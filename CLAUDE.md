@@ -1,0 +1,60 @@
+# RISE OF THE DON — Standing rules
+
+## Project
+- **Game:** RISE OF THE DON — an original 3D open-world action-adventure set in Velanagar, a fictional South Indian coastal city.
+- **Engine:** Godot 4.x (GDScript only, no C#). **Art:** Blender, run from scripts. **Target:** Windows PC first.
+- **Everything is original.** Use no GTA (or other game) names, characters, maps, missions, logos, music, or UI layouts. Don't copy real brands onto vehicles, shops, or signs.
+- Design reference: `docs/GAME_DESIGN.md`. Read only the sections the current task needs.
+
+## Machine setup (confirmed 2026-11-24)
+- Godot console executable (4.7.2 stable, .NET build — used for GDScript only):
+  `C:\Users\ADMIN\Downloads\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe`
+- Godot editor executable (same folder): `Godot_v4.7.2-stable_mono_win64.exe`
+- Blender executable (4.0.2): `C:\Program Files\Blender Foundation\Blender 4.0\blender.exe`
+- Project root: `D:\project\RISE OF THE DON` (this folder — the path contains spaces, always quote it)
+- Shell: Claude Code on Windows runs Git Bash. Quote paths that contain spaces.
+- Git Bash variables used in the commands below:
+  ```bash
+  GODOT="/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64_console.exe"
+  BLENDER="/c/Program Files/Blender Foundation/Blender 4.0/blender.exe"
+  ```
+- Physics engine: Jolt Physics (built into Godot 4.4+), set in `project.godot`.
+- **Known, accepted message:** because the installed editor is the .NET build and no .NET SDK is installed, editor-mode runs (`--import`, opening the editor) print `ERROR: .NET Sdk not found. The required version is '8.0.29'.` It is about C# support, which this project does not use, and it never appears when the game itself runs. Ignore exactly that line; treat every other `ERROR:` as a failure. Switching to the standard (non-.NET) Godot 4.7.2 build removes it.
+
+## How to validate work (you cannot see the screen, so these are your eyes)
+1. **Import / parse check:** `"$GODOT" --headless --path . --import` (re-imports assets and reports script parse errors).
+2. **Smoke test:** `"$GODOT" --headless --path . res://tests/smoke_test.tscn`. This scene loads the main game, simulates input for a few hundred frames, asserts expected state (for example "the player moved more than 5 m", "the car speed is above 0 after throttle"), prints `SMOKE TEST PASSED` or `FAILED: <reason>`, and quits with exit code 0 or 1. Add assertions to it for every new feature.
+3. Treat any `SCRIPT ERROR`, `ERROR:`, or parse error in the output as a failure. Fix it before moving on.
+4. Headless runs prove the logic works, not that it feels or looks right. For anything visual or feel-based (camera, handling, lighting, UI layout), say exactly what the user should check in the editor, and don't mark it done until they confirm.
+5. **Screenshots (optional extra eyes):** `"$GODOT" --path . res://tests/screenshot.tscn -- --scene=res://scenes/... --out=<abs path>.png` renders a scene in a real window for a few frames and saves a PNG you can open with the Read tool. It also surfaces shader compile errors, which headless runs cannot. It is a sanity check, not a substitute for the user's own look.
+
+## Blender pipeline
+- Generate assets with Python scripts in `tools/blender/`, run as `"$BLENDER" --background --factory-startup --python tools/blender/<script>.py -- <args>`. You cannot use the Blender GUI. (`--factory-startup` keeps the user's own Blender preferences and add-ons from affecting the output.)
+- `tools/blender/build_all.sh` re-runs every generator, then re-import in Godot.
+- Shared helpers live in `tools/blender/rotd_mesh.py` (mesh builder, materials, GLB export).
+- Export GLB to `assets/models/<category>/`. Use 1 unit = 1 metre, +Y up in Godot (export with Blender's default glTF Y-up conversion), the pivot at the base centre (buildings, props, characters) or the chassis centre (vehicles), and apply transforms before export.
+- Naming: `bld_`, `veh_`, `prop_`, `chr_`, `road_`. Name collision meshes with the `-col` / `-colonly` suffix so Godot's importer builds collision automatically.
+- Keep each generator script re-runnable. Re-running it overwrites only its own outputs.
+- Low-poly, stylised geometry with simple PBR materials is the target. Don't chase photorealism from code.
+
+## Code rules
+- One responsibility per script. Use signals between systems. Autoloads only for real global state: `GameState`, `SaveManager`, `MissionManager`, `EconomyManager`, `WantedSystem`, `AudioManager`, `Settings`.
+- Statically type GDScript (`var speed: float = 0.0`, typed function signatures).
+- Put tunables in Resources (`.tres`) under `resources/`, not hard-coded. This covers vehicle handling, mission definitions, shop items, and NPC density.
+- Prefer building complex node trees in code or in small, simple `.tscn` files. Hand-written `.tscn` files must be valid Godot 4 format. Never invent `uid://` values; omit them and let Godot assign them on import.
+- Use the input map for all controls (`project.godot` `[input]` section), never raw keycodes in gameplay scripts. The input map is generated by `tools/godot/setup_project.gd` — edit that script and re-run it rather than hand-editing `[input]`.
+- Don't write TODO stubs for anything the current milestone needs, and don't add buttons that do nothing. If something is out of scope, leave it out and list it in the report.
+
+## Safety and workflow
+- The project is a git repo. Commit after each working milestone with a clear message. Never force-push or rewrite history.
+- Never delete or overwrite the user's files (especially anything in `assets/` they made by hand) without asking.
+- Work in small steps: implement → run validation → fix → commit. Don't start the next feature while the current one is failing.
+- Stop at the end of each milestone and wait for the user's approval before starting the next.
+- Keep these updated: `DEVELOPMENT_LOG.md` (dated entries: what was built, what broke, how it was fixed), `README.md` (setup, run, controls), `TESTING.md` (manual test checklist per feature).
+
+## End-of-milestone report format
+1. What now works (only what you actually ran and verified)
+2. Files created or changed
+3. Errors hit and how they were fixed
+4. What the user must test by hand, as a numbered checklist
+5. Known issues and what's next

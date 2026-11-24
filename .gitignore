@@ -1,0 +1,26 @@
+# Godot 4 editor/import cache (regenerated on import)
+.godot/
+/android/
+
+# .NET build artefacts (this project is GDScript-only, but the editor is the .NET build)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Export output
+/build/
+/export/
+
+# Blender backups and Python caches from the generator scripts
+*.blend1
+*.blend2
+__pycache__/
+*.pyc
+
+# OS clutter
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Note: *.import and *.uid files are intentionally committed. They hold import
+# settings and resource UIDs; ignoring them breaks references on a fresh clone.
