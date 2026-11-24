@@ -50,3 +50,15 @@ extends Resource
 ## Health regenerates on its own only up to this fraction of max (GDD: 50 %).
 @export_range(0.0, 1.0) var health_regen_cap: float = 0.5
 @export var health_regen_delay: float = 5.0
+
+@export_group("Vehicles")
+## The nearest vehicle whose centre is within this distance can be entered (GDD: 3 m).
+@export var vehicle_enter_radius: float = 3.0
+## Time to step to the door and get in, seconds.
+@export var enter_vehicle_time: float = 0.45
+## Time after getting out before the player can move.
+@export var exit_vehicle_time: float = 0.3
+## Asking to get out above this speed (m/s) brakes the car first.
+@export var vehicle_exit_max_speed: float = 2.5
+## Give up waiting for the car to slow down and get out anyway after this long.
+@export var vehicle_exit_timeout: float = 4.0

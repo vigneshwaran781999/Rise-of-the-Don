@@ -5,9 +5,13 @@ extends Node
 ##   "$GODOT" --path . res://tests/screenshot.tscn -- --scene=res://scenes/main/game.tscn \
 ##       --out=C:/path/shot.png [--frames=90] [--view=yaw,pitch] [--cam=x,y,z --look=x,y,z]
 ##       [--pause] [--press=ButtonName,OtherButton]
+##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
+## --drive puts the player in the test block's sedan; --throttle holds the accelerator for that
+## many frames (with --steer), --hood picks the hood camera, --health sets the car's health share
+## (below 0.35 it smokes), --headlights switches them on.
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -35,6 +39,8 @@ func _run() -> void:
 		cam.look_at(_vec3(str(args.get("look", "0,0,0"))), Vector3.UP)
 		cam.make_current()
 	await get_tree().process_frame
+	if args.has("drive"):
+		await _drive(instance, args)
 	if args.has("pause"):
 		var pause_menu: PauseMenu = instance.get_node_or_null("PauseMenu") as PauseMenu
 		if pause_menu != null:
@@ -59,6 +65,38 @@ func _run() -> void:
 	var err: Error = image.save_png(out_path)
 	print("SCREENSHOT %s -> %s" % ["SAVED" if err == OK else "FAILED (%d)" % err, out_path])
 	get_tree().quit(0 if err == OK else 1)
+
+
+func _drive(game: Node, args: Dictionary) -> void:
+	var player := game.get_node("Player") as PlayerController
+	var car := game.get_node("World/Vehicles/Sedan") as VehicleController
+	for i: int in 20:
+		await get_tree().physics_frame
+	player.global_position = car.get_exit_points()[0]
+	player.reset_physics_interpolation()
+	for i: int in 5:
+		await get_tree().physics_frame
+	player.enter_vehicle(car, car.get_exit_points()[0])
+	for i: int in 70:
+		await get_tree().physics_frame
+	var damage := car.get_node("Damage") as VehicleDamage
+	if args.has("health"):
+		damage.apply_damage(damage.health - car.stats.max_health * float(args["health"]))
+	if args.has("headlights"):
+		car.set_headlights(true)
+	if args.has("hood"):
+		(game.get_node("VehicleCamera") as VehicleCamera).set_mode(VehicleCamera.Mode.HOOD)
+	var frames: int = int(args.get("throttle", "0"))
+	var steer: float = float(args.get("steer", "0"))
+	if frames > 0:
+		Input.action_press("vehicle_accelerate")
+		if steer > 0.0:
+			Input.action_press("vehicle_steer_left", steer)
+		elif steer < 0.0:
+			Input.action_press("vehicle_steer_right", -steer)
+		for i: int in frames:
+			await get_tree().physics_frame
+	print("DRIVE  %.0f km/h, gear %s, health %.0f, at %s" % [car.get_speed_kmh(), (car.get_node("Engine") as VehicleEngine).get_gear_text(), damage.health, car.global_position])
 
 
 func _parse_args(raw: PackedStringArray) -> Dictionary:

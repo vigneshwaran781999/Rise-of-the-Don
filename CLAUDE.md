@@ -24,6 +24,7 @@
 ## How to validate work (you cannot see the screen, so these are your eyes)
 1. **Import / parse check:** `"$GODOT" --headless --path . --import` (re-imports assets and reports script parse errors).
 2. **Smoke test:** `"$GODOT" --headless --path . res://tests/smoke_test.tscn`. This scene loads the main game, simulates input for a few hundred frames, asserts expected state (for example "the player moved more than 5 m", "the car speed is above 0 after throttle"), prints `SMOKE TEST PASSED` or `FAILED: <reason>`, and quits with exit code 0 or 1. Add assertions to it for every new feature.
+   Per-feature test scenes sit next to it, e.g. `"$GODOT" --headless --path . --fixed-fps 60 res://tests/vehicle_test.tscn` (vehicle handling report with sanity ranges; `--fixed-fps 60` runs it faster than real time).
 3. Treat any `SCRIPT ERROR`, `ERROR:`, or parse error in the output as a failure. Fix it before moving on.
 4. Headless runs prove the logic works, not that it feels or looks right. For anything visual or feel-based (camera, handling, lighting, UI layout), say exactly what the user should check in the editor, and don't mark it done until they confirm.
 5. **Screenshots (optional extra eyes):** `"$GODOT" --path . res://tests/screenshot.tscn -- --scene=res://scenes/... --out=<abs path>.png` renders a scene in a real window for a few frames and saves a PNG you can open with the Read tool. It also surfaces shader compile errors, which headless runs cannot. It is a sanity check, not a substitute for the user's own look.

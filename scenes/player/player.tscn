@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://scripts/player/player_audio.gd" id="4_audio"]
 [ext_resource type="Script" path="res://scripts/player/third_person_camera.gd" id="5_cam"]
 [ext_resource type="Resource" path="res://resources/characters/player_camera.tres" id="6_camset"]
+[ext_resource type="Script" path="res://scripts/player/vehicle_interactor.gd" id="7_interact"]
+[ext_resource type="Script" path="res://scripts/player/player_driving_input.gd" id="8_drive"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -32,7 +34,7 @@ size = Vector3(0.22, 0.12, 0.34)
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
-collision_mask = 1
+collision_mask = 5
 script = ExtResource("1_ctrl")
 tuning = ExtResource("2_tuning")
 
@@ -57,6 +59,12 @@ tuning = ExtResource("2_tuning")
 [node name="Audio" type="Node" parent="."]
 script = ExtResource("4_audio")
 
+[node name="VehicleInteractor" type="Node" parent="."]
+script = ExtResource("7_interact")
+
+[node name="DrivingInput" type="Node" parent="."]
+script = ExtResource("8_drive")
+
 [node name="CameraRig" type="Node3D" parent="."]
 top_level = true
 script = ExtResource("5_cam")
@@ -67,7 +75,7 @@ settings = ExtResource("6_camset")
 [node name="Pitch" type="Node3D" parent="CameraRig/Yaw"]
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig/Yaw/Pitch"]
-collision_mask = 1
+collision_mask = 5
 spring_length = 4.2
 margin = 0.1
 

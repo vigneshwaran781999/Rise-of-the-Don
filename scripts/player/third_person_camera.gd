@@ -59,6 +59,19 @@ func set_view_degrees(yaw_degrees: float, pitch_degrees: float) -> void:
 	_apply_rotation()
 
 
+## Inactive while another camera (e.g. the vehicle camera) is in charge: no look input, no
+## following. Reactivating snaps it back to the player.
+func set_active(active: bool) -> void:
+	set_process(active)
+	set_process_unhandled_input(active)
+	if active:
+		snap_to_target()
+
+
+func is_active() -> bool:
+	return is_processing()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion

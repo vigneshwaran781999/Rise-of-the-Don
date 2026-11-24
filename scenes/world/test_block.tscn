@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/world/city_block_builder.gd" id="1_block"]
 [ext_resource type="Script" path="res://scripts/world/world_lighting.gd" id="2_light"]
 [ext_resource type="Resource" path="res://resources/world/late_afternoon.tres" id="3_preset"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="4_sedan"]
 
 [node name="TestBlock" type="Node3D"]
 script = ExtResource("1_block")
@@ -13,3 +14,8 @@ preset = ExtResource("3_preset")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.05, 30)
+
+[node name="Vehicles" type="Node3D" parent="."]
+
+[node name="Sedan" parent="Vehicles" instance=ExtResource("4_sedan")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -4.75, 0.6, 22)

@@ -50,6 +50,26 @@ func _exit_tree() -> void:
 	if _pad_task != -1:
 		WorkerThreadPool.wait_for_task_completion(_pad_task)
 		_pad_task = -1
+	_silence()
+
+
+## Stops every sound, gives the audio thread a moment to release them, then quits. Quitting
+## while a sound plays makes Godot report the playing stream as leaked at exit.
+func quit_game(exit_code: int = 0) -> void:
+	_silence()
+	for node: Node in get_tree().root.find_children("*", "AudioStreamPlayer3D", true, false):
+		(node as AudioStreamPlayer3D).stop()
+	await get_tree().create_timer(0.1, true, false, true).timeout
+	get_tree().quit(exit_code)
+
+
+func _silence() -> void:
+	_kill_music_tween()
+	_wanted_music = &""
+	_current_music = &""
+	for player: AudioStreamPlayer in _ui_players + _sfx_players + [_music_player]:
+		player.stop()
+		player.stream = null
 
 
 func has_stream(sound: StringName) -> bool:

@@ -1,0 +1,115 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_controller.gd" id="1_ctrl"]
+[ext_resource type="Resource" path="res://resources/vehicles/sedan_stats.tres" id="2_stats"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/veh_sedan_body.glb" id="3_body"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/veh_sedan_wheel.glb" id="4_wheel"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_engine.gd" id="5_engine"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_damage.gd" id="6_damage"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_lights.gd" id="7_lights"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_audio.gd" id="8_audio"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_recovery.gd" id="9_recovery"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_lower"]
+points = PackedVector3Array(0.87, -0.1, 2.25, -0.87, -0.1, 2.25, 0.87, 0.06, 2.255, -0.87, 0.06, 2.255, 0.85, -0.27, 2.19, -0.85, -0.27, 2.19, 0.87, 0.16, 2.21, -0.87, 0.16, 2.21, 0.87, 0.25, 2.02, -0.87, 0.25, 2.02, 0.87, -0.34, 2.05, -0.87, -0.34, 2.05, 0.87, -0.34, -2.08, -0.87, -0.34, -2.08, 0.85, -0.26, -2.21, -0.85, -0.26, -2.21, 0.87, -0.05, -2.26, -0.87, -0.05, -2.26, 0.87, 0.22, -2.25, -0.87, 0.22, -2.25, 0.87, 0.34, -2.12, -0.87, 0.34, -2.12, 0.87, 0.36, 0.82, -0.87, 0.36, 0.82, 0.87, 0.38, -1.42, -0.87, 0.38, -1.42)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_cabin"]
+points = PackedVector3Array(0.8, 0.35, 0.82, -0.8, 0.35, 0.82, 0.66, 0.9, 0.16, -0.66, 0.9, 0.16, 0.66, 0.9, -0.72, -0.66, 0.9, -0.72, 0.8, 0.37, -1.42, -0.8, 0.37, -1.42, 0.615, 0.935, 0.1, -0.615, 0.935, 0.1, 0.615, 0.935, -0.66, -0.615, 0.935, -0.66)
+
+[node name="Sedan" type="VehicleBody3D"]
+collision_layer = 4
+collision_mask = 5
+mass = 1250.0
+script = ExtResource("1_ctrl")
+stats = ExtResource("2_stats")
+
+[node name="Model" parent="." instance=ExtResource("3_body")]
+
+[node name="LowerBody" type="CollisionShape3D" parent="."]
+shape = SubResource("ConvexPolygonShape3D_lower")
+
+[node name="Cabin" type="CollisionShape3D" parent="."]
+shape = SubResource("ConvexPolygonShape3D_cabin")
+
+[node name="WheelFrontLeft" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.76, -0.115, 1.36)
+wheel_radius = 0.33
+
+[node name="Mesh" parent="WheelFrontLeft" instance=ExtResource("4_wheel")]
+
+[node name="WheelFrontRight" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.76, -0.115, 1.36)
+wheel_radius = 0.33
+
+[node name="Mesh" parent="WheelFrontRight" instance=ExtResource("4_wheel")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="WheelRearLeft" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.76, -0.115, -1.29)
+wheel_radius = 0.33
+
+[node name="Mesh" parent="WheelRearLeft" instance=ExtResource("4_wheel")]
+
+[node name="WheelRearRight" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.76, -0.115, -1.29)
+wheel_radius = 0.33
+
+[node name="Mesh" parent="WheelRearRight" instance=ExtResource("4_wheel")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="Seat" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.38, -0.3, -0.1)
+
+[node name="ExitPoints" type="Node3D" parent="."]
+
+[node name="DriverDoor" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -0.5, 0.15)
+
+[node name="PassengerDoor" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, -0.5, 0.15)
+
+[node name="Behind" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -3)
+
+[node name="InFront" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 3)
+
+[node name="HoodCamera" type="Marker3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.64, 0.92)
+
+[node name="SmokePoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 1.5)
+
+[node name="Engine" type="Node" parent="."]
+script = ExtResource("5_engine")
+
+[node name="Damage" type="Node" parent="."]
+script = ExtResource("6_damage")
+
+[node name="Lights" type="Node3D" parent="."]
+script = ExtResource("7_lights")
+
+[node name="HeadlightLeft" type="SpotLight3D" parent="Lights"]
+visible = false
+rotation = Vector3(-0.10472, 3.14159, 0)
+position = Vector3(0.64, 0.1, 2.28)
+light_color = Color(1, 0.94, 0.82, 1)
+light_energy = 6.0
+spot_range = 36.0
+spot_angle = 30.0
+
+[node name="HeadlightRight" type="SpotLight3D" parent="Lights"]
+visible = false
+rotation = Vector3(-0.10472, 3.14159, 0)
+position = Vector3(-0.64, 0.1, 2.28)
+light_color = Color(1, 0.94, 0.82, 1)
+light_energy = 6.0
+spot_range = 36.0
+spot_angle = 30.0
+
+[node name="Audio" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.8)
+script = ExtResource("8_audio")
+
+[node name="Recovery" type="Node" parent="."]
+script = ExtResource("9_recovery")

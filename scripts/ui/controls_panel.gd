@@ -3,13 +3,26 @@ extends MenuPanel
 ## Lists the controls that work right now. Bindings are read from the input map, so this
 ## screen always matches project.godot. Rebinding comes with the full settings screen.
 
-## label, actions, optional keyboard text override, optional gamepad text override
+## label, actions, optional keyboard text override, optional gamepad text override.
+## A one-element row is a section heading.
 const ROWS: Array = [
+	["ON FOOT"],
 	["Move", ["move_forward", "move_left", "move_back", "move_right"], "", ""],
 	["Look", ["look_left", "look_right", "look_up", "look_down"], "Mouse", ""],
 	["Walk (hold)", ["walk"], "", "Tilt stick gently"],
 	["Sprint (hold)", ["sprint"], "", ""],
 	["Jump", ["jump"], "", ""],
+	["Get in / out of a vehicle", ["vehicle_enter_exit"], "", ""],
+	["DRIVING"],
+	["Accelerate", ["vehicle_accelerate"], "", ""],
+	["Brake / reverse", ["vehicle_brake"], "", ""],
+	["Steer left", ["vehicle_steer_left"], "", ""],
+	["Steer right", ["vehicle_steer_right"], "", ""],
+	["Handbrake", ["vehicle_handbrake"], "", ""],
+	["Horn (hold)", ["vehicle_horn"], "", ""],
+	["Headlights", ["vehicle_headlights"], "", ""],
+	["Chase / hood camera", ["vehicle_camera"], "", ""],
+	["GENERAL"],
 	["Pause", ["pause"], "", ""],
 	["FPS counter", ["toggle_fps"], "", ""],
 ]
@@ -75,15 +88,16 @@ func _build() -> void:
 	grid.name = "BindingsGrid"
 	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 40)
-	grid.add_theme_constant_override("v_separation", 14)
+	grid.add_theme_constant_override("v_separation", 7)
 	box.add_child(grid)
 	for header: String in ["ACTION", "KEYBOARD / MOUSE", "GAMEPAD"]:
-		var label := Label.new()
-		label.text = header
-		label.add_theme_font_size_override("font_size", 18)
-		label.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
-		grid.add_child(label)
+		grid.add_child(_small(header, UIStyle.TEXT_DIM))
 	for row: Array in ROWS:
+		if row.size() == 1:
+			grid.add_child(_small(str(row[0]), UIStyle.MAGENTA.lightened(0.3), 12.0))
+			grid.add_child(Control.new())
+			grid.add_child(Control.new())
+			continue
 		var actions: Array = row[1]
 		var keys: String = str(row[2]) if str(row[2]) != "" else describe_keyboard(actions)
 		var pad: String = str(row[3]) if str(row[3]) != "" else describe_gamepad(actions)
@@ -99,5 +113,17 @@ func _build() -> void:
 func _cell(text: String, color: Color) -> Label:
 	var label := Label.new()
 	label.text = text
+	label.add_theme_font_size_override("font_size", 21)
 	label.add_theme_color_override("font_color", color)
+	return label
+
+
+## Small caps-style label for column headers and section headings.
+func _small(text: String, color: Color, top_gap: float = 0.0) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	label.custom_minimum_size = Vector2(0.0, 20.0 + top_gap)
 	return label

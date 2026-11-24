@@ -91,7 +91,7 @@ func _build() -> void:
 	var main_menu: Button = _add_button(box, "Main Menu", "MainMenuButton")
 	main_menu.pressed.connect(_go_to_main_menu)
 	var quit: Button = _add_button(box, "Quit to Desktop", "QuitButton")
-	quit.pressed.connect(func() -> void: get_tree().quit())
+	quit.pressed.connect(func() -> void: AudioManager.quit_game())
 
 	_settings = SettingsPanel.new()
 	center.add_child(_settings)

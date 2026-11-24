@@ -1,6 +1,6 @@
 # Manual Testing Checklist
 
-Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print `SMOKE TEST PASSED`). These checks cover what a headless run can't judge: how things look, sound and feel. Tick each box; note anything that fails in DEVELOPMENT_LOG.md.
+Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print `SMOKE TEST PASSED`) and, for vehicle handling figures, `tests/vehicle_test.tscn` (`VEHICLE TEST PASSED`). These checks cover what a headless run can't judge: how things look, sound and feel. Tick each box; note anything that fails in DEVELOPMENT_LOG.md.
 
 ---
 
@@ -51,3 +51,38 @@ Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print
 - [ ] Pause → Settings → change something → Back returns to the pause menu.
 - [ ] Pause → Main Menu returns to the title screen (music fades back in); New Game works again from there.
 - [ ] Pause → Quit to Desktop closes the game.
+
+## M2 — First car
+
+### Getting in and out
+- [ ] The crimson sedan is parked against the left kerb a few metres ahead of where you start. It looks like an ordinary unbadged four-door saloon: wheels sit in the arches, nothing floats or pokes through.
+- [ ] Walk up to it: a "F  GET IN" prompt appears at the bottom of the screen within about 3 m and disappears when you walk away. Walking into the car doesn't push it.
+- [ ] F: the player steps to the nearer front door and vanishes inside; the camera glides from behind the player to behind the car (no cut, no clipping through the car). The engine starts.
+- [ ] A one-off reminder of the driving keys shows along the bottom for a few seconds the first time you get in.
+- [ ] F when stopped: you get out of the driver's door (the car's right side, as in India). The on-foot camera takes over facing the same way.
+- [ ] F at speed: the car brakes hard by itself and you hop out once it's nearly stopped.
+- [ ] Park with the driver's side against a wall (or the boundary): F gets you out of the passenger side.
+
+### Handling (feel)
+- [ ] W pulls away briskly (about 8 s to 100 km/h); the engine note rises and drops through the gear changes.
+- [ ] S brakes firmly (the tail lights brighten); holding S once stopped reverses (white reverse lights, gear "R").
+- [ ] Steering feels responsive at low speed (tight U-turn in one go on the 12 m road) but calmer at high speed, with no twitchiness.
+- [ ] Taking a corner too fast makes the car run wide (understeer) rather than spin.
+- [ ] Space (handbrake) at speed with some steering swings the tail round; tyres squeal while sliding.
+- [ ] The car stays planted over kerbs and through junctions; driving onto a sidewalk bumps up over the kerb.
+- [ ] Letting go of everything, the car rolls to a stop gently (engine braking).
+- [ ] Gamepad: RT / LT are progressive, the left stick steers smoothly.
+
+### Cameras
+- [ ] Chase camera: follows smoothly with no jitter, drops back a little and widens the view as you speed up, softens suspension bounce.
+- [ ] Look around with the mouse / right stick; about a second after you stop, it swings back behind the car (only while moving).
+- [ ] The chase camera pulls in instead of clipping through buildings or walls.
+- [ ] V switches to the hood camera (bonnet in view, looking ahead) and back. Mouse look works in the hood view and drifts back to straight ahead.
+
+### HUD, sounds, lights, damage
+- [ ] Bottom-right speedometer: speed in km/h matches how fast it feels, the arc fills and turns magenta near top speed, gear letter and rev arc move sensibly, the orange CAR bar shows the car's health.
+- [ ] H holds the horn (two-tone); L switches the headlights on (lenses glow, beams light the road) and off.
+- [ ] Crashing into a building at 30+ km/h makes a crunch and drops the CAR bar; gentle bumps don't.
+- [ ] Below about a third health, grey smoke rises from the engine; below 15 % it turns dark; at zero the smoke goes black and the engine won't run (you can still get out).
+- [ ] If the car ever ends up on its side or roof while you are in it, it rights itself after about 2.5 s. (Hard to do on purpose in this flat block; the vehicle test checks it.)
+- [ ] Pausing while driving freezes the car and its sounds; resuming carries on.

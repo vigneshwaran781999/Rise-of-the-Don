@@ -8,6 +8,8 @@ extends SceneTree
 
 const MOVE_DEADZONE: float = 0.2
 const LOOK_DEADZONE: float = 0.15
+const STEER_DEADZONE: float = 0.12
+const TRIGGER_DEADZONE: float = 0.08
 const MAIN_SCENE: String = "res://scenes/main/main_menu.tscn"
 const BUS_LAYOUT_PATH: String = "res://default_bus_layout.tres"
 ## Autoloads in load order (GDD: only real global state).
@@ -70,6 +72,16 @@ func _setup_input_map() -> void:
 	# Interaction
 	_action("vehicle_enter_exit", MOVE_DEADZONE, [_key(KEY_F), _button(JOY_BUTTON_Y)])
 	_action("interact", MOVE_DEADZONE, [_key(KEY_E), _button(JOY_BUTTON_X)])
+
+	# Driving (only read while the player is in a vehicle; arrow keys work as well as WASD)
+	_action("vehicle_accelerate", TRIGGER_DEADZONE, [_key(KEY_W), _key(KEY_UP), _axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
+	_action("vehicle_brake", TRIGGER_DEADZONE, [_key(KEY_S), _key(KEY_DOWN), _axis(JOY_AXIS_TRIGGER_LEFT, 1.0)])
+	_action("vehicle_steer_left", STEER_DEADZONE, [_key(KEY_A), _key(KEY_LEFT), _axis(JOY_AXIS_LEFT_X, -1.0)])
+	_action("vehicle_steer_right", STEER_DEADZONE, [_key(KEY_D), _key(KEY_RIGHT), _axis(JOY_AXIS_LEFT_X, 1.0)])
+	_action("vehicle_handbrake", MOVE_DEADZONE, [_key(KEY_SPACE), _button(JOY_BUTTON_RIGHT_SHOULDER)])
+	_action("vehicle_horn", MOVE_DEADZONE, [_key(KEY_H), _button(JOY_BUTTON_LEFT_STICK)])
+	_action("vehicle_headlights", MOVE_DEADZONE, [_key(KEY_L), _button(JOY_BUTTON_DPAD_UP)])
+	_action("vehicle_camera", MOVE_DEADZONE, [_key(KEY_V), _button(JOY_BUTTON_BACK)])
 
 	# Menus and debug
 	_action("pause", MOVE_DEADZONE, [_key(KEY_ESCAPE), _button(JOY_BUTTON_START)])

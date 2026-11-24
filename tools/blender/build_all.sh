@@ -10,6 +10,7 @@ GENERATORS=(
   road_kit.py
   buildings.py
   props.py
+  vehicles.py
 )
 
 for gen in "${GENERATORS[@]}"; do

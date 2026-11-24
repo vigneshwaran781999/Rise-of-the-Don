@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="VehicleCameraTuning" format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_camera_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+pivot_height = 1.3
+distance = 5.6
+distance_speed_bonus = 1.4
+default_pitch_degrees = -10.0
+min_pitch_degrees = -55.0
+max_pitch_degrees = 25.0
+collision_radius = 0.25
+mouse_radians_per_pixel = 0.0025
+stick_degrees_per_second = 150.0
+recenter_delay = 1.2
+recenter_sharpness = 3.0
+recenter_min_speed_kmh = 8.0
+follow_sharpness = 14.0
+vertical_follow_sharpness = 7.0
+base_fov = 72.0
+speed_fov_bonus = 10.0
+fov_sharpness = 4.0
+hood_fov = 80.0
+hood_look_limit_degrees = 100.0

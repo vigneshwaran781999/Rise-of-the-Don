@@ -1,22 +1,34 @@
 class_name PlayerController
 extends CharacterBody3D
-## On-foot player (GDD §4, M1 subset): camera-relative walk / run / sprint, jump with coyote
-## time and input buffering, gravity, slope handling, and a small state machine.
-## The capsule is placeholder art; the Model node turns smoothly to face the movement.
+## The player (GDD §4): camera-relative walk / run / sprint, jump with coyote time and input
+## buffering, gravity, slope handling, and getting in and out of vehicles, driven by a small
+## state machine. The capsule is placeholder art; the Model node turns to face the movement.
+##
+## Vehicles: VehicleInteractor decides when to get in or out and where to stand; this script
+## carries it out (walk to the door, ride in the seat hidden, step out) and announces it with
+## vehicle_entered / vehicle_exited. PlayerDrivingInput steers while the state is IN_VEHICLE.
 
 signal state_changed(previous: State, current: State)
 signal jumped
 signal landed(impact_speed: float)
+## Emitted as the player starts getting in (the camera hands over during the walk to the door).
+signal vehicle_entered(vehicle: VehicleController)
+signal vehicle_exited(vehicle: VehicleController)
 
-enum State { IDLE, WALK, RUN, SPRINT, JUMP, FALL, LAND }
+enum State { IDLE, WALK, RUN, SPRINT, JUMP, FALL, LAND, ENTER_VEHICLE, IN_VEHICLE, EXIT_VEHICLE }
+
+const ON_FOOT_STATES: Array[State] = [State.IDLE, State.WALK, State.RUN, State.SPRINT, State.LAND]
 
 @export var tuning: PlayerTuning
 
 var state: State = State.IDLE
+## The vehicle the player is getting into or sitting in (null on foot).
+var vehicle: VehicleController
 
 @onready var model: Node3D = $Model
 @onready var stats: PlayerStats = $Stats
 @onready var camera_rig: ThirdPersonCamera = $CameraRig
+@onready var _collision: CollisionShape3D = $CollisionShape3D
 
 var _gravity: float = 9.8
 var _coyote_left: float = 0.0
@@ -24,6 +36,11 @@ var _jump_buffer_left: float = 0.0
 var _jump_was_held: bool = false
 var _land_left: float = 0.0
 var _was_on_floor: bool = true
+var _transition_left: float = 0.0
+var _enter_from: Vector3 = Vector3.ZERO
+var _enter_door_local: Vector3 = Vector3.ZERO
+var _exit_requested: bool = false
+var _exit_wait: float = 0.0
 
 
 func _ready() -> void:
@@ -43,11 +60,91 @@ func get_state_name() -> String:
 	return State.keys()[state]
 
 
-func _physics_process(delta: float) -> void:
-	var on_floor: bool = is_on_floor()
-	_update_timers(delta, on_floor)
+# --------------------------------------------------------------------------- vehicles
 
-	var input: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+## True when standing (or walking) on the ground, free to get into a vehicle.
+func can_enter_vehicle() -> bool:
+	return state in ON_FOOT_STATES and is_on_floor()
+
+
+func is_in_vehicle() -> bool:
+	return state == State.IN_VEHICLE
+
+
+## Starts getting into `target` through the door at world position `door`.
+func enter_vehicle(target: VehicleController, door: Vector3) -> void:
+	if not can_enter_vehicle() or target.is_occupied():
+		return
+	vehicle = target
+	_enter_from = global_position
+	_enter_door_local = target.to_local(door)
+	_transition_left = tuning.enter_vehicle_time
+	velocity = Vector3.ZERO
+	_collision.set_deferred("disabled", true)
+	_set_state(State.ENTER_VEHICLE)
+	vehicle_entered.emit(target)
+
+
+## Asks to get out. VehicleInteractor completes it with exit_vehicle() once the car is slow
+## enough; until then PlayerDrivingInput brakes.
+func request_vehicle_exit() -> void:
+	if state == State.IN_VEHICLE and not _exit_requested:
+		_exit_requested = true
+		_exit_wait = 0.0
+
+
+func is_exit_requested() -> bool:
+	return _exit_requested
+
+
+## Seconds since the exit was requested.
+func get_exit_wait() -> float:
+	return _exit_wait
+
+
+## Steps out of the current vehicle onto the ground at world position `at`.
+func exit_vehicle(at: Vector3) -> void:
+	if vehicle == null:
+		return
+	var left: VehicleController = vehicle
+	left.set_driver(null)
+	vehicle = null
+	_exit_requested = false
+	global_position = at
+	velocity = Vector3.ZERO
+	reset_physics_interpolation()
+	var away: Vector3 = at - left.global_position
+	away.y = 0.0
+	if away.length() > 0.01:
+		model.rotation.y = atan2(-away.x, -away.z)
+	model.visible = true
+	_collision.set_deferred("disabled", false)
+	_transition_left = tuning.exit_vehicle_time
+	_jump_buffer_left = 0.0
+	_was_on_floor = true
+	_set_state(State.EXIT_VEHICLE)
+	vehicle_exited.emit(left)
+
+
+# --------------------------------------------------------------------------- physics
+
+func _physics_process(delta: float) -> void:
+	match state:
+		State.ENTER_VEHICLE:
+			_step_entering(delta)
+			return
+		State.IN_VEHICLE:
+			_ride(delta)
+			return
+
+	var on_floor: bool = is_on_floor()
+	var stepping_out: bool = state == State.EXIT_VEHICLE
+	_transition_left = maxf(0.0, _transition_left - delta)
+	_update_timers(delta, on_floor)
+	if stepping_out:
+		_jump_buffer_left = 0.0
+
+	var input: Vector2 = Vector2.ZERO if stepping_out else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var strength: float = minf(input.length(), 1.0)
 	var gait: State = _choose_gait(strength)
 	_apply_horizontal(_camera_relative(input) * _gait_speed(gait), on_floor, delta)
@@ -66,7 +163,35 @@ func _physics_process(delta: float) -> void:
 	stats.tick(delta, gait == State.SPRINT and speed > tuning.walk_speed)
 	camera_rig.sprinting = gait == State.SPRINT and speed > tuning.run_speed
 	_face_movement(delta)
+	if stepping_out and _transition_left > 0.0:
+		return
 	_update_state(now_on_floor, gait)
+
+
+## Walks (glides) to the door, turning to face the car, then disappears into the seat.
+func _step_entering(delta: float) -> void:
+	_transition_left -= delta
+	var progress: float = 1.0 - clampf(_transition_left / tuning.enter_vehicle_time, 0.0, 1.0)
+	var door: Vector3 = vehicle.to_global(_enter_door_local)
+	global_position = _enter_from.lerp(door, smoothstep(0.0, 1.0, progress))
+	var to_car: Vector3 = vehicle.global_position - global_position
+	if Vector2(to_car.x, to_car.z).length() > 0.1:
+		model.rotation.y = lerp_angle(model.rotation.y, atan2(-to_car.x, -to_car.z), 1.0 - exp(-tuning.turn_speed * delta))
+	if _transition_left <= 0.0:
+		model.visible = false
+		vehicle.set_driver(self)
+		_set_state(State.IN_VEHICLE)
+		_ride(delta)
+
+
+## Sits in the driver's seat: follows the car, hidden, with no collision of its own.
+func _ride(delta: float) -> void:
+	global_position = vehicle.get_seat_transform().origin
+	velocity = Vector3.ZERO
+	stats.tick(delta, false)
+	camera_rig.sprinting = false
+	if _exit_requested:
+		_exit_wait += delta
 
 
 func _update_timers(delta: float, on_floor: bool) -> void:

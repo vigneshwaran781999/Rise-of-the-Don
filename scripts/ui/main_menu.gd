@@ -79,15 +79,15 @@ func _build() -> void:
 	var controls_button: Button = _add_button(buttons, "Controls", "ControlsButton")
 	var credits_button: Button = _add_button(buttons, "Credits", "CreditsButton")
 	var exit_button: Button = _add_button(buttons, "Exit", "ExitButton")
-	exit_button.pressed.connect(func() -> void: get_tree().quit())
+	exit_button.pressed.connect(func() -> void: AudioManager.quit_game())
 
 	var filler := Control.new()
 	filler.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(filler)
 	var footer := Label.new()
 	footer.name = "Footer"
-	footer.text = "v%s  ·  Milestone 1 prototype      Enter / A select   ·   Esc / B back" % \
-			str(ProjectSettings.get_setting("application/config/version", "0.1.0"))
+	footer.text = "v%s  ·  Milestone 2: first car      Enter / A select   ·   Esc / B back" % \
+			str(ProjectSettings.get_setting("application/config/version", "0.2.0"))
 	footer.add_theme_font_size_override("font_size", 18)
 	footer.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
 	column.add_child(footer)

@@ -51,3 +51,37 @@ Dated entries: what was built, what broke, how it was fixed.
 - Sidewalk tiles had to be 8 m, not 12 m: the stretch between junction corners is 40 m (inner) and 32 m (outer), which 12 m tiles don't divide.
 
 **Performance note (not the M3 baseline):** at the spawn view, the windowed run on this machine reports 60 FPS (VSync-capped), ~890 draw calls, ~124 k primitives, 151 MB video memory. Draw calls are high because every kerb, light and palm is its own instance. MultiMesh and chunking in M3 are expected to bring this down.
+
+---
+
+## 2026-11-24 — M2: first car
+
+**Built**
+- **Physics choice:** Godot's `VehicleBody3D` + `VehicleWheel3D` running on the built-in **Jolt Physics** engine (already the project's engine since M0). A probe confirmed on this build: forward is +Z, positive steering turns left, `VehicleWheel3D.brake` is an impulse per physics step (so brake forces are applied as force × delta), and Jolt reports body contacts for damage.
+- **Sedan model** (`tools/blender/vehicles.py`, deterministic): `veh_sedan_body.glb` (1,204 tris): side profile with real wheel-arch cut-outs, extruded and bevelled, tapered tinted-glass cabin, painted roof and pillars, door seams, handles, mirrors, headlights, grille, blank number plates, tail and reverse lights, exhaust. `veh_sedan_wheel.glb` (568 tris): tyre plus five-spoke rim. Lens materials are named so the game can make them glow. No baked collision (the scene has two convex hulls: lower body and cabin).
+- **`VehicleStats` resource** (`resources/vehicles/sedan_stats.tres`): mass, centre of mass, drive layout, engine force and power, top speed, reverse, drag, rolling resistance, engine braking, downforce, brakes and bias, handbrake, parking brake, steering lock (with high-speed falloff), steer speeds, suspension (stiffness, rest length, travel, damping, max force, roll influence), tyre grip, cosmetic gearbox, damage, flip recovery.
+- **`VehicleController`** (`scenes/vehicles/sedan.tscn`): drivers only call `set_controls(throttle, brake, steer, handbrake)`, so AI traffic can use the same car later. Front-wheel drive; brake pedal reverses from a standstill; power-limited push with a top-speed limiter; per-wheel brake bias; handbrake locks and loosens the rear; parking brake when empty; `teleport()` that doesn't count as a crash.
+- **Components:** `VehicleEngine` (simulated rpm, 5-speed automatic for sound and HUD), `VehicleDamage` (crash = sudden speed change while touching something, health, grey/dark/black engine smoke from GPU particles, engine dies at zero), `VehicleLights` (headlight spotlights and glowing lenses, brake lights, reverse lights), `VehicleAudio` (3D engine note pitched by rpm, two-tone horn, tyre screech from wheel slip, crash, door thunk; all synthesised), `VehicleRecovery` (rights an occupied car stuck on its side or roof).
+- **Player:** new states ENTER_VEHICLE, IN_VEHICLE, EXIT_VEHICLE. `VehicleInteractor` finds the nearest free car within 3 m (F / Y), enters by the nearer front door, and on exit brakes first if moving, then picks the first clear spot: driver's door (right-hand drive), passenger door, behind, in front, roof. `PlayerDrivingInput` maps the new driving actions to the car. The player now collides with vehicles (mask world + vehicles).
+- **Cameras:** `VehicleCamera` with chase mode (spring arm, drops back and widens with speed, swings behind the car after you stop looking) and hood mode; V / Back toggles. `CameraTransition` blends between the on-foot and vehicle cameras on getting in (0.6 s) and out (0.45 s).
+- **HUD:** neon speedometer (speed arc, ticks, digits, gear, rev arc) with an orange car-health bar; "F  GET IN" prompt; a one-off driving reminder. Controls screen gains On foot / Driving / General sections.
+- **Input map:** `vehicle_accelerate` (W, Up, RT), `vehicle_brake` (S, Down, LT), `vehicle_steer_left/right` (A/D, arrows, left stick), `vehicle_handbrake` (Space, RB), `vehicle_horn` (H, L3), `vehicle_headlights` (L, D-pad up), `vehicle_camera` (V, Back).
+- **Tests:** smoke test now runs 26 checks including 11 vehicle ones (parked state, walk-into, prompt, get in, drive, brake, reverse, steer, cameras, horn, lights, crash damage, smoke, pause while driving, get out stopped / at speed / blocked door). New `tests/vehicle_test.tscn` drives the sedan on a 4 km test pad and prints a handling report with sanity ranges. Screenshot tool gained `--drive`, `--throttle`, `--steer`, `--hood`, `--health`, `--headlights`.
+
+**Handling report (sedan, as tuned)**
+- 0-50 km/h 3.5 s, 0-100 km/h 7.8 s, top speed 171 km/h (limiter 175), straight-line drift 0.00 m.
+- 100-0 km/h in 42.9 m (0.88 g). Reverse tops out at 28 km/h.
+- Turning circle 10.5 m. Full lock at 60 km/h: 1.30 g, 14 m radius; at 100 km/h: 1.42 g, 42 m radius (understeers), body tilt never above 3°.
+- Handbrake + full lock for 1 s at 60 km/h: 94° of rotation vs 42° without.
+- Crashes into a wall: 10 km/h no damage, 30 km/h -160, 60 km/h -430 (of 1000).
+
+**Broke / fixed**
+- Top speed stuck at 93 km/h: Godot's default linear damping (0.1/s) acted as a second drag on the car → the car replaces it with 0 and models drag and rolling resistance itself.
+- Test bug: the 40 s acceleration run drove off the end of a 2 km test pad and into the crash-test wall (which then wrecked the car for every later check). Bigger pad, runway start, wall moved aside.
+- Teleporting a car at 171 km/h to a standstill counted as a 171 km/h crash → `VehicleController.teleport()` emits `teleported` and the damage tracker resets. Flip recovery uses it too.
+- First tyre-grip guess (3.0) gave 2.7 g cornering and no understeer, so the car would turn like it was on rails → grip 1.4 front / 1.55 rear (about 1.3 g, mild understeer at the limit).
+- Exit at speed must brake whichever way the car is rolling: pressing only the brake pedal while rolling backwards reverses → the exit brake presses both pedals (the controller treats that as pure braking).
+- "2 ObjectDB instances were leaked at exit" warnings (also present in M1): the menu music's playback when quitting mid-song. `AudioManager.quit_game()` stops every player (including 3D car sounds) and waits 0.1 s before quitting; the menu Exit, pause Quit and both test scenes use it.
+- Smoke puffs looked like solid white balls in the first screenshot → smaller, more transparent particles.
+
+**Performance note:** driving view at spawn in the windowed run: 60 FPS (VSync-capped), ~710-800 draw calls, ~0.1 M primitives, 157 MB video memory. The sedan costs about 21 draw calls (9 body material surfaces plus 3 per wheel), more in shadow passes; worth merging for AI traffic in M4.
