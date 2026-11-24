@@ -1,23 +1,54 @@
 extends SceneTree
-## Writes the project's input map into project.godot.
-## Edit the action table below and re-run; it rebuilds every action it owns.
+## Writes the project's input map, autoloads, main scene and a few core settings into
+## project.godot, and the audio bus layout into default_bus_layout.tres.
+## Edit the tables below and re-run; it rebuilds everything it owns.
 ##
 ## Run from the project root (Git Bash):
 ##   "$GODOT" --headless --path . --script res://tools/godot/setup_project.gd
 
 const MOVE_DEADZONE: float = 0.2
 const LOOK_DEADZONE: float = 0.15
+const MAIN_SCENE: String = "res://scenes/main/main_menu.tscn"
+const BUS_LAYOUT_PATH: String = "res://default_bus_layout.tres"
+## Autoloads in load order (GDD: only real global state).
+const AUTOLOADS: Array = [
+	["Settings", "res://scripts/systems/settings.gd"],
+	["AudioManager", "res://scripts/systems/audio_manager.gd"],
+]
+## Buses under Master (GDD §13).
+const BUSES: Array = ["Music", "SFX", "Ambience", "UI"]
 
 
 func _initialize() -> void:
 	_setup_input_map()
+	_setup_core_settings()
+	var bus_err: Error = _setup_audio_buses()
 	var err: Error = ProjectSettings.save()
-	if err != OK:
-		push_error("setup_project: ProjectSettings.save() failed with code %d" % err)
+	if err != OK or bus_err != OK:
+		push_error("setup_project: saving failed (project %d, buses %d)" % [err, bus_err])
 		quit(1)
 		return
-	print("setup_project: input map written to project.godot")
+	print("setup_project: project.godot and default_bus_layout.tres written")
 	quit(0)
+
+
+func _setup_core_settings() -> void:
+	ProjectSettings.set_setting("application/run/main_scene", MAIN_SCENE)
+	# Smooth rendering between 60 Hz physics ticks on high-refresh screens.
+	ProjectSettings.set_setting("physics/common/physics_interpolation", true)
+	for entry: Array in AUTOLOADS:
+		ProjectSettings.set_setting("autoload/" + str(entry[0]), "*" + str(entry[1]))
+
+
+func _setup_audio_buses() -> Error:
+	while AudioServer.bus_count > 1:
+		AudioServer.remove_bus(AudioServer.bus_count - 1)
+	for bus_name: String in BUSES:
+		AudioServer.add_bus()
+		var index: int = AudioServer.bus_count - 1
+		AudioServer.set_bus_name(index, bus_name)
+		AudioServer.set_bus_send(index, &"Master")
+	return ResourceSaver.save(AudioServer.generate_bus_layout(), BUS_LAYOUT_PATH)
 
 
 func _setup_input_map() -> void:
@@ -27,6 +58,7 @@ func _setup_input_map() -> void:
 	_action("move_left", MOVE_DEADZONE, [_key(KEY_A), _axis(JOY_AXIS_LEFT_X, -1.0)])
 	_action("move_right", MOVE_DEADZONE, [_key(KEY_D), _axis(JOY_AXIS_LEFT_X, 1.0)])
 	_action("sprint", MOVE_DEADZONE, [_key(KEY_SHIFT), _button(JOY_BUTTON_LEFT_STICK)])
+	_action("walk", MOVE_DEADZONE, [_key(KEY_CTRL)])  # gamepad walks by tilting the stick gently
 	_action("jump", MOVE_DEADZONE, [_key(KEY_SPACE), _button(JOY_BUTTON_A)])
 
 	# Camera (mouse look is read from mouse motion by the camera rig; these are the stick equivalents)
@@ -39,8 +71,9 @@ func _setup_input_map() -> void:
 	_action("vehicle_enter_exit", MOVE_DEADZONE, [_key(KEY_F), _button(JOY_BUTTON_Y)])
 	_action("interact", MOVE_DEADZONE, [_key(KEY_E), _button(JOY_BUTTON_X)])
 
-	# Menus
+	# Menus and debug
 	_action("pause", MOVE_DEADZONE, [_key(KEY_ESCAPE), _button(JOY_BUTTON_START)])
+	_action("toggle_fps", MOVE_DEADZONE, [_key(KEY_F3)])
 
 
 func _action(action_name: String, deadzone: float, events: Array[InputEvent]) -> void:

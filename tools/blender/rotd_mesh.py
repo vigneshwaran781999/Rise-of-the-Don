@@ -273,6 +273,18 @@ class MeshBuilder:
             self.face([p3(p, a0) for p in profile], mat, inside=inside)
             self.face([p3(p, a1) for p in profile], mat, inside=inside)
 
+    def convex_hull(self, points, mat: bpy.types.Material) -> None:
+        """Add the convex hull of a point cloud (used for bevelled collision shapes)."""
+        import bmesh
+        bm = bmesh.new()
+        for p in points:
+            bm.verts.new(Vector(p))
+        bmesh.ops.convex_hull(bm, input=list(bm.verts))
+        centre = sum((Vector(p) for p in points), Vector()) / len(points)
+        for f in bm.faces:
+            self.face([v.co.copy() for v in f.verts], mat, inside=centre)
+        bm.free()
+
     # ---- output
 
     def build(self, name: str) -> bpy.types.Object:

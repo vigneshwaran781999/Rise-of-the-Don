@@ -1,0 +1,119 @@
+class_name PauseMenu
+extends CanvasLayer
+## Esc / Start pauses the game: Resume, Settings, Main Menu, Quit (M1 subset of GDD §10).
+## Pausing stops gameplay through SceneTree.paused and frees the mouse.
+
+const MAIN_MENU_SCENE: String = "res://scenes/main/main_menu.tscn"
+
+var _root: Control
+var _menu: PanelContainer
+var _settings: SettingsPanel
+var _resume: Button
+var _settings_button: Button
+
+
+func _ready() -> void:
+	layer = 20
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_build()
+	_root.hide()
+
+
+func is_open() -> bool:
+	return _root.visible
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var pause_pressed: bool = event.is_action_pressed("pause")
+	var back_pressed: bool = event.is_action_pressed("ui_cancel")
+	if not (pause_pressed or back_pressed):
+		return
+	if not is_open():
+		if pause_pressed:
+			open()
+			get_viewport().set_input_as_handled()
+		return
+	if _settings.visible:
+		_settings.close()
+	else:
+		resume()
+	get_viewport().set_input_as_handled()
+
+
+func open() -> void:
+	get_tree().paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_root.show()
+	_menu.show()
+	_settings.hide()
+	_resume.grab_focus()
+	AudioManager.play_ui(&"ui_accept")
+
+
+func resume() -> void:
+	_root.hide()
+	get_tree().paused = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	AudioManager.play_ui(&"ui_back")
+
+
+func _build() -> void:
+	_root = Control.new()
+	_root.name = "Root"
+	_root.theme = UIStyle.get_theme()
+	_root.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_root)
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.02, 0.62)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(dim)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var center := CenterContainer.new()
+	_root.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	_menu = PanelContainer.new()
+	_menu.name = "PausePanel"
+	_menu.custom_minimum_size = Vector2(540.0, 0.0)
+	center.add_child(_menu)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	_menu.add_child(box)
+	box.add_child(UIStyle.make_heading("PAUSED", 52))
+	box.add_child(HSeparator.new())
+	_resume = _add_button(box, "Resume", "ResumeButton")
+	_resume.pressed.connect(resume)
+	_settings_button = _add_button(box, "Settings", "SettingsButton")
+	_settings_button.pressed.connect(_open_settings)
+	var main_menu: Button = _add_button(box, "Main Menu", "MainMenuButton")
+	main_menu.pressed.connect(_go_to_main_menu)
+	var quit: Button = _add_button(box, "Quit to Desktop", "QuitButton")
+	quit.pressed.connect(func() -> void: get_tree().quit())
+
+	_settings = SettingsPanel.new()
+	center.add_child(_settings)
+	_settings.closed.connect(_on_settings_closed)
+
+
+func _add_button(parent: Control, text: String, node_name: String) -> Button:
+	var button: Button = UIStyle.make_button(text, node_name)
+	parent.add_child(button)
+	return button
+
+
+func _open_settings() -> void:
+	_menu.hide()
+	_settings.open()
+
+
+func _on_settings_closed() -> void:
+	_menu.show()
+	_settings_button.grab_focus()
+
+
+func _go_to_main_menu() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MAIN_MENU_SCENE)

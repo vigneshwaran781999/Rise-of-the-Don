@@ -7,6 +7,9 @@ GODOT="${GODOT:-/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_mono_win64/Godot_v4
 
 GENERATORS=(
   test_cube.py
+  road_kit.py
+  buildings.py
+  props.py
 )
 
 for gen in "${GENERATORS[@]}"; do

@@ -21,3 +21,33 @@ Dated entries: what was built, what broke, how it was fixed.
 - `--import` prints `ERROR: .NET Sdk not found` because the editor is the .NET build and no .NET SDK is installed. Not a project error (no C#), and it doesn't appear at runtime. Documented in `CLAUDE.md` as the one accepted message.
 - Godot drops settings equal to their defaults when it saves `project.godot` (`physics_ticks_per_second=60`, `rendering_method="forward_plus"`), so they don't appear in the file. Expected.
 - Kept `*.import` / `*.uid` files in git (Godot's recommendation): they hold import settings and resource UIDs.
+
+---
+
+## 2026-11-24 — M1: playable prototype
+
+**Built**
+- **Blender generators** (deterministic: re-running gives byte-identical GLBs):
+  - `road_kit.py`: 12 m road straight (4 lanes, left-hand traffic markings), crosswalk variant (zebra + stop line), junction, 4 × 8 m sidewalk and 4 × 4 m corner with black/yellow painted kerbs. Sidewalk collision is **bevelled at the kerb (~27°)** so the capsule can step up without a step-up hack.
+  - `buildings.py`: 3 shop-house variants (shutter/open shopfront, striped awning, blank sign + neon strip, balcony, rooftop water tank), 2 apartment blocks on stilts (walk-under parking, balconies), 2 glass office towers (floor bands, corner fins, neon crown, one with a spire), temple **gopuram** (7 painted tiers with pavilions, barrel-vault crown, golden finials, walk-through gateway with a bevelled plinth) and a small shrine. 330 to 2,800 tris each, box-based `-colonly` collision.
+  - `props.py`: streetlight (warm emissive lens), leaning coconut palm, red-and-white striped temple compound wall.
+  - `rotd_mesh.py` gained `convex_hull()` for bevelled collision shapes.
+- **Test block** (`scenes/world/test_block.tscn` + `city_block_builder.gd`): 3 × 3 road grid built at runtime from the kit (roads at −60/0/+60 m both ways, 204 m square), crosswalks on every junction approach, sidewalks, raised lots (paved / grass / temple sand), 12 buildings, walled temple compound with a 1 m platform (18° walkable ramp, 50° too-steep ramp), 93 road tiles, 252 sidewalk pieces, 54 streetlights, 49 palms, invisible boundary walls and a safety floor, a ground plane beyond the walls.
+- **Lighting** (`LightingPreset` resource + `WorldLighting`): late-afternoon sun (21° elevation from WSW, warm), procedural sky, sky ambient, exponential fog with sun scatter, ACES tonemapping, soft glow, SSAO, mild saturation and contrast boost.
+- **Player** (`scenes/player/player.tscn`): capsule with a magenta facing "nose"; camera-relative walk (Ctrl / light stick) / run / sprint (Shift, uses stamina), jump with coyote time and input buffering, heavier fall gravity, 46° slope limit with floor snapping, states IDLE / WALK / RUN / SPRINT / JUMP / FALL / LAND with a `state_changed` signal. Health (regenerates to 50 %) and stamina (exhaustion lock-out) in `PlayerStats`. All tunables in `resources/characters/player_tuning.tres`.
+- **Camera** (`ThirdPersonCamera`): Yaw → Pitch → SpringArm3D (sphere-cast collision) → Camera3D; mouse and right-stick look, pitch clamp (−65° to +35°), separate horizontal/vertical follow smoothing of the player's *interpolated* transform, FOV kick while sprinting. Tunables in `player_camera.tres`.
+- **Physics interpolation** switched on in the project, so movement and camera stay smooth on screens faster than the 60 Hz physics tick.
+- **UI** (built in code on one theme, `UIStyle`): main menu (New Game, Continue disabled, Settings, Controls, Credits, Exit) over an animated neon-skyline shader; settings panel (master/music/effects volume, mouse sensitivity, invert look; applied live, saved to `user://settings.cfg` on close); controls screen generated from the input map; credits including the Godot licence text; pause menu (Resume, Settings, Main Menu, Quit; really pauses the tree and frees the mouse); HUD with health and stamina bars and an F3 FPS counter. Keyboard, mouse and gamepad navigable.
+- **Audio**: buses Master → Music, SFX, Ambience, UI (`default_bus_layout.tres`). `AudioManager` autoload with pooled voices; all sounds synthesised in code (`AudioSynth`): UI blips, footsteps (paced by speed), landing thud, a seamless 4 s ambient menu loop built on a worker thread.
+- **Autoloads**: `Settings`, `AudioManager` (written by `tools/godot/setup_project.gd`, which now also writes the main scene, physics interpolation and the bus layout).
+- **Tests**: the smoke test now drives the real flow (main menu → settings sliders → controls/credits → New Game → spawn → W for 2 s → sprint → jump → kerb, ramps and gateway → camera → HUD → pause, frozen while paused → resume → Main Menu) with 15 checks and fails on any logged engine/script error. It never writes the user's settings (`Settings.persist = false`). New `tests/screenshot.tscn` renders a scene in a window, saves a PNG and prints render stats.
+
+**Broke / fixed**
+- Menu buttons were hard to read over the shader skyline, and the disabled *Continue* button looked broken → darkened the left third of the background shader; made the disabled style more opaque. (Found via screenshot.)
+- Player capsule was nearly black against the asphalt → lighter body colour.
+- *Invert look* rendered as an empty bar with a tiny default switch → replaced with an ON/OFF toggle button in the menu style.
+- Credits text could only be scrolled with the mouse wheel → up/down keys and D-pad now scroll it.
+- Smoke test "failed" walking through the gopuram: the test held D for 2.5 s, which at 5 m/s doesn't reach the courtyard. The player was correctly standing mid-passage. Fixed the test's timing (4 s), not the game.
+- Sidewalk tiles had to be 8 m, not 12 m: the stretch between junction corners is 40 m (inner) and 32 m (outer), which 12 m tiles don't divide.
+
+**Performance note (not the M3 baseline):** at the spawn view, the windowed run on this machine reports 60 FPS (VSync-capped), ~890 draw calls, ~124 k primitives, 151 MB video memory. Draw calls are high because every kerb, light and palm is its own instance. MultiMesh and chunking in M3 are expected to bring this down.

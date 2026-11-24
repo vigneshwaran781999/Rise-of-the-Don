@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LightingPreset" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/lighting_preset.gd" id="1_preset"]
+
+[resource]
+script = ExtResource("1_preset")
+sun_elevation_degrees = 21.0
+sun_azimuth_degrees = 250.0
+sun_color = Color(1, 0.78, 0.55, 1)
+sun_energy = 1.6
+shadow_max_distance = 140.0
+sky_top_color = Color(0.22, 0.42, 0.72, 1)
+sky_horizon_color = Color(0.96, 0.74, 0.55, 1)
+ground_horizon_color = Color(0.78, 0.62, 0.5, 1)
+ground_bottom_color = Color(0.2, 0.17, 0.15, 1)
+ambient_energy = 0.65
+fog_color = Color(0.9, 0.74, 0.6, 1)
+fog_density = 0.0035
+fog_sun_scatter = 0.3
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.35
+exposure = 1.0
+saturation = 1.12
+contrast = 1.06
+glow_intensity = 0.55
+ssao_enabled = true
