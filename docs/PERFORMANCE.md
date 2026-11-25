@@ -191,3 +191,16 @@ Same machine and settings. The whole city: seven 512 m cells, six districts, 112
 - **Streaming drive along Ring B:** 36 FPS average, worst frame 35.3 ms; it now streams the Countryside's chunks in at the west end.
 - **City life:** 35-36 FPS at every density (physics 7-12 ms, as in step 3).
 - **Video memory rose to 330 MB** (272 MB in step 3). 19 MB of that is the city map, now 6144 px square (block-compressed). The rest is not yet accounted for; to look into in M8's optimisation pass.
+
+## M7 steps 6-8: vehicles and weather (2026-11-25)
+
+| Viewpoint | FPS | avg ms |
+|---|---:|---:|
+| Spawn street, 13:00, clear | 35 | 28.50 |
+| Spawn street, 13:00, rain (5,000 streaks, full cloud, wet surfaces) | 36 | - |
+| Spawn street, night 21:30 | 29 | 34.90 |
+| Sky only | 62 | - |
+
+- **Rain costs nothing measurable** on this machine: the particles are small and unlit, and wet surfaces are two extra lines in the palette shader.
+- **Clouds:** the first version drew the cloud texture in every weather and rewrote its tint every half second, which made the sky recompute its light each time. The sky-only row fell from 63 to 54 FPS (+2.6 ms on every frame). Clear weather now has no cloud texture at all, and the tint is only written when it changes; the sky-only row is back to 62 FPS.
+- The new parked vehicles near the spawn add about 10 draw calls.

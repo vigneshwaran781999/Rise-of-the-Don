@@ -6,7 +6,7 @@ extends Node
 ##       --out=C:/path/shot.png [--frames=90] [--view=yaw,pitch] [--cam=x,y,z --look=x,y,z]
 ##       [--at=x,y,z] [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
-##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--waypoint=x,z]
+##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--weather=clear|cloudy|fog|rain] [--waypoint=x,z]
 ##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id] [--mission=id[:n] [--talk]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
@@ -18,6 +18,7 @@ extends Node
 ## --crowd puts pedestrians at the --look point, or at x,y,z (chatting, walking, one going to sit down).
 ## --chase looks over traffic car n (default the first) once the frames have passed.
 ## --hour sets the in-game clock (day/night) before the frames run; --waypoint=x,z sets a GPS waypoint.
+## --weather sets the weather at once (M7).
 ## --outfit dresses the player (an Outfit id); --shop=id puts them at that shop or property's door
 ## and opens it (the shop menu, or the offer for a property on sale).
 
@@ -53,6 +54,8 @@ func _run() -> void:
 	if args.has("waypoint") and instance.has_node("Gps"):
 		var at: PackedStringArray = str(args["waypoint"]).split(",")
 		(instance.get_node("Gps") as GpsNavigator).set_waypoint(Vector3(float(at[0]), 0.0, float(at[1])))
+	if args.has("weather") and instance.has_node("Weather"):
+		(instance.get_node("Weather") as WeatherCycle).set_weather(StringName(str(args["weather"])), true)
 	if args.has("hour"):
 		GameState.set_hour(float(args["hour"]))
 		var cycle := instance.get_node_or_null("DayNight") as DayNightCycle

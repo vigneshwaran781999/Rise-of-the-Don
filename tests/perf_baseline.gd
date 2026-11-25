@@ -78,6 +78,13 @@ func _run() -> void:
 	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - night, 21:30 (lamps, windows, street lights)", VIEWS[0][1], VIEWS[0][2]], true))
 	GameState.set_hour(13.0)
 	day_night.refresh()
+	# Rain (M7): the particles near the camera, a greyer sky, wet surfaces.
+	var weather := _game.get_node("Weather") as WeatherCycle
+	weather.set_weather(&"rain", true)
+	day_night.refresh()
+	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - rain, 13:00", VIEWS[0][1], VIEWS[0][2]], true))
+	weather.set_weather(&"clear", true)
+	day_night.refresh()
 	# Where the time goes: the fixed cost of the screen (sky only), then the spawn view with the
 	# heaviest screen effects switched off and at a lower 3D render resolution.
 	results.append(await _measure_view(world, player, ["Sky only (fixed per-pixel cost)", Vector3(73.5, 1.9, 1.5), Vector3(73.5, 50.0, 1.6)], true))

@@ -13,6 +13,8 @@ signal darkness_changed(dark: bool)
 @export var update_interval: float = 0.5
 
 var street_lights: StreetLightPool
+## The weather (M7): it changes each look before it is shown (less sun, a greyer sky, fog).
+var weather: WeatherCycle
 
 var _lighting: WorldLighting
 var _timer: float = 0.0
@@ -52,7 +54,8 @@ func _process(delta: float) -> void:
 
 func _apply() -> void:
 	_last_hour = GameState.hour
-	_lighting.apply(settings.preset_at(GameState.hour))
+	var look: LightingPreset = settings.preset_at(GameState.hour)
+	_lighting.apply(weather.modify(look) if weather != null else look)
 	var darkness: float = settings.city_lights_at(GameState.hour)
 	RenderingServer.global_shader_parameter_set(&"city_lights", darkness)
 	var camera: Camera3D = get_viewport().get_camera_3d()

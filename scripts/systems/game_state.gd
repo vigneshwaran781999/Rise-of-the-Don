@@ -1,6 +1,7 @@
 extends Node
 ## Facts about the current playthrough that belong to no other system: the in-game clock and
-## day (GDD §12; one day lasts DayNightSettings.day_length_minutes of play), the outfit the player
+## day (GDD §12; one day lasts DayNightSettings.day_length_minutes of play) and the weather (the
+## WeatherCycle sets it; a WeatherLook id), the outfit the player
 ## is wearing (GDD §9; Outfit ids, bought through EconomyManager), time played and the
 ## running stats. All of it is saved (GDD §14). Autoload: GameState.
 
@@ -22,6 +23,8 @@ var hour: float = 16.5
 var outfit: StringName = &""
 ## In-game day, from 1.
 var day: int = 1
+## The weather (a WeatherLook id in resources/world/weather.tres; WeatherCycle changes it).
+var weather: StringName = &"clear"
 
 
 func _ready() -> void:
@@ -42,6 +45,7 @@ func start_new_game() -> void:
 	stats = {&"missions_passed": 0, &"missions_failed": 0, &"cash_earned": 0}
 	hour = DAY_NIGHT.start_hour
 	day = 1
+	weather = &"clear"
 	set_outfit(&"")
 
 
@@ -82,7 +86,7 @@ func to_save() -> Dictionary:
 	var saved: Dictionary = {}
 	for key: StringName in stats:
 		saved[String(key)] = stats[key]
-	return {"play_time": play_time, "stats": saved, "hour": hour, "day": day, "outfit": String(outfit)}
+	return {"play_time": play_time, "stats": saved, "hour": hour, "day": day, "outfit": String(outfit), "weather": String(weather)}
 
 
 func from_save(data: Dictionary) -> void:
@@ -90,6 +94,7 @@ func from_save(data: Dictionary) -> void:
 	play_time = float(data.get("play_time", 0.0))
 	hour = fposmod(float(data.get("hour", DAY_NIGHT.start_hour)), 24.0)
 	day = maxi(int(data.get("day", 1)), 1)
+	weather = StringName(str(data.get("weather", "clear")))
 	set_outfit(StringName(str(data.get("outfit", ""))))
 	var saved: Dictionary = data.get("stats", {})
 	for key: Variant in saved:

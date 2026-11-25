@@ -295,3 +295,13 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] Crash each one: damage, smoke, a wreck; they right themselves when flipped.
 - [ ] **Motorcycle** (blue, outside the tiffin stall across from the bus stand): F from either side. You're seen riding it (in your outfit), and it leans into turns, more the faster you go. Nimble (a 6 m turning circle), 0–100 in about 8 s, 113 km/h. It rides on hidden stabiliser wheels, so it can't fall over: does it still feel like a bike? Does the lean look right, or too much or too little?
 - [ ] **Motorcycles in traffic** with their riders; they stop at lights and give way like cars.
+
+### Weather (step 8)
+`tests/weather_test.tscn` checks the mechanics. These checks are about looks. To see a weather straight away, use the screenshot tool's `--weather=rain` (or cloudy, fog), or wait: spells last 4–9 minutes.
+- [ ] **Clear:** a clear sky (no clouds; they come with cloudy weather, fog and rain).
+- [ ] **Cloudy:** the sky clouds over and greys, shadows soften, colours dull.
+- [ ] **Fog:** the far end of a street disappears into a pale haze; the gopurams fade out.
+- [ ] **Rain:** streaks fall around you (also while driving), you hear it, the sky goes grey, and the roads, sidewalks and car roofs turn dark and glossy. After the rain the ground stays wet for a couple of minutes. Does the rain look right from the car? Is a rainy noon too bright, a rainy night too dark?
+- [ ] **Changes** blend over about 45 s, without a jump.
+- [ ] **Sunset in cloud:** the clouds pick up the sunset colours.
+- [ ] Save in the rain, load: it's still raining.

@@ -500,6 +500,23 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Model:** `veh_bike_body` and `veh_bike_wheel` in `tools/blender/vehicles.py`. `VehicleModel` puts no tyre on the stabiliser wheels.
   - **In the city:** parked outside the tiffin stall across from the bus stand, and in the traffic mix (about one in five new vehicles).
   - **Tests:** in the fleet test (0–100 km/h 7.8 s, 113 km/h, a 6 m turning circle, upright at full lock at 40 km/h). The smoke test rides it: the rider shows, it leans into a left turn, the rider goes when you get off.
+- **Step 8, weather (GDD §12):**
+  - **`WeatherCycle`** (a node in the game scene) runs spells of clear, cloudy, foggy and rainy weather (`WeatherLook` resources in `resources/world/weather.tres`), picked by weight, 4–9 minutes each, each blending into the next over 45 s.
+  - **Light:** it changes the time of day's look before it is applied (`DayNightCycle` calls `modify()`): less sun and ambient light, the sky and fog towards a grey that follows the time of day's brightness (so an overcast night stays dark), extra fog, lower saturation and exposure.
+  - **Clouds:** a seamless noise panorama over the procedural sky, as thick as the weather says, tinted by the sky's horizon (sunset clouds glow; night clouds stay dark).
+  - **Rain:**
+    - `RainEffect`: up to 5,000 GPU particle streaks in a box that follows the camera, dimmer at night.
+    - A synthesised rain loop on the Ambience bus: `AudioManager.set_ambience()` plays looping ambience layers, ready for the audio pass.
+    - The `wetness` shader global: the palette shader darkens upward-facing surfaces and makes them glossy. It rises over 40 s of rain and dries over 2.5 minutes.
+  - **Saving:** the weather lives in `GameState` and is saved; a new game starts clear.
+  - **Tools:** the screenshot tool has `--weather=`; the performance baseline measures the spawn street in rain.
+  - **Tests:** new `tests/weather_test.tscn` checks:
+    - a new game starts clear;
+    - rain (sun, sky, drops round the camera, sound, wet ground);
+    - fog and cloud;
+    - blending and slow drying;
+    - the cycle moving on by itself;
+    - saving.
 
 **Broke and fixed**
 - **Step 1:**
@@ -523,3 +540,8 @@ Dated entries: what was built, what broke, how it was fixed.
   - **First tuning:** 0–100 km/h in 3.2 s (a 230 kg bike with a car-like engine force), so the engine force and power came down.
   - **Body roll:** at full lock the physics body rolled 20 degrees outward, against the visual lean. Wider stabilisers, stiffer springs and almost no roll influence brought it to 6.
   - **Stabilisers:** first one pair, in the middle. That acted as a third axle and scrubbed through turns (a 12 m turning circle). Moved to the rear axle, they left the bike resting 3 degrees nose-down (three springs at the back, one at the front), so now there is a pair on each axle: level, a 6 m turning circle, and braking spread over six wheels (the brake force came down to match).
+- **Step 8:**
+  - **Rain at night:** the unshaded rain streaks glowed white, and the clouds (lightened towards white whatever the hour) came out as brown smoke. The streaks now dim with the darkness, and the clouds lighten only as much as the sky is bright.
+  - **Rain at noon** looked washed out; rain and heavy cloud now also lower the exposure.
+  - **Class cache:** the setup script reported a compile error until the new classes were registered by an import (expected for new `class_name` scripts).
+  - **Cloud cost:** the performance baseline showed the sky costing 2.6 ms more per frame. The cloud texture was drawn in every weather, and its tint was rewritten every half second, so the sky kept recomputing its light. Clear weather now has no clouds at all, and the tint is only set when it changes; the cost is gone.

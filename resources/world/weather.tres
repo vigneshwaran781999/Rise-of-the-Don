@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="WeatherSettings" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/weather_settings.gd" id="1_settings"]
+[ext_resource type="Script" path="res://scripts/world/weather_look.gd" id="2_look"]
+
+[sub_resource type="Resource" id="Resource_clear"]
+script = ExtResource("2_look")
+id = &"clear"
+display_name = "Clear"
+weight = 4.0
+cloud_cover = 0.0
+
+[sub_resource type="Resource" id="Resource_cloudy"]
+script = ExtResource("2_look")
+id = &"cloudy"
+display_name = "Cloudy"
+weight = 2.0
+sun_energy_scale = 0.55
+ambient_scale = 0.85
+overcast = 0.45
+fog_density_add = 0.001
+saturation_scale = 0.85
+exposure_scale = 0.94
+cloud_cover = 0.75
+
+[sub_resource type="Resource" id="Resource_fog"]
+script = ExtResource("2_look")
+id = &"fog"
+display_name = "Fog"
+weight = 1.0
+sun_energy_scale = 0.45
+ambient_scale = 0.9
+overcast = 0.65
+fog_density_add = 0.016
+saturation_scale = 0.75
+cloud_cover = 0.5
+wetness = 0.15
+
+[sub_resource type="Resource" id="Resource_rain"]
+script = ExtResource("2_look")
+id = &"rain"
+display_name = "Rain"
+weight = 1.5
+sun_energy_scale = 0.25
+ambient_scale = 0.6
+exposure_scale = 0.82
+overcast = 0.8
+overcast_tint = Color(0.82, 0.88, 0.98, 1)
+fog_density_add = 0.005
+saturation_scale = 0.7
+cloud_cover = 0.95
+rain = 1.0
+wetness = 1.0
+
+[resource]
+script = ExtResource("1_settings")
+looks = Array[ExtResource("2_look")]([SubResource("Resource_clear"), SubResource("Resource_cloudy"), SubResource("Resource_fog"), SubResource("Resource_rain")])

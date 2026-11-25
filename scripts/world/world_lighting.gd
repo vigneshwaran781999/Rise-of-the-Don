@@ -4,6 +4,8 @@ extends Node3D
 ## SSAO, colour adjustment) and the sun DirectionalLight3D, and shows a LightingPreset with them.
 ## apply() can be called again at any time (the day/night cycle does, with blended presets): it
 ## updates the existing sky and environment rather than building new ones.
+## The sky also carries clouds (M7: a noise panorama drawn over it, as thick as set_cloud_cover()
+## says; the weather sets it).
 
 @export var preset: LightingPreset
 
@@ -11,6 +13,7 @@ var sun: DirectionalLight3D
 var world_environment: WorldEnvironment
 var _sky_material: ProceduralSkyMaterial
 var _env: Environment
+var _cloud_cover: float = 0.0
 
 
 func _ready() -> void:
@@ -58,6 +61,7 @@ func apply(p: LightingPreset) -> void:
 	_sky_material.sky_horizon_color = p.sky_horizon_color
 	_sky_material.ground_horizon_color = p.ground_horizon_color
 	_sky_material.ground_bottom_color = p.ground_bottom_color
+	_update_clouds()
 	_env.ambient_light_energy = p.ambient_energy
 	_env.tonemap_exposure = p.exposure
 	_env.glow_intensity = p.glow_intensity
@@ -69,3 +73,60 @@ func apply(p: LightingPreset) -> void:
 	_env.fog_sky_affect = p.fog_sky_affect
 	_env.adjustment_saturation = p.saturation
 	_env.adjustment_contrast = p.contrast
+
+
+## How much of the sky the clouds cover (0-1). Their colour follows the sky's horizon colour, so
+## they glow at sunset and go dark at night.
+func set_cloud_cover(amount: float) -> void:
+	_cloud_cover = clampf(amount, 0.0, 1.0)
+	_update_clouds()
+
+
+func get_cloud_cover() -> float:
+	return _cloud_cover
+
+
+func _update_clouds() -> void:
+	# No clouds: no cover texture at all (drawing it costs a little on every sky pixel and every
+	# update of the sky's light).
+	if _cloud_cover < 0.02:
+		if _sky_material.sky_cover != null:
+			_sky_material.sky_cover = null
+		return
+	if _sky_material.sky_cover == null:
+		_sky_material.sky_cover = _cloud_texture()
+	# Lighter than the sky by day; at night only a little, so they don't glow.
+	var level: float = clampf(_sky_material.sky_horizon_color.get_luminance() * 2.0, 0.0, 1.0)
+	var tint: Color = _sky_material.sky_horizon_color.lerp(Color(1.0, 1.0, 1.0), 0.35 * level)
+	var modulate := Color(tint.r, tint.g, tint.b, _cloud_cover * 0.85)
+	# Only when it changes: every change makes the sky recompute its light.
+	if not modulate.is_equal_approx(_sky_material.sky_cover_modulate):
+		_sky_material.sky_cover_modulate = modulate
+
+
+## The cloud texture, made once and shared.
+static var _clouds: NoiseTexture2D
+
+
+## A soft, seamless noise panorama for the clouds.
+static func _cloud_texture() -> NoiseTexture2D:
+	if _clouds != null:
+		return _clouds
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = 0.006
+	noise.fractal_octaves = 4
+	noise.seed = 1729
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 1.0, 1.0, 0.0))
+	ramp.set_color(1, Color(1.0, 1.0, 1.0, 1.0))
+	ramp.set_offset(0, 0.45)
+	ramp.set_offset(1, 0.8)
+	var texture := NoiseTexture2D.new()
+	texture.width = 1024
+	texture.height = 512
+	texture.seamless = true
+	texture.noise = noise
+	texture.color_ramp = ramp
+	_clouds = texture
+	return texture

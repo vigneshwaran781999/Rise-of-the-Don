@@ -50,6 +50,8 @@ func _setup_core_settings() -> void:
 	ProjectSettings.set_setting("navigation/3d/default_cell_height", 0.1)
 	# Shader global set by the day/night cycle: 0 by day, 1 at night (streetlights, lit windows).
 	ProjectSettings.set_setting("shader_globals/city_lights", {"type": "float", "value": 0.0})
+	# How wet the ground is after rain (M7, the weather; 0 = dry).
+	ProjectSettings.set_setting("shader_globals/wetness", {"type": "float", "value": 0.0})
 	for entry: Array in AUTOLOADS:
 		ProjectSettings.set_setting("autoload/" + str(entry[0]), "*" + str(entry[1]))
 

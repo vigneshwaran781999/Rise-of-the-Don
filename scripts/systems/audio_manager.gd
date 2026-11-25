@@ -1,10 +1,12 @@
 extends Node
-## Plays UI sounds, one-shot sound effects and music on the right audio buses (GDD §13).
+## Plays UI sounds, one-shot sound effects, music and looping ambience layers (rain from M7) on the
+## right audio buses (GDD §13).
 ## Every sound is currently a synthesised placeholder (see AudioSynth). Autoload: AudioManager.
 
 const UI_BUS: StringName = &"UI"
 const SFX_BUS: StringName = &"SFX"
 const MUSIC_BUS: StringName = &"Music"
+const AMBIENCE_BUS: StringName = &"Ambience"
 const UI_VOICES: int = 4
 const SFX_VOICES: int = 8
 const MUSIC_DB: float = -6.0
@@ -18,6 +20,7 @@ var _current_music: StringName = &""
 var _wanted_music: StringName = &""
 var _pad_task: int = -1
 var _pad_stream: AudioStreamWAV  # written by the worker thread, read once the task completes
+var _ambience: Dictionary = {}  # layer StringName -> AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -33,6 +36,7 @@ func _ready() -> void:
 	_streams[&"mission_failed"] = AudioSynth.blips(PackedFloat32Array([440.0, 370.0, 311.1, 233.1]), 0.18, 0.26)
 	_streams[&"objective"] = AudioSynth.blips(PackedFloat32Array([1174.7, 1568.0]), 0.07, 0.2)
 	_streams[&"cash"] = AudioSynth.blips(PackedFloat32Array([1975.5, 2637.0]), 0.05, 0.16)
+	_streams[&"rain"] = AudioSynth.rain_loop()
 	for i: int in UI_VOICES:
 		_ui_players.append(_make_player(UI_BUS))
 	for i: int in SFX_VOICES:
@@ -80,6 +84,10 @@ func _silence() -> void:
 	for player: AudioStreamPlayer in _ui_players + _sfx_players + [_music_player]:
 		player.stop()
 		player.stream = null
+	for layer: StringName in _ambience:
+		(_ambience[layer] as AudioStreamPlayer).stop()
+		(_ambience[layer] as AudioStreamPlayer).stream = null
+	_ambience.clear()
 
 
 func has_stream(sound: StringName) -> bool:
@@ -123,6 +131,31 @@ func stop_music(fade_seconds: float = 0.8) -> void:
 
 func is_music_playing() -> bool:
 	return _music_player.playing
+
+
+## Plays the looping ambience layer `layer` (a sound name: &"rain"...) at `level` (0-1, linear
+## volume) on the Ambience bus; 0 stops it.
+func set_ambience(layer: StringName, level: float) -> void:
+	var player: AudioStreamPlayer = _ambience.get(layer)
+	if level <= 0.001:
+		if player != null and player.playing:
+			player.stop()
+		return
+	if player == null:
+		if not _streams.has(layer):
+			return
+		player = _make_player(AMBIENCE_BUS)
+		player.stream = _streams[layer]
+		_ambience[layer] = player
+	player.volume_db = linear_to_db(level)
+	if not player.playing:
+		player.play()
+
+
+## The level an ambience layer is playing at (0 when it isn't).
+func get_ambience(layer: StringName) -> float:
+	var player: AudioStreamPlayer = _ambience.get(layer)
+	return db_to_linear(player.volume_db) if player != null and player.playing else 0.0
 
 
 func _play_on(pool: Array[AudioStreamPlayer], sound: StringName, volume_db: float, pitch: float) -> void:

@@ -224,3 +224,32 @@ static func rotor_loop() -> AudioStreamWAV:
 		var chop: float = pow(0.5 + 0.5 * cos(TAU * 18.0 * t), 3.0)
 		out[i] = (low * (0.35 + 0.9 * chop) + sin(TAU * 54.0 * t) * 0.15) * 0.6
 	return to_wav(out, RATE, true)
+
+
+## Steady rain: soft filtered noise (the hiss of the downpour) with scattered drop ticks, looping
+## every 3 s. The end fades into the start so the loop has no seam.
+static func rain_loop() -> AudioStreamWAV:
+	var seconds: float = 3.0
+	var count: int = int(seconds * RATE)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4711
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	var band: float = 0.0
+	for i: int in count:
+		var white: float = rng.randf_range(-1.0, 1.0)
+		low += (white - low) * 0.18            # take the harsh top off
+		band += (low - band) * 0.6
+		out[i] = (low - band * 0.5) * 0.55
+	for drop: int in 140:                       # little ticks of single drops
+		var at: int = rng.randi() % (count - 400)
+		var size: float = rng.randf_range(0.08, 0.25)
+		for k: int in 300:
+			out[at + k] += sin(k * rng.randf_range(0.9, 1.4)) * size * exp(-k / 40.0)
+	var fade: int = int(0.25 * RATE)          # crossfade the tail into the head
+	for k: int in fade:
+		var t: float = float(k) / fade
+		out[k] = out[k] * t + out[count - fade + k] * (1.0 - t)
+	out.resize(count - fade)
+	return to_wav(out, RATE, true)

@@ -35,6 +35,8 @@
 [ext_resource type="Script" path="res://scripts/shops/shop_data.gd" id="33_shopdata"]
 [ext_resource type="Script" path="res://scripts/shops/property_data.gd" id="34_propdata"]
 [ext_resource type="Script" path="res://scripts/world/region_watcher.gd" id="35_regions"]
+[ext_resource type="Script" path="res://scripts/world/weather_cycle.gd" id="36_weather"]
+[ext_resource type="Resource" path="res://resources/world/weather.tres" id="37_weather_settings"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -121,3 +123,7 @@ script = ExtResource("32_shopmenu")
 
 [node name="Regions" type="Node" parent="."]
 script = ExtResource("35_regions")
+
+[node name="Weather" type="Node" parent="."]
+script = ExtResource("36_weather")
+settings = ExtResource("37_weather_settings")

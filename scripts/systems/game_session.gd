@@ -29,6 +29,7 @@ const EXIT_BLEND_SECONDS: float = 0.45
 @onready var places: PlaceDirector = $Places
 @onready var shop_menu: ShopMenu = $ShopMenu
 @onready var regions: RegionWatcher = $Regions
+@onready var weather: WeatherCycle = $Weather
 
 
 func _ready() -> void:
@@ -62,6 +63,9 @@ func _ready() -> void:
 	_show_region(regions.get_current())
 	regions.region_changed.connect(_show_region)
 	lane_debug.setup(world.get_lane_graph(), player, world)
+	weather.set_weather(GameState.weather, true)     # a new game's clear sky, or the saved weather
+	weather.setup(world.get_node("Lighting") as WorldLighting)
+	day_night.weather = weather
 	day_night.setup(world.get_node("Lighting") as WorldLighting, world.streamer)
 	traffic.setup(world.get_lane_graph(), player, world.streamer)
 	traffic.set_headlights(day_night.is_dark())
