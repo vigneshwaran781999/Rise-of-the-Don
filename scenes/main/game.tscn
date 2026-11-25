@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_man.glb" id="16_man"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_woman.glb" id="17_woman"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_elder.glb" id="18_elder"]
+[ext_resource type="Script" path="res://scripts/missions/mission_director.gd" id="19_missions"]
+[ext_resource type="Script" path="res://scripts/ui/mission_failed_screen.gd" id="20_failed"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -58,9 +60,17 @@ tuning = ExtResource("12_population")
 pedestrian_scene = ExtResource("15_ped")
 looks = Array[PackedScene]([ExtResource("16_man"), ExtResource("17_woman"), ExtResource("18_elder")])
 
+[node name="Missions" type="Node3D" parent="."]
+script = ExtResource("19_missions")
+looks = Array[PackedScene]([ExtResource("16_man"), ExtResource("17_woman"), ExtResource("18_elder")])
+
 [node name="LaneDebug" type="MeshInstance3D" parent="."]
 script = ExtResource("9_lanedebug")
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="PauseMenu" parent="." instance=ExtResource("5_pause")]
+
+[node name="MissionFailed" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("20_failed")

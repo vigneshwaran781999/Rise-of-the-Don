@@ -26,6 +26,8 @@ const KERB_BEVEL: float = 0.29
 const MAX_DEPTH: float = 12.0
 ## Half size of the temple tank model (bld_ot_tank, 30 x 30 m).
 const TANK_HALF: float = 15.0
+## The bus stand where New Game begins (base centre of the shelter).
+const BUS_STAND := Vector3(97.0, LOT_TOP, 7.0)
 const NODE_SPACING: float = 10.0
 const SEED: int = 7031
 ## Street lines, the same on both axes: [position, class].
@@ -95,6 +97,7 @@ func generate() -> void:
 	_find_segments()
 	_build_roads()
 	_build_blocks()
+	_bus_stand()
 	_build_signals()
 	_build_crossings()
 	_build_lanes()
@@ -493,6 +496,17 @@ func _benches_facing_in(r: Rect2, inset: float, kind: StringName) -> void:
 
 
 ## A stone bench facing +Z rotated by yaw, with two places to sit.
+## The bus stand on the south kerb of the east gopuram road, where New Game begins (M5): the
+## shelter opens towards the road, and its bench seats two waiting pedestrians.
+func _bus_stand() -> void:
+	var yaw: float = PI   # model's open side (+Z) faces -Z, the road
+	_place(&"prop_bus_shelter", BUS_STAND, yaw, Vector3.ONE, &"prop")
+	var basis := Basis(Vector3.UP, yaw)
+	for side: float in [-0.6, 0.6]:
+		# Seat top at 0.5 m, front edge 0.1 m behind the centre line.
+		sit_spots.append({"xform": Transform3D(basis, BUS_STAND + basis * Vector3(side, -0.38, -0.18)), "kind": &"prop"})
+
+
 func _bench(pos: Vector3, yaw: float, kind: StringName) -> void:
 	_place(&"prop_bench", pos, yaw, Vector3.ONE, kind)
 	var basis := Basis(Vector3.UP, yaw)

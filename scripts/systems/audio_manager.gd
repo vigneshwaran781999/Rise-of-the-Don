@@ -27,6 +27,12 @@ func _ready() -> void:
 	_streams[&"ui_back"] = AudioSynth.blips(PackedFloat32Array([1320.0, 880.0]), 0.045, 0.2)
 	_streams[&"footstep"] = AudioSynth.thump(0.09, 0.35, 95.0, 0.55, 11)
 	_streams[&"land"] = AudioSynth.thump(0.22, 0.2, 62.0, 0.85, 23)
+	# Mission stingers (GDD §13): rising for start and pass, falling for failure.
+	_streams[&"mission_start"] = AudioSynth.blips(PackedFloat32Array([523.3, 784.0, 1046.5]), 0.11, 0.22)
+	_streams[&"mission_passed"] = AudioSynth.blips(PackedFloat32Array([523.3, 659.3, 784.0, 1046.5, 1318.5]), 0.13, 0.26)
+	_streams[&"mission_failed"] = AudioSynth.blips(PackedFloat32Array([440.0, 370.0, 311.1, 233.1]), 0.18, 0.26)
+	_streams[&"objective"] = AudioSynth.blips(PackedFloat32Array([1174.7, 1568.0]), 0.07, 0.2)
+	_streams[&"cash"] = AudioSynth.blips(PackedFloat32Array([1975.5, 2637.0]), 0.05, 0.16)
 	for i: int in UI_VOICES:
 		_ui_players.append(_make_player(UI_BUS))
 	for i: int in SFX_VOICES:

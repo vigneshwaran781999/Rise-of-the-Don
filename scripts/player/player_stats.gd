@@ -42,6 +42,12 @@ func apply_damage(amount: float) -> void:
 	health_changed.emit(health, tuning.max_health)
 
 
+## Sets health directly (loading a save).
+func set_health(value: float) -> void:
+	health = clampf(value, 0.0, tuning.max_health)
+	health_changed.emit(health, tuning.max_health)
+
+
 func _tick_stamina(delta: float, sprinting: bool) -> void:
 	var before: float = stamina
 	if sprinting:

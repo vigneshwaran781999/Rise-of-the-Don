@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+
+[sub_resource type="Resource" id="Resource_gate"]
+script = ExtResource("2_objective")
+type = 0
+text = "Walk to the temple's east gate."
+hint = "Move with {move_forward} {move_left} {move_back} {move_right} and look around with the mouse. The arrow on screen points the way."
+position = Vector3(42.5, 0.15, 0)
+radius = 3.5
+
+[sub_resource type="Resource" id="Resource_courtyard"]
+script = ExtResource("2_objective")
+type = 0
+text = "Step through the gate into the temple courtyard."
+hint = "Hold {sprint} to run."
+position = Vector3(22, 0.15, 8)
+radius = 4.0
+mode = 1
+
+[sub_resource type="Resource" id="Resource_tank"]
+script = ExtResource("2_objective")
+type = 0
+text = "Find the temple tank, south-east of the temple."
+hint = "Press {jump} to jump. Nobody is watching."
+position = Vector3(60, 0.15, 56)
+radius = 3.5
+mode = 1
+
+[resource]
+script = ExtResource("1_mission")
+id = &"welcome"
+title = "Welcome to Velanagar"
+description = "Fresh off the bus in Old Town. Find your feet."
+category = 5
+auto_start = true
+start_position = Vector3(86.5, 0.15, 8)
+start_yaw_degrees = 90.0
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_gate"), SubResource("Resource_courtyard"), SubResource("Resource_tank")])
+intro_lines = PackedStringArray("CONDUCTOR: Old Town bus stand! Everybody off, mind the step.", "Two hundred rupees, one bag, and a city that doesn't know your name yet.")
+outro_lines = PackedStringArray("FIXER: Hey! You, with the bag. New in town?", "FIXER: Come over here. I might have some work for you.")
+reward_cash = 300

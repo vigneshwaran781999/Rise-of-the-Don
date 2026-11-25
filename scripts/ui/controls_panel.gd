@@ -13,6 +13,7 @@ const ROWS: Array = [
 	["Sprint (hold)", ["sprint"], "", ""],
 	["Jump", ["jump"], "", ""],
 	["Get in / out of a vehicle", ["vehicle_enter_exit"], "", ""],
+	["Talk, hand over, skip a line", ["interact"], "", ""],
 	["DRIVING"],
 	["Accelerate", ["vehicle_accelerate"], "", ""],
 	["Brake / reverse", ["vehicle_brake"], "", ""],
@@ -61,6 +62,26 @@ static func describe_keyboard(actions: Array) -> String:
 			if text != "" and not names.has(text):
 				names.append(text)
 	return " ".join(names)
+
+
+## The key to show in prompts and hints for `action`: its first keyboard key, plus the gamepad
+## button when a gamepad is connected ("E", or "E / X").
+static func key_text(action: String) -> String:
+	var keys: String = describe_keyboard([action]).get_slice(" ", 0)
+	if Input.get_connected_joypads().is_empty():
+		return keys
+	var pad: String = describe_gamepad([action]).get_slice(",", 0)
+	return "%s / %s" % [keys, pad] if pad != "" else keys
+
+
+## `text` with every {action_name} replaced by that action's key, e.g. "Press {interact} to talk".
+static func fill_keys(text: String) -> String:
+	var result: String = text
+	for action: StringName in InputMap.get_actions():
+		var tag: String = "{%s}" % action
+		if result.contains(tag):
+			result = result.replace(tag, key_text(action))
+	return result
 
 
 static func describe_gamepad(actions: Array) -> String:

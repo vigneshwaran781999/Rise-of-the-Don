@@ -1,9 +1,10 @@
 class_name Hud
 extends CanvasLayer
-## In-game HUD (GDD §10, M2 subset): health and stamina bars, an FPS counter (F3, also showing
-## loaded chunks and how many traffic cars and pedestrians are about), the
-## "get in" prompt near a vehicle, and while driving a speedometer with gear, revs and the
-## car's health, plus a short reminder of the driving controls when you first get in.
+## In-game HUD (GDD §10): health and stamina bars, cash, an FPS counter (F3, also showing
+## loaded chunks and how many traffic cars and pedestrians are about), the interaction prompt
+## ("get in" near a vehicle, or a mission action such as "talk"), the mission read-outs
+## (MissionHud), and while driving a speedometer with gear, revs and the car's health, plus a
+## short reminder of the driving controls when you first get in.
 
 const EXHAUSTED_COLOUR := Color(0.25, 0.42, 0.48)
 const CAR_HEALTH_COLOUR := Color("ffb02e")
@@ -38,6 +39,10 @@ var _area_box: VBoxContainer
 var _area_title: Label
 var _area_subtitle: Label
 var _area_tween: Tween
+var _cash: CashDisplay
+var _missions: MissionHud
+var _vehicle_target: VehicleController
+var _mission_prompt: Array = ["", ""]   # [action, text]
 
 
 func _ready() -> void:
@@ -59,6 +64,20 @@ func bind_player(stats: PlayerStats) -> void:
 func bind_interactor(interactor: VehicleInteractor) -> void:
 	interactor.target_changed.connect(_on_vehicle_target_changed)
 	_on_vehicle_target_changed(interactor.get_target())
+
+
+## Shows the running mission's objective, hints, dialogue, waypoint and prompts.
+func bind_missions(director: MissionDirector, player: Node3D) -> void:
+	_missions.bind(director, player)
+	director.prompt_changed.connect(_on_mission_prompt_changed)
+
+
+func get_mission_hud() -> MissionHud:
+	return _missions
+
+
+func get_cash_shown() -> String:
+	return _cash.get_shown_text()
 
 
 func bind_vehicle(vehicle: VehicleController) -> void:
@@ -117,6 +136,7 @@ func get_car_health_shown() -> float:
 func show_area_title(title: String, subtitle: String) -> void:
 	_area_title.text = title
 	_area_subtitle.text = subtitle
+	_missions.hold_banners(0.8 + AREA_TITLE_SECONDS + 1.2)   # mission banners wait their turn
 	_area_box.modulate.a = 0.0
 	_area_box.show()
 	if _area_tween != null and _area_tween.is_valid():
@@ -175,12 +195,27 @@ func _on_car_health_changed(current: float, maximum: float) -> void:
 
 
 func _on_vehicle_target_changed(vehicle: VehicleController) -> void:
-	if vehicle == null:
+	_vehicle_target = vehicle
+	_refresh_prompt()
+
+
+func _on_mission_prompt_changed(action: String, text: String) -> void:
+	_mission_prompt = [action, text]
+	_refresh_prompt()
+
+
+## A mission action (talk, hand over) takes the prompt over from "get in".
+func _refresh_prompt() -> void:
+	if _mission_prompt[0] != "":
+		_prompt_key.text = _key_text(_mission_prompt[0])
+		_prompt_text.text = _mission_prompt[1]
+		_prompt.show()
+	elif _vehicle_target != null:
+		_prompt_key.text = _key_text("vehicle_enter_exit")
+		_prompt_text.text = "GET IN"
+		_prompt.show()
+	else:
 		_prompt.hide()
-		return
-	_prompt_key.text = _key_text("vehicle_enter_exit")
-	_prompt_text.text = "GET IN"
-	_prompt.show()
 
 
 func _show_hint() -> void:
@@ -201,13 +236,8 @@ func _show_hint() -> void:
 	_hint_tween.tween_callback(_hint.hide)
 
 
-## First keyboard key of an action, plus the gamepad button when a gamepad is connected.
 func _key_text(action: String) -> String:
-	var keys: String = ControlsPanel.describe_keyboard([action]).get_slice(" ", 0)
-	if Input.get_connected_joypads().is_empty():
-		return keys
-	var pad: String = ControlsPanel.describe_gamepad([action]).get_slice(",", 0)
-	return "%s / %s" % [keys, pad] if pad != "" else keys
+	return ControlsPanel.key_text(action)
 
 
 # --------------------------------------------------------------------------- layout
@@ -243,8 +273,19 @@ func _build() -> void:
 	_fps_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	_fps_label.offset_left = -320.0
 	_fps_label.offset_right = -30.0
-	_fps_label.offset_top = 26.0
-	_fps_label.offset_bottom = 122.0
+	_fps_label.offset_top = 104.0
+	_fps_label.offset_bottom = 200.0
+
+	_cash = CashDisplay.new()
+	root.add_child(_cash)
+	_cash.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_cash.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_cash.offset_left = -360.0
+	_cash.offset_right = -34.0
+	_cash.offset_top = 22.0
+
+	_missions = MissionHud.new()
+	root.add_child(_missions)
 
 	_build_prompt(root)
 	_build_vehicle_panel(root)

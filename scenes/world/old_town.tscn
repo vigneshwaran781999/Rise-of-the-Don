@@ -89,7 +89,7 @@ cast_shadow = 0
 mesh = SubResource("PlaneMesh_outer_we")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
-position = Vector3(70, 0.05, 1.5)
+position = Vector3(86.5, 0.2, 8)
 rotation = Vector3(0, 1.5708, 0)
 
 [node name="Vehicles" type="Node3D" parent="."]

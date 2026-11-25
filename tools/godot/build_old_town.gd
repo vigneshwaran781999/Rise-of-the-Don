@@ -3,7 +3,7 @@ extends SceneTree
 ##   1. bakes every model it uses into a one-draw-call mesh in assets/world/kit/ (KitBaker),
 ##   2. lays out the town (OldTownLayout, deterministic),
 ##   3. writes one scene per 128 m chunk to scenes/world/chunks/old_town/: ground tiles and props
-##      as MultiMeshes, buildings, occluders, traffic signals, simple convex collision and the
+##      as MultiMeshes, buildings, occluders (as data, see OccluderBatch), traffic signals, simple convex collision and the
 ##      baked pedestrian navmesh for that chunk,
 ##   4. writes the always-loaded temple landmark scene, the lane graph and the district manifest.
 ## Re-run after changing the layout or any Blender asset (after build_all.sh and an import):
@@ -229,7 +229,7 @@ func _build_chunk(coord: Vector2i, source: NavigationMeshSourceGeometryData3D, t
 	var ground := _child(root, root, Node3D.new(), "Ground")
 	var buildings := _child(root, root, Node3D.new(), "Buildings")
 	var props := _child(root, root, Node3D.new(), "Props")
-	var occluders := _child(root, root, Node3D.new(), "Occluders")
+	var occluder_boxes: Array = []
 	var signals := _child(root, root, Node3D.new(), "Signals")
 	var body := _child(root, root, StaticBody3D.new(), "Collision") as StaticBody3D
 	body.collision_layer = WORLD_LAYER
@@ -259,7 +259,9 @@ func _build_chunk(coord: Vector2i, source: NavigationMeshSourceGeometryData3D, t
 			mi.transform = xform
 			mi.visibility_range_end = BUILDING_VISIBILITY
 			_child(root, buildings, mi, "B%03d_%s" % [index, str(p["kit"]).trim_prefix("bld_")])
-			_add_occluder(root, occluders, piece, xform, index)
+			var box: Array = _occluder_box(piece, xform)
+			if not box.is_empty():
+				occluder_boxes.append(box)
 			_stats["buildings"] += 1
 			index += 1
 		else:
@@ -279,6 +281,9 @@ func _build_chunk(coord: Vector2i, source: NavigationMeshSourceGeometryData3D, t
 		else:
 			mmi.visibility_range_end = PROP_VISIBILITY
 		_child(root, ground if is_ground else props, mmi, str(kit_name))
+	var occluders := OccluderBatch.new()
+	occluders.boxes = OccluderBatch.pack(occluder_boxes)
+	_child(root, root, occluders, "Occluders")
 
 	for s: Dictionary in _layout.signals:
 		var centre: Vector3 = s["position"]
@@ -427,21 +432,18 @@ func _add_sit_spots(root: Node3D, kind: StringName, coord: Vector2i) -> void:
 		k += 1
 
 
-## Box occluder inside a building's upper floors (never over open shopfronts or verandahs).
-func _add_occluder(root: Node3D, parent: Node, piece: KitPiece, xform: Transform3D, index: int) -> void:
+## Box occluder inside a building's upper floors (never over open shopfronts or verandahs):
+## [Transform3D, size] for an OccluderBatch, or [] if the building is too low for one.
+func _occluder_box(piece: KitPiece, xform: Transform3D) -> Array:
 	var b: AABB = piece.bounds
 	var bottom: float = 3.6
 	var top: float = b.end.y - 1.0
 	if top - bottom < 2.0:
-		return
+		return []
 	var scale: Vector3 = xform.basis.get_scale()
-	var occ := BoxOccluder3D.new()
-	occ.size = Vector3(b.size.x * 0.7 * scale.x, top - bottom, b.size.z * 0.6 * scale.z)
-	var instance := OccluderInstance3D.new()
-	instance.occluder = occ
+	var size := Vector3(b.size.x * 0.7 * scale.x, top - bottom, b.size.z * 0.6 * scale.z)
 	var local_centre := Vector3(b.get_center().x, (bottom + top) * 0.5, b.get_center().z)
-	instance.transform = Transform3D(xform.basis.orthonormalized(), xform * local_centre)
-	_child(root, parent, instance, "O%03d" % index)
+	return [Transform3D(xform.basis.orthonormalized(), xform * local_centre), size]
 
 
 func _multimesh(piece: KitPiece, xforms: Array) -> InstanceBatch:

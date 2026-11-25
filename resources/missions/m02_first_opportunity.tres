@@ -1,0 +1,117 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="3_contact"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="4_vehicle"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="5_sedan"]
+
+[sub_resource type="Resource" id="Resource_fixer"]
+script = ExtResource("3_contact")
+id = &"fixer"
+display_name = "Fixer"
+look = 0
+top_color = Color(0.165, 0.184, 0.227, 1)
+bottom_color = Color(0.231, 0.231, 0.247, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(70, 0.15, 55)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_tailor"]
+script = ExtResource("3_contact")
+id = &"tailor"
+display_name = "Tailor"
+look = 2
+top_color = Color(0.957, 0.945, 0.91, 1)
+bottom_color = Color(0.925, 0.89, 0.812, 1)
+skin_color = Color(0.42, 0.259, 0.157, 1)
+hair_color = Color(0.725, 0.706, 0.678, 1)
+position = Vector3(135, 0.15, 8.6)
+yaw_degrees = 0.0
+
+[sub_resource type="Resource" id="Resource_buyer"]
+script = ExtResource("3_contact")
+id = &"buyer"
+display_name = "Buyer"
+look = 1
+top_color = Color(0.761, 0.094, 0.357, 1)
+bottom_color = Color(0.122, 0.435, 0.69, 1)
+skin_color = Color(0.553, 0.353, 0.231, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(-70, 0.15, -54)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_car"]
+script = ExtResource("4_vehicle")
+id = &"tailor_car"
+label = "the tailor's car"
+scene = ExtResource("5_sedan")
+position = Vector3(128, 0, 4.75)
+yaw_degrees = 90.0
+paint = Color(0.165, 0.549, 0.525, 1)
+must_survive = true
+
+[sub_resource type="Resource" id="Resource_talk_fixer"]
+script = ExtResource("2_objective")
+type = 1
+text = "Talk to the fixer."
+hint = "Walk up to him and press {interact} to talk. {interact} also skips a line."
+contact = &"fixer"
+lines = PackedStringArray("FIXER: New faces are useful. Nobody knows them yet.", "FIXER: This parcel goes to the tailor on the main road, east of the big junction.", "FIXER: Walk it over. Don't open it, don't drop it, don't be slow.")
+give_item = &"parcel"
+
+[sub_resource type="Resource" id="Resource_tailor_delivery"]
+script = ExtResource("2_objective")
+type = 1
+text = "Take the parcel to the tailor on the east main road."
+hint = "Follow the arrow. Hold {sprint} to run."
+contact = &"tailor"
+lines = PackedStringArray("TAILOR: From the fixer? Good. You're quicker than the last boy he sent.", "TAILOR: Now this one goes to a buyer at the flower market, by the temple. They're waiting already.", "TAILOR: Take my car, it's out front. Bring it back in one piece... or at least bring it back.")
+take_item = &"parcel"
+give_item = &"parcel"
+
+[sub_resource type="Resource" id="Resource_get_in"]
+script = ExtResource("2_objective")
+type = 2
+text = "Get in the tailor's car."
+hint = "Press {vehicle_enter_exit} to get in."
+vehicle = &"tailor_car"
+checkpoint = true
+checkpoint_position = Vector3(124.5, 0.2, 7.4)
+checkpoint_yaw_degrees = -50.0
+
+[sub_resource type="Resource" id="Resource_drive"]
+script = ExtResource("2_objective")
+type = 0
+text = "Drive the parcel to the flower market by the temple."
+hint = "You have two minutes. Stop the car in the marker."
+position = Vector3(-70, 0, -46)
+radius = 5.0
+mode = 2
+vehicle = &"tailor_car"
+time_limit = 120.0
+
+[sub_resource type="Resource" id="Resource_hand_over"]
+script = ExtResource("2_objective")
+type = 1
+text = "Give the parcel to the buyer."
+hint = "Press {vehicle_enter_exit} to get out, then {interact} to hand it over."
+contact = &"buyer"
+lines = PackedStringArray("BUYER: About time. The fixer said you'd be quick.", "BUYER: Tell him we're square. And you... I'll remember your face.")
+take_item = &"parcel"
+
+[resource]
+script = ExtResource("1_mission")
+id = &"first_opportunity"
+title = "First Opportunity"
+description = "A fixer at the temple tank has a parcel that needs carrying."
+category = 2
+prerequisites = Array[StringName]([&"welcome"])
+start_position = Vector3(67.5, 0.15, 55.5)
+start_yaw_degrees = -90.0
+giver = SubResource("Resource_fixer")
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_talk_fixer"), SubResource("Resource_tailor_delivery"), SubResource("Resource_get_in"), SubResource("Resource_drive"), SubResource("Resource_hand_over")])
+contacts = Array[ExtResource("3_contact")]([SubResource("Resource_tailor"), SubResource("Resource_buyer")])
+vehicles = Array[ExtResource("4_vehicle")]([SubResource("Resource_car")])
+reward_cash = 1000

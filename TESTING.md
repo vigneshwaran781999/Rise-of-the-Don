@@ -150,3 +150,31 @@ Headless tests already cover the logic (`tests/traffic_test.tscn`, `tests/pedest
 
 ### Performance
 - [ ] With F3 at Medium density, the FPS at the spawn street should be about the same as without people and cars. This machine measured 37–38 FPS at every density (GPU-bound; `docs/PERFORMANCE.md`). Is it still smooth on yours, including at High?
+
+## M5 — Core loop
+
+`tests/mission_test.tscn` and `tests/save_test.tscn` cover the logic. These checks are about how missions feel and read. Start with **New Game**.
+
+### Mission 1: Welcome to Velanagar
+- [ ] You start on the sidewalk beside the bus stand, looking down the road at the east gopuram. Behind you is the shelter: blue panels, a bench and a round blue bus stop sign.
+- [ ] "OLD TOWN" fades in first, then the "WELCOME TO VELANAGAR" banner. The conductor's line and the inner-monologue line show as subtitles at the bottom, with a cyan hint just above them naming your movement keys.
+- [ ] Top left: mission title and objective. Top right: ₹200.
+- [ ] A cyan light beam stands at the temple gate, and a diamond with the distance floats over it. Turn away: an arrow at the screen edge keeps pointing to it.
+- [ ] Walking to the gate, into the courtyard and to the temple tank updates the objective each time with a short chime. Each step's hint names the right key (Shift to run, Space to jump).
+- [ ] At the tank: "MISSION PASSED +₹300", a rising jingle, and the cash counts up to ₹500 with "+₹300" under it. The fixer calls out to you.
+
+### Mission 2: First Opportunity
+- [ ] A magenta beam stands by the fixer (dark shirt) at the tank. Walking into it starts "FIRST OPPORTUNITY".
+- [ ] The fixer turns to face you as you come close. "E  TALK TO FIXER" shows when you're next to him. During his lines he gestures, and E skips a line.
+- [ ] Afterwards you carry a brown parcel in front of you. Follow the arrow to the tailor (white veshti) on the main road east of the big junction: "E  GIVE TAILOR THE PARCEL".
+- [ ] The tailor's teal car is parked at the kerb with a diamond over it. Get in: a 2:00 clock starts top left, and it turns red under 15 s.
+- [ ] Drive round to the flower market by the temple, stop in the cyan ring ("Stop in the marker" if you're too fast), get out and give the buyer the parcel: "MISSION PASSED +₹1,000", ₹1,500.
+- [ ] Wreck the tailor's car (or let the clock run out): after a moment the game pauses on "MISSION FAILED" with the reason. **Retry** after you've got in puts you back beside a fresh car with the parcel. **Retry** before that, or after **Quit Mission**, starts again at the fixer.
+- [ ] Does the route feel fair for two minutes with traffic about? Is any dialogue line too long to read before it moves on?
+
+### Saving and loading
+- [ ] Pause → Save Game: the autosave row is greyed out. Pick Slot 1: "Saved to slot 1.", and the row shows the mission, cash, play time and date. Pick it again: it asks before overwriting.
+- [ ] Main Menu: Continue and Load Game are now enabled. Continue loads the newest save. Load Game lists all four slots and loads the one you pick.
+- [ ] Saving during mission 2 after the tailor has given you his car, then loading: you're back beside the car with the parcel and the clock not yet started. Saving before that puts you back at the fixer.
+- [ ] Health, cash, position and missions passed come back as saved. The autosave after each mission shows "Free roam, N missions passed".
+- [ ] Save files are in `%APPDATA%\Godot\app_userdata\Rise of the Don\saves\`.

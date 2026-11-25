@@ -16,6 +16,10 @@ const BUS_LAYOUT_PATH: String = "res://default_bus_layout.tres"
 const AUTOLOADS: Array = [
 	["Settings", "res://scripts/systems/settings.gd"],
 	["AudioManager", "res://scripts/systems/audio_manager.gd"],
+	["MissionManager", "res://scripts/systems/mission_manager.gd"],
+	["EconomyManager", "res://scripts/systems/economy_manager.gd"],
+	["GameState", "res://scripts/systems/game_state.gd"],
+	["SaveManager", "res://scripts/systems/save_manager.gd"],
 ]
 ## Buses under Master (GDD §13).
 const BUSES: Array = ["Music", "SFX", "Ambience", "UI"]

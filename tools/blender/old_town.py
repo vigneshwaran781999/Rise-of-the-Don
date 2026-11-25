@@ -16,7 +16,7 @@ builder (tools/godot/build_old_town.gd) gives each block one bevelled slab inste
 
 Props: prop_signal_pole (lamp materials sig_red / sig_amber / sig_green are switched at
 runtime), prop_market_stall_a/b, prop_flower_stall, prop_handcart, prop_bollard, prop_neem_tree,
-prop_bench (people sit on it, M4).
+prop_bench (people sit on it, M4), prop_bus_shelter (the bus stand where the story starts, M5).
 
 Buildings (pivot at the base centre, front facing Blender -Y): a family of Old Town row houses
 and shops (bld_ot_house_*, bld_ot_shop_*, bld_ot_lodge_01), bld_ot_market_hall,
@@ -332,6 +332,60 @@ def prop_bench() -> None:
     mb.build(name)
     col = rm.CollisionSet(name)
     col.box(-0.9, -0.24, 0.0, 0.9, 0.24, 0.47)
+    col.build()
+    rm.export_glb("props", name)
+
+
+def prop_bus_shelter() -> None:
+    """Bus stand shelter, 3.6 x 1.5 m, open towards Blender -Y (Godot +Z), with a bench for two
+    (seat at 0.5 m) and a bus stop sign on a pole beside it (M5: the opening mission starts here).
+    The roof (2.45 m) is high enough to walk under."""
+    name = "prop_bus_shelter"
+    rm.clear_scene()
+    steel = rm.material("shelter_steel", "#3d4652", roughness=0.45, metallic=0.6)
+    panel = rm.material("shelter_panel", "#2f6f9e", roughness=0.6)
+    roof = rm.material("shelter_roof", "#d9d4c7", roughness=0.85)
+    board = rm.material("shelter_board", "#f2c230", roughness=0.6)
+    strip = rm.material("shelter_strip", "#23262b", roughness=0.7)
+    wood = rm.material("shelter_bench", "#8a5e38", roughness=0.85)
+    sign = rm.material("bus_sign", "#1f5fae", roughness=0.5)
+    white = rm.material("bus_sign_white", "#f4f1e8", roughness=0.6)
+    mb = rm.MeshBuilder()
+    w, d = 1.8, 0.75
+    for x in (-w + 0.04, w - 0.12):                                         # posts
+        for y in (-d + 0.05, d - 0.13):
+            mb.box(x, y, 0.0, x + 0.08, y + 0.08, 2.45, steel)
+    mb.box(-w + 0.1, d - 0.12, 0.25, w - 0.1, d - 0.06, 2.3, panel)          # back panel
+    for x in (-w + 0.06, w - 0.1):                                          # half side panels
+        mb.box(x, -0.1, 0.35, x + 0.04, d - 0.13, 2.2, panel)
+    mb.box(-w - 0.15, -d - 0.2, 2.45, w + 0.15, d + 0.1, 2.56, roof)         # roof slab
+    mb.box(-1.3, -d - 0.23, 2.28, 1.3, -d - 0.2, 2.6, board)                 # route board
+    mb.box(-1.15, -d - 0.24, 2.4, 1.15, -d - 0.23, 2.48, strip)
+    mb.box(-1.3, 0.1, 0.42, 1.3, 0.5, 0.5, wood)                            # bench seat
+    for x in (-1.1, 0.0, 1.1):
+        mb.box(x - 0.04, 0.2, 0.0, x + 0.04, 0.45, 0.42, steel, skip=("bottom",))
+    # Bus stop sign: a blue disc on a pole with a white bus (windows, door, wheels) on both faces.
+    sx = w + 0.5
+    mb.tube((sx, -d + 0.1, 0.0), (sx, -d + 0.1, 2.3), 0.035, 0.035, 8, steel, caps=True)
+    mb.tube((sx, -d + 0.08, 2.55), (sx, -d + 0.12, 2.55), 0.3, 0.3, 16, sign, caps=True)
+    for face, y0 in ((-1, -d + 0.07), (1, -d + 0.125)):
+        y1 = y0 + 0.006 * face
+        lo, hi = min(y0, y1), max(y0, y1)
+        out = 0.004 * face                                                  # windows and wheels sit proud of the body
+        mb.box(sx - 0.17, lo, 2.47, sx + 0.17, hi, 2.66, white)              # bus body
+        for wx in (-0.12, -0.04, 0.04):
+            mb.box(sx + wx, lo + out, 2.56, sx + wx + 0.06, hi + out, 2.62, sign)   # windows
+        mb.box(sx + 0.1, lo + out, 2.5, sx + 0.14, hi + out, 2.62, sign)     # door
+        for wx in (-0.1, 0.1):
+            mb.box(sx + wx - 0.035, lo + out, 2.43, sx + wx + 0.035, hi + out, 2.49, strip)  # wheels
+    mb.build(name)
+    col = rm.CollisionSet(name)
+    col.box(-w + 0.04, d - 0.13, 0.0, w - 0.04, d - 0.05, 2.45)              # back panel and posts
+    for x in (-w + 0.04, w - 0.12):
+        col.box(x, -d + 0.05, 0.0, x + 0.08, d - 0.05, 2.45)                 # side frames
+    col.box(-1.3, 0.1, 0.0, 1.3, 0.5, 0.5)                                  # bench
+    col.box(-w - 0.15, -d - 0.2, 2.45, w + 0.15, d + 0.1, 2.56)              # roof
+    col.box(sx - 0.05, -d + 0.05, 0.0, sx + 0.05, -d + 0.15, 2.3)            # sign pole
     col.build()
     rm.export_glb("props", name)
 
@@ -702,6 +756,7 @@ BUILDERS = {
     "prop_bollard": prop_bollard,
     "prop_neem_tree": prop_neem_tree,
     "prop_bench": prop_bench,
+    "prop_bus_shelter": prop_bus_shelter,
     "bld_ot_market_hall": market_hall,
     "bld_ot_mandapam": mandapam,
     "bld_ot_vimana": vimana,

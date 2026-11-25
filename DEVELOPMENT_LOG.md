@@ -208,3 +208,70 @@ Dated entries: what was built, what broke, how it was fixed.
   - a sed edit made `_halt()` call itself;
   - navigation queries ran before the map's first sync (now guarded);
   - the knock-down test braked with the brake pedal alone, which reverses at a standstill, so it ran the person over twice (it now holds both pedals, as the AI does).
+
+## 2026-11-25 — M5: core loop
+
+**Built**
+- **Mission data (GDD §8):**
+  - `MissionData` holds the id, title, description, category, prerequisites, auto-start, start spot, giver, objectives, contacts, vehicles, intro and outro lines, and the cash reward.
+  - `MissionObjective` has three types:
+    - `GO_TO`: on foot, in any vehicle, or in a given mission vehicle; in a car you must stop in the marker.
+    - `TALK_TO`: dialogue, plus giving and taking an item, which covers deliveries.
+    - `ENTER_VEHICLE`.
+  - Each objective can have a time limit and can be a checkpoint, with a respawn spot.
+  - `MissionContact` and `MissionVehicle` describe the people and cars a mission brings.
+  - Everything is `.tres` in `resources/missions/`, listed by `story.tres` (which also sets ₹200 starting cash).
+- **Autoloads (all from the allowed list):**
+  - `MissionManager`: progress only, with no world knowledge. Tracks missions on offer, passed and running, the objective and checkpoint, failing, retrying from the checkpoint and quitting, all through signals.
+  - `EconomyManager`: cash and transactions through a `cash_changed` signal, with Indian digit grouping (₹12,50,000). It pays mission rewards.
+  - `GameState`: play time and stats (missions passed and failed, cash earned).
+  - `SaveManager`: see Saving below.
+- **`MissionDirector`** (in the game scene) runs the missions in the world:
+  - magenta start beams, with the giver standing by, for missions on offer;
+  - when a mission starts or is retried: puts the player at the checkpoint, and brings in the contacts (`MissionContactNPC`, a pedestrian model in fixed colours that turns to face the player and gestures while talking) and the borrowed cars;
+  - cyan goal beams and rings, and diamonds over people and cars;
+  - the talk prompt and dialogue (`DialoguePlayer`; E talks, and skips a line);
+  - the carried parcel, the objective clock, and failure when a car that must survive is wrecked;
+  - after a pass, people leave once out of sight and the borrowed car stays where it was left.
+- **HUD:**
+  - cash top right (`CashDisplay`, counts up and flashes "+₹300");
+  - `MissionHud`: mission title and objective, the clock (red under 15 s), tutorial hints with the player's own key names, dialogue subtitles, and the start and passed banners (held back until the district title has gone);
+  - `WaypointIndicator`: a diamond and distance over the target, or an arrow at the screen edge;
+  - mission prompts take priority over "get in".
+- **`MissionFailedScreen`:** after 1.4 s the game pauses on "MISSION FAILED", the reason, and Retry or Quit Mission. The pause menu stays shut while it's up.
+- **Saving (GDD §14):**
+  - **Slots:** JSON in `user://saves/slot_0.json` (the autosave) to `slot_3.json`, with a version field. Files are written through a temp file, so a failed write keeps the old save.
+  - **What's saved:** player position (beside the car if driving), facing and health, cash, missions passed and the running mission's checkpoint, play time and stats.
+  - **Loading:** restores all of that, and a running mission restarts at its checkpoint.
+  - **Bad files:** a damaged file, or one from another save version, is listed as such and refused without harm.
+  - **When it saves:** autosave after each mission passed; manual saves from pause → Save Game (`SavePanel`: slot rows show mission, cash, play time and date; an occupied slot asks before overwriting).
+  - **Title screen:** Continue now loads the newest save, and a new Load Game button lists the slots.
+- **Missions 1 and 2** (original writing; characters are role names until the story pass in M6):
+  - **Welcome to Velanagar:** arrive at the new Old Town bus stand, walk to the east gate, into the temple courtyard and to the tank (₹300).
+  - **First Opportunity:** the fixer's parcel goes on foot to a tailor east of Ring B. Then, in the tailor's teal car, to the flower market within 2 minutes, where you hand it to the buyer (₹1,000). The checkpoint is at the car.
+- **World:**
+  - `prop_bus_shelter`: shelter, bench and a bus stop sign with a bus pictogram. It's placed at the kerb of the east gopuram road, its bench gives pedestrians two seats, and New Game now starts beside it.
+  - Mission stinger sounds and a cash chime (synthesised).
+- **Controls screen:** lists E (talk, hand over, skip a line).
+- **Tests:**
+  - **New `tests/mission_test.tscn`:** plays both missions through, including a wreck plus Retry, a time-out plus Quit Mission, and a restart.
+  - **New `tests/save_test.tscn`:** real menus and scene changes; slot overwrite question, full restore, save while driving, damaged and other-version files, Continue.
+  - **Smoke test:** checks the opening mission and cash after New Game, Load Game disabled without saves, and saving from the pause menu (after which Continue and Load Game are enabled).
+  - **Isolation:** all tests save to `user://test_saves`, never the player's real saves.
+- **Version:** 0.5.0.
+
+**Broke / fixed**
+- **Corrupted occluder RIDs** ("Attempting to initialize the wrong RID", then "unimplemented base type" in `WorldStreamer._add_chunk`):
+  - **Cause:** chunk scenes carried `BoxOccluder3D` resources, which are created when the chunk is loaded on a background thread. Godot's occluder store isn't thread-safe, and from M5 the mission director also loads chunks on the main thread (to place the player at a checkpoint) while background loads are in flight.
+  - **Fix:** chunks now store their occluder boxes as plain data in an `OccluderBatch` node that builds the occluders on the main thread when the chunk enters the tree (as `InstanceBatch` does for MultiMeshes). The save test, which hit this, is clean now.
+- **E skipped the fixer's call-out instead of starting the conversation:** when a talk prompt is showing, E now starts the talk (cutting off other lines); otherwise it skips a line.
+- **Opening frame:**
+  - The district title, the mission banner and the hint all showed at once. Mission banners now wait for the title, and the hint sits above the subtitles.
+  - The spawn moved twice: first the camera was inside the shelter, then a streetlight blocked the view.
+- **Smaller fixes:**
+  - The waypoint over a person was drawn at chest height; it's now over the diamond above their head.
+  - A typed-array assignment from a ternary failed.
+  - `get_meta()` with a null default logged errors.
+  - `JSON.parse_string` logged an engine error on a damaged save; it now uses a quiet instance parse.
+  - A helper in the save test named `_process` clashed with Node's.
+  - Save times are stored to fractions of a second, so Continue can tell two saves made in the same second apart.

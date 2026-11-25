@@ -4,14 +4,15 @@ extends Node
 ## Prints "SMOKE TEST PASSED" and exits 0, or "FAILED: <reason>" and exits 1.
 ## Any engine or script error logged while it runs also fails the test.
 ##
-## It drives the real game: main menu -> New Game (Old Town) -> traffic and pedestrians appear
+## It drives the real game: main menu -> New Game (Old Town, the opening mission starts) -> traffic and pedestrians appear
 ## (then switched off) -> chunk streaming, traffic signals, lane graph, pedestrian navmesh ->
 ## walk, sprint, jump, kerb, look, HUD -> get in the sedan, drive, brake, reverse, steer,
-## cameras, horn, lights, crash, get out -> pause -> back to the main menu. Input goes through
+## cameras, horn, lights, crash, get out -> pause, save to a slot -> back to the main menu. Input goes through
 ## the real input map (simulated key events).
 ## More detail lives in per-feature tests: tests/vehicle_test.tscn (handling figures),
 ## tests/player_test.tscn (kerb, ramps and gateway on the M1 test block),
-## tests/traffic_test.tscn and tests/pedestrian_test.tscn (M4 city life).
+## tests/traffic_test.tscn and tests/pedestrian_test.tscn (M4 city life), tests/mission_test.tscn
+## and tests/save_test.tscn (M5 missions, cash, saving). Saves go to user://test_saves.
 
 const ErrorCatcher := preload("res://tests/error_catcher.gd")
 const TIMEOUT_SEC: float = 180.0
@@ -70,6 +71,9 @@ func _run() -> void:
 	get_tree().current_scene = stand_in
 	# Never write the user's real settings file, and handle simulated input immediately.
 	Settings.persist = false
+	SaveManager.save_dir = "user://test_saves"   # never the player's real saves
+	for slot: int in SaveManager.ALL_SLOTS:
+		SaveManager.delete_slot(slot)
 	Input.use_accumulated_input = false
 	var failure: String = await _run_checks()
 	_release_all_keys()
@@ -207,12 +211,12 @@ func _check_main_menu() -> String:
 	var menu: Node = await _wait_for_scene(MAIN_MENU)
 	if menu == null:
 		return "main menu did not load"
-	for button_name: String in ["NewGameButton", "ContinueButton", "SettingsButton", "ControlsButton",
+	for button_name: String in ["NewGameButton", "ContinueButton", "LoadGameButton", "SettingsButton", "ControlsButton",
 			"CreditsButton", "ExitButton"]:
 		if _find(menu, button_name) == null:
 			return "main menu has no %s" % button_name
-	if not (_find(menu, "ContinueButton") as Button).disabled:
-		return "Continue should be disabled while no save exists"
+	if not (_find(menu, "ContinueButton") as Button).disabled or not (_find(menu, "LoadGameButton") as Button).disabled:
+		return "Continue and Load Game should be disabled while no save exists"
 
 	(_find(menu, "SettingsButton") as Button).pressed.emit()
 	await _process_frames(2)
@@ -260,7 +264,7 @@ func _check_main_menu() -> String:
 	var grid := _find(menu, "BindingsGrid") as GridContainer
 	if grid == null or grid.get_child_count() < 3 * 4:
 		return "controls screen lists no bindings"
-	print("  ok  main menu (buttons, Continue disabled, settings sliders and density buttons work, controls, credits)")
+	print("  ok  main menu (buttons, Continue and Load Game disabled without saves, settings sliders and density buttons work, controls, credits)")
 	return ""
 
 
@@ -284,8 +288,16 @@ func _check_new_game() -> String:
 		return "the temple landmark is not loaded"
 	if _hud().get_area_title() != "OLD TOWN":
 		return "no OLD TOWN title card on arrival (got '%s')" % _hud().get_area_title()
-	print("  ok  New Game starts in Old Town: %d chunks, %d buildings around the spawn, temple landmark, title card" % [
-		world.streamer.get_loaded_count(), buildings])
+	# The story starts: the opening mission runs, with cash and the first objective on the HUD.
+	var opening: MissionData = MissionManager.get_active()
+	if opening == null or opening.id != &"welcome":
+		return "New Game should start the opening mission 'welcome'"
+	if _hud().get_cash_shown() != EconomyManager.format(MissionManager.story.starting_cash):
+		return "HUD cash shows '%s', expected the starting %s" % [_hud().get_cash_shown(), EconomyManager.format(MissionManager.story.starting_cash)]
+	if _hud().get_mission_hud().get_objective_shown() == "":
+		return "no objective on the HUD"
+	print("  ok  New Game starts in Old Town: %d chunks, %d buildings around the spawn, temple landmark, title card; mission '%s' running ('%s'), %s cash" % [
+		world.streamer.get_loaded_count(), buildings, opening.title, _hud().get_mission_hud().get_objective_shown(), _hud().get_cash_shown()])
 	return ""
 
 
@@ -331,7 +343,7 @@ func _check_spawn() -> String:
 	await _physics_frames(30)
 	if not player.is_on_floor():
 		return "player is not standing on the ground after spawning (y=%.2f)" % player.global_position.y
-	print("  ok  player spawned and standing on the road (state %s)" % player.get_state_name())
+	print("  ok  player spawned at the bus stand, standing on the sidewalk (state %s)" % player.get_state_name())
 	return ""
 
 
@@ -1109,13 +1121,28 @@ func _check_pause_and_return_to_menu() -> String:
 	_key(KEY_ESCAPE, true)
 	_key(KEY_ESCAPE, false)
 	await _process_frames(2)
+	# Save Game: the panel lists the autosave and three slots; saving to slot 1 works.
+	(_find(pause, "SaveGameButton") as Button).pressed.emit()
+	await _process_frames(2)
+	var save_panel := _find(pause, "SavePanel") as SavePanel
+	if save_panel == null or not save_panel.visible:
+		return "pause menu's Save Game did not open the save panel"
+	save_panel.get_row(1).pressed.emit()
+	if save_panel.get_status_text() != "Saved to slot 1." or SaveManager.read_slot(1).is_empty():
+		return "saving to slot 1 from the pause menu failed ('%s')" % save_panel.get_status_text()
+	save_panel.close()
+	await _process_frames(2)
 	(_find(pause, "MainMenuButton") as Button).pressed.emit()
 	var menu: Node = await _wait_for_scene(MAIN_MENU)
 	if menu == null:
 		return "pause menu's Main Menu button did not return to the main menu"
 	if get_tree().paused:
 		return "tree is still paused after returning to the main menu"
-	print("  ok  Esc pauses (player frozen) and resumes; Main Menu returns to the title screen")
+	if (_find(menu, "ContinueButton") as Button).disabled or (_find(menu, "LoadGameButton") as Button).disabled:
+		return "after saving, Continue and Load Game should be enabled on the title screen"
+	for slot: int in SaveManager.ALL_SLOTS:
+		SaveManager.delete_slot(slot)
+	print("  ok  Esc pauses (player frozen) and resumes; Save Game saves to a slot; Main Menu returns to the title screen, where Continue and Load Game are now enabled")
 	return ""
 
 

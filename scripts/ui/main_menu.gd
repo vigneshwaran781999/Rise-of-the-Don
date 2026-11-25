@@ -1,5 +1,5 @@
 extends Control
-## Title screen (GDD §10): New Game, Continue (disabled until saving exists), Settings,
+## Title screen (GDD §10): New Game, Continue (the latest save), Load Game, Settings,
 ## Controls, Credits, Exit. Keyboard, mouse and gamepad navigable.
 
 const GAME_SCENE: String = "res://scenes/main/game.tscn"
@@ -11,6 +11,7 @@ var _panels: Array[MenuPanel] = []
 var _settings: SettingsPanel
 var _controls: ControlsPanel
 var _credits: CreditsPanel
+var _load: SavePanel
 var _return_focus: Button
 var _starting: bool = false
 
@@ -71,10 +72,14 @@ func _build() -> void:
 	column.add_child(buttons)
 	_new_game = _add_button(buttons, "New Game", "NewGameButton")
 	_new_game.pressed.connect(_start_new_game)
+	var has_save: bool = SaveManager.has_any_save()
 	var continue_button: Button = _add_button(buttons, "Continue", "ContinueButton")
-	continue_button.disabled = true
-	continue_button.focus_mode = Control.FOCUS_NONE
-	continue_button.tooltip_text = "No saved game yet."
+	continue_button.pressed.connect(_continue_game)
+	var load_button: Button = _add_button(buttons, "Load Game", "LoadGameButton")
+	for button: Button in [continue_button, load_button]:
+		button.disabled = not has_save
+		button.focus_mode = Control.FOCUS_ALL if has_save else Control.FOCUS_NONE
+		button.tooltip_text = "" if has_save else "No saved game yet."
 	var settings_button: Button = _add_button(buttons, "Settings", "SettingsButton")
 	var controls_button: Button = _add_button(buttons, "Controls", "ControlsButton")
 	var credits_button: Button = _add_button(buttons, "Credits", "CreditsButton")
@@ -86,8 +91,8 @@ func _build() -> void:
 	column.add_child(filler)
 	var footer := Label.new()
 	footer.name = "Footer"
-	footer.text = "v%s  ·  Milestone 4: life in the city      Enter / A select   ·   Esc / B back" % \
-			str(ProjectSettings.get_setting("application/config/version", "0.4.0"))
+	footer.text = "v%s  ·  Milestone 5: core loop      Enter / A select   ·   Esc / B back" % \
+			str(ProjectSettings.get_setting("application/config/version", "0.5.0"))
 	footer.add_theme_font_size_override("font_size", 18)
 	footer.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
 	column.add_child(footer)
@@ -99,10 +104,13 @@ func _build() -> void:
 	_settings = SettingsPanel.new()
 	_controls = ControlsPanel.new()
 	_credits = CreditsPanel.new()
-	for panel: MenuPanel in [_settings, _controls, _credits]:
+	_load = SavePanel.new()
+	_load.mode = SavePanel.Mode.LOAD
+	for panel: MenuPanel in [_settings, _controls, _credits, _load]:
 		panel_area.add_child(panel)
 		panel.closed.connect(_on_panel_closed)
 		_panels.append(panel)
+	load_button.pressed.connect(_open_panel.bind(_load, load_button))
 	settings_button.pressed.connect(_open_panel.bind(_settings, settings_button))
 	controls_button.pressed.connect(_open_panel.bind(_controls, controls_button))
 	credits_button.pressed.connect(_open_panel.bind(_credits, credits_button))
@@ -166,3 +174,18 @@ func _start_new_game() -> void:
 		button.disabled = true
 	AudioManager.stop_music(0.6)
 	get_tree().change_scene_to_file(GAME_SCENE)
+
+
+## Loads the most recent save (manual or autosave).
+func _continue_game() -> void:
+	var slot: int = SaveManager.latest_slot()
+	if _starting or slot < 0:
+		return
+	_starting = true
+	for button: Button in _menu_buttons:
+		button.disabled = true
+	AudioManager.stop_music(0.6)
+	if SaveManager.load_game(slot) != OK:
+		_starting = false
+		for button: Button in _menu_buttons:
+			button.disabled = false

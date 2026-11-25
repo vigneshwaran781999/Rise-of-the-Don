@@ -1,6 +1,6 @@
 class_name PauseMenu
 extends CanvasLayer
-## Esc / Start pauses the game: Resume, Settings, Main Menu, Quit (M1 subset of GDD §10).
+## Esc / Start pauses the game: Resume, Save Game, Settings, Main Menu, Quit (subset of GDD §10).
 ## Pausing stops gameplay through SceneTree.paused and frees the mouse.
 
 const MAIN_MENU_SCENE: String = "res://scenes/main/main_menu.tscn"
@@ -10,6 +10,8 @@ var _menu: PanelContainer
 var _settings: SettingsPanel
 var _resume: Button
 var _settings_button: Button
+var _save: SavePanel
+var _save_button: Button
 
 
 func _ready() -> void:
@@ -29,12 +31,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (pause_pressed or back_pressed):
 		return
 	if not is_open():
-		if pause_pressed:
+		if pause_pressed and not MissionManager.is_failed():   # the failure screen takes over then
 			open()
 			get_viewport().set_input_as_handled()
 		return
 	if _settings.visible:
 		_settings.close()
+	elif _save.visible:
+		_save.close()
 	else:
 		resume()
 	get_viewport().set_input_as_handled()
@@ -46,6 +50,7 @@ func open() -> void:
 	_root.show()
 	_menu.show()
 	_settings.hide()
+	_save.hide()
 	_resume.grab_focus()
 	AudioManager.play_ui(&"ui_accept")
 
@@ -86,6 +91,8 @@ func _build() -> void:
 	box.add_child(HSeparator.new())
 	_resume = _add_button(box, "Resume", "ResumeButton")
 	_resume.pressed.connect(resume)
+	_save_button = _add_button(box, "Save Game", "SaveGameButton")
+	_save_button.pressed.connect(_open_save)
 	_settings_button = _add_button(box, "Settings", "SettingsButton")
 	_settings_button.pressed.connect(_open_settings)
 	var main_menu: Button = _add_button(box, "Main Menu", "MainMenuButton")
@@ -96,6 +103,9 @@ func _build() -> void:
 	_settings = SettingsPanel.new()
 	center.add_child(_settings)
 	_settings.closed.connect(_on_settings_closed)
+	_save = SavePanel.new()
+	center.add_child(_save)
+	_save.closed.connect(_on_save_closed)
 
 
 func _add_button(parent: Control, text: String, node_name: String) -> Button:
@@ -112,6 +122,16 @@ func _open_settings() -> void:
 func _on_settings_closed() -> void:
 	_menu.show()
 	_settings_button.grab_focus()
+
+
+func _open_save() -> void:
+	_menu.hide()
+	_save.open_as(SavePanel.Mode.SAVE)
+
+
+func _on_save_closed() -> void:
+	_menu.show()
+	_save_button.grab_focus()
 
 
 func _go_to_main_menu() -> void:
