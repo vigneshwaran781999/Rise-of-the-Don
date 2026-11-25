@@ -1,7 +1,7 @@
 class_name LaneGraph
 extends Resource
-## Directed graph of traffic lanes for one district (GDD §6: traffic follows a lane graph, not
-## the navmesh). Left-hand traffic. Built by tools/godot/build_old_town.gd; AI traffic (M4)
+## Directed graph of traffic lanes for the whole city (GDD §6: traffic follows a lane graph, not
+## the navmesh). Left-hand traffic. Built by tools/godot/build_city.gd; AI traffic (M4)
 ## drives from node to node. Node i has a position on its lane centre line, a speed limit, and
 ## for nodes at a stop line or inside a junction the junction's id. Successors are stored in
 ## compressed form: the nodes after i are next_list[next_start[i] .. next_start[i + 1]).
@@ -11,7 +11,7 @@ enum Flag {
 	SIGNALIZED = 2,    ## the junction has traffic lights (check signal_axis)
 	GIVE_WAY = 4,      ## unsignalized junction where this approach must yield (lane meeting a main road)
 	IN_JUNCTION = 8,   ## on a turn/straight path through a junction box
-	U_TURN = 16,       ## turning back at the district edge
+	U_TURN = 16,       ## turning back where a road ends (the edge of the city)
 }
 
 @export var positions: PackedVector3Array = PackedVector3Array()

@@ -35,7 +35,7 @@
 - Shared helpers live in `tools/blender/rotd_mesh.py` (mesh builder, materials, GLB export).
 - Export GLB to `assets/models/<category>/`. Use 1 unit = 1 metre, +Y up in Godot (export with Blender's default glTF Y-up conversion), the pivot at the base centre (buildings, props, characters) or the chassis centre (vehicles), and apply transforms before export.
 - Naming: `bld_`, `veh_`, `prop_`, `chr_`, `road_`. Name collision meshes with the `-col` / `-colonly` suffix so Godot's importer builds collision automatically. For collision made of several pieces, use `rm.CollisionSet` (one `-convcolonly` object per piece) so pieces never fuse into one hull.
-- Streamed districts are generated from the models: after changing a model Old Town uses or `scripts/world/old_town_layout.gd`, re-import and run `"$GODOT" --headless --path . --script res://tools/godot/build_old_town.gd` (`build_all.sh` does both). Never hand-edit the generated chunk scenes, kit meshes, lane graph or district manifest.
+- The streamed city is generated from the models: after changing a model the city uses or a district layout (`scripts/world/*_layout.gd`), re-import and run `"$GODOT" --headless --path . --script res://tools/godot/build_city.gd` (`build_all.sh` does both). Never hand-edit the generated chunk scenes, kit meshes, lane graph, city map or city manifest.
 - Keep each generator script re-runnable. Re-running it overwrites only its own outputs.
 - Low-poly, stylised geometry with simple PBR materials is the target. Don't chase photorealism from code.
 

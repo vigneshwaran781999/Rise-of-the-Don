@@ -1,7 +1,7 @@
 class_name KitBaker
 extends RefCounted
 ## Turns an imported GLB scene into a KitPiece (build time only; see
-## tools/godot/build_old_town.gd). Every surface of every mesh is merged into ONE surface whose
+## tools/godot/build_city.gd). Every surface of every mesh is merged into ONE surface whose
 ## vertices carry their material's colour, roughness, metallic and glow (read by
 ## shaders/palette_lit.gdshader), so the piece costs one draw call however many materials the
 ## Blender model used. Every collision shape becomes a convex hull (point cloud).
@@ -9,11 +9,18 @@ extends RefCounted
 ## 1 mm grid used to weld trimesh vertices when splitting a '-colonly' mesh into pieces.
 const WELD_SCALE: float = 1000.0
 ## Materials that only glow at night (scaled by the city_lights shader global; GDD §12), stored
-## in the glow's alpha: 1 = glows at night (streetlight lenses, brighter than their daytime
-## material), 2 = lit window (some buildings and floors stay dark, chosen in the shader).
+## in the glow's alpha: 1 = glows at night (streetlight lenses and neon, brighter than their
+## daytime material), 2 = lit window (some buildings and floors stay dark, chosen in the shader).
 const NIGHT_GLOW: Dictionary = {
 	"lamp_lens": {"mode": 1.0, "boost": 1.8},
 	"window_glass": {"mode": 2.0, "emission": Color(1.0, 0.6, 0.28), "energy": 0.75},
+}
+## The same by name prefix: office windows (M7: Downtown towers; whole walls of glass, so a soft
+## light) and neon
+## (signs, lit lobbies: their own glow, at night only).
+const NIGHT_GLOW_PREFIX: Dictionary = {
+	"office_glass": {"mode": 2.0, "emission": Color(1.0, 0.93, 0.8), "energy": 0.07},
+	"neon_": {"mode": 1.0, "boost": 1.0},
 }
 
 
@@ -56,7 +63,7 @@ static func bake_mesh(root: Node3D, material: Material, exclude: PackedStringArr
 				if mat.emission_enabled:
 					emission = mat.emission.srgb_to_linear() * mat.emission_energy_multiplier
 				double_sided = mat.cull_mode == BaseMaterial3D.CULL_DISABLED
-				var night: Dictionary = NIGHT_GLOW.get(mat.resource_name, {})
+				var night: Dictionary = night_glow(mat.resource_name)
 				if not night.is_empty():
 					if night.has("emission"):
 						emission = (night["emission"] as Color) * float(night["energy"])
@@ -200,3 +207,13 @@ static func _union(parent: Array[int], a: int, b: int) -> void:
 	var rb: int = _find(parent, b)
 	if ra != rb:
 		parent[rb] = ra
+
+
+## How a material glows at night (see NIGHT_GLOW): {} if it glows all the time or not at all.
+static func night_glow(material_name: String) -> Dictionary:
+	if NIGHT_GLOW.has(material_name):
+		return NIGHT_GLOW[material_name]
+	for prefix: String in NIGHT_GLOW_PREFIX:
+		if material_name.begins_with(prefix):
+			return NIGHT_GLOW_PREFIX[prefix]
+	return {}

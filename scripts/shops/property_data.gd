@@ -7,7 +7,7 @@ extends Resource
 @export var title: String
 ## One line on the "for sale" offer.
 @export var description: String
-## Key into DistrictData.places: the spot in front of its door.
+## Key into CityData.places: the spot in front of its door.
 @export var place: StringName
 @export var price: int = 5000
 ## Cash paid at the start of each in-game day while you own it.

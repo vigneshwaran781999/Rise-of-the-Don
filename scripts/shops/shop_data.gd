@@ -1,6 +1,6 @@
 class_name ShopData
 extends Resource
-## A shop in the district (GDD §9), placed at one of the district's places (DistrictData.places:
+## A shop in the district (GDD §9), placed at one of the district's places (CityData.places:
 ## the spot in front of its door). Edit the .tres files in res://resources/shops/.
 ## - FOOD: items are FoodItems, eaten on the spot for health.
 ## - CLOTHES: items are Outfits, bought once and then worn at will.
@@ -12,7 +12,7 @@ enum Kind { FOOD, CLOTHES, RESPRAY }
 @export var id: StringName
 @export var title: String
 @export var kind: Kind = Kind.FOOD
-## Key into DistrictData.places.
+## Key into CityData.places.
 @export var place: StringName
 ## The shop opens once this mission has been passed (empty: open from the start).
 @export var unlock_mission: StringName

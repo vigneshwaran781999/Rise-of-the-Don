@@ -21,7 +21,7 @@ var _director: MissionDirector
 var _hud: Hud
 var _mhud: MissionHud
 var _player: PlayerController
-var _world: District
+var _world: CityWorld
 var _report: PackedStringArray = []
 
 

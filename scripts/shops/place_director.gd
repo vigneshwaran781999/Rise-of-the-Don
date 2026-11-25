@@ -1,6 +1,6 @@
 class_name PlaceDirector
 extends Node3D
-## Shops and properties in the district (GDD §9), each at its place (DistrictData.places, the spot
+## Shops and properties in the district (GDD §9), each at its place (CityData.places, the spot
 ## at its door):
 ## - a ring on the ground at each open shop's door (in the garage, across its bay) and at
 ##   properties; a FOR SALE board at a property on sale; map blips for all of them;
@@ -39,7 +39,7 @@ var menu: ShopMenu
 var pause_menu: PauseMenu
 
 var _player: PlayerController
-var _district: DistrictData
+var _district: CityData
 var _missions: MissionDirector
 var _police: PoliceManager
 var _rings: Dictionary = {}          # ShopData / PropertyData -> MeshInstance3D
@@ -55,7 +55,7 @@ func _ready() -> void:
 	_rng.seed = 2207
 
 
-func setup(player: PlayerController, district: DistrictData, missions: MissionDirector, police: PoliceManager) -> void:
+func setup(player: PlayerController, district: CityData, missions: MissionDirector, police: PoliceManager) -> void:
 	_player = player
 	_district = district
 	_missions = missions

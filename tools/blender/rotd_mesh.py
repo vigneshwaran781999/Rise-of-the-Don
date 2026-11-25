@@ -347,3 +347,65 @@ class CollisionSet:
     def build(self) -> None:
         for i, mb in enumerate(self.parts):
             mb.build(f"{self.name}_c{i:02d}-convcolonly")
+
+
+# --------------------------------------------------------------------------- block letters
+
+# 5-row block letters for signs (shop boards, rooftop signs, neon). "#" is a pixel.
+PIXEL_FONT = {
+    " ": ("..", "..", "..", "..", ".."),
+    "A": ("###", "#.#", "###", "#.#", "#.#"),
+    "B": ("##.", "#.#", "##.", "#.#", "##."),
+    "C": ("###", "#..", "#..", "#..", "###"),
+    "D": ("##.", "#.#", "#.#", "#.#", "##."),
+    "E": ("###", "#..", "###", "#..", "###"),
+    "F": ("###", "#..", "##.", "#..", "#.."),
+    "G": ("###", "#..", "#.#", "#.#", "###"),
+    "H": ("#.#", "#.#", "###", "#.#", "#.#"),
+    "I": ("###", ".#.", ".#.", ".#.", "###"),
+    "J": ("..#", "..#", "..#", "#.#", "###"),
+    "K": ("#.#", "#.#", "##.", "#.#", "#.#"),
+    "L": ("#..", "#..", "#..", "#..", "###"),
+    "M": ("#...#", "##.##", "#.#.#", "#...#", "#...#"),
+    "N": ("#..#", "##.#", "#.##", "#..#", "#..#"),
+    "O": ("###", "#.#", "#.#", "#.#", "###"),
+    "P": ("###", "#.#", "###", "#..", "#.."),
+    "Q": ("###", "#.#", "#.#", "###", "..#"),
+    "R": ("##.", "#.#", "##.", "#.#", "#.#"),
+    "S": ("###", "#..", "###", "..#", "###"),
+    "T": ("###", ".#.", ".#.", ".#.", ".#."),
+    "U": ("#.#", "#.#", "#.#", "#.#", "###"),
+    "V": ("#.#", "#.#", "#.#", "#.#", ".#."),
+    "W": ("#...#", "#...#", "#.#.#", "##.##", "#...#"),
+    "X": ("#.#", "#.#", ".#.", "#.#", "#.#"),
+    "Y": ("#.#", "#.#", ".#.", ".#.", ".#."),
+    "Z": ("###", "..#", ".#.", "#..", "###"),
+}
+
+
+def text_width(text: str, pixel: float) -> float:
+    return sum((len(PIXEL_FONT[ch][0]) + 1) * pixel for ch in text) - pixel
+
+
+def pixel_text(mb: MeshBuilder, text: str, x_centre: float, y_front: float, z_bottom: float, pixel: float,
+               material, depth: float = 0.03) -> None:
+    """Block letters (PIXEL_FONT) standing just in front of the plane y = y_front, reading left to
+    right for someone looking at it from the front (-Y side), one pixel apart. Each run of pixels
+    in a row is one box, `depth` thick."""
+    x = x_centre - text_width(text, pixel) / 2
+    for ch in text:
+        glyph = PIXEL_FONT[ch]
+        cols = len(glyph[0])
+        for r, row in enumerate(glyph):
+            z_top = z_bottom + (5 - r) * pixel
+            c = 0
+            while c < cols:
+                if row[c] != "#":
+                    c += 1
+                    continue
+                end = c
+                while end < cols and row[end] == "#":
+                    end += 1
+                mb.box(x + c * pixel, y_front - depth, z_top - pixel, x + end * pixel, y_front, z_top, material, skip=("back",))
+                c = end
+        x += (cols + 1) * pixel

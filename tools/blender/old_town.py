@@ -417,49 +417,6 @@ def prop_neem_tree() -> None:
 H0, FH = 3.4, 3.0   # ground-floor and upper-floor heights
 
 
-# Block letters for signs: 5 pixels tall, top row first ('#' = filled); most are 3 wide, N 4.
-PIXEL_FONT = {
-    "A": ("###", "#.#", "###", "#.#", "#.#"),
-    "C": ("###", "#..", "#..", "#..", "###"),
-    "E": ("###", "#..", "###", "#..", "###"),
-    "F": ("###", "#..", "##.", "#..", "#.."),
-    "G": ("###", "#..", "#.#", "#.#", "###"),
-    "I": ("###", ".#.", ".#.", ".#.", "###"),
-    "L": ("#..", "#..", "#..", "#..", "###"),
-    "N": ("#..#", "##.#", "#.##", "#..#", "#..#"),
-    "O": ("###", "#.#", "#.#", "#.#", "###"),
-    "P": ("###", "#.#", "###", "#..", "#.."),
-    "R": ("##.", "#.#", "##.", "#.#", "#.#"),
-    "S": ("###", "#..", "###", "..#", "###"),
-    "T": ("###", ".#.", ".#.", ".#.", ".#."),
-    "X": ("#.#", "#.#", ".#.", "#.#", "#.#"),
-}
-
-
-def pixel_text(mb, text: str, x_centre: float, y_front: float, z_bottom: float, pixel: float, material) -> None:
-    """Block letters (PIXEL_FONT) standing just in front of the plane y = y_front, reading left to
-    right for someone looking at it from the front (-Y side), one pixel apart. Each run of pixels
-    in a row is one box."""
-    width = sum((len(PIXEL_FONT[ch][0]) + 1) * pixel for ch in text) - pixel
-    x = x_centre - width / 2
-    for ch in text:
-        glyph = PIXEL_FONT[ch]
-        cols = len(glyph[0])
-        for r, row in enumerate(glyph):
-            z_top = z_bottom + (5 - r) * pixel
-            c = 0
-            while c < cols:
-                if row[c] != "#":
-                    c += 1
-                    continue
-                end = c
-                while end < cols and row[end] == "#":
-                    end += 1
-                mb.box(x + c * pixel, y_front - 0.03, z_top - pixel, x + end * pixel, y_front, z_top, material, skip=("back",))
-                c = end
-        x += (cols + 1) * pixel
-
-
 def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: str, ground: str,
                 roof: str, balcony: bool = False, awning: str | None = None, sign: str | None = None,
                 pillars: int = 0, rooftop_sign: str | None = None, rooftop_text: str | None = None,
@@ -531,7 +488,7 @@ def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: st
             if sign_text:
                 mb.box(x0 + 0.3, yf - 0.12, 2.95, x1 - 0.3, yf, 3.4, sg, skip=("back",))
                 letters = rm.material(name + "_sign_letters", sign_letters, roughness=0.6)
-                pixel_text(mb, sign_text, 0.0, yf - 0.12, 3.0, 0.07, letters)
+                rm.pixel_text(mb, sign_text, 0.0, yf - 0.12, 3.0, 0.07, letters)
             else:
                 mb.box(x0 + 0.3, yf - 0.12, 2.98, x1 - 0.3, yf, 3.32, sg, skip=("back",))
     else:
@@ -598,7 +555,7 @@ def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: st
         if rooftop_text:
             letters = rm.material("sign_letters", "#f4f1e8", roughness=0.6)
             pixel = 0.2
-            pixel_text(mb, rooftop_text, 0.0, y0 + 0.3, top + 2.4 - 2.5 * pixel, pixel, letters)
+            rm.pixel_text(mb, rooftop_text, 0.0, y0 + 0.3, top + 2.4 - 2.5 * pixel, pixel, letters)
     mb.build(name)
     box_collision(name, collide)
     rm.export_glb("buildings", name)
@@ -671,7 +628,7 @@ def garage() -> None:
     mb.box(bay_x0, y0 - 0.06, bay_top, bay_x1, y0, bay_top + 0.15, trim, skip=("back",))
     mb.box(bay_x0 + 0.05, y0 + 0.05, bay_top - 0.32, bay_x1 - 0.05, y0 + 0.45, bay_top, shutter)
     mb.box(x0 + 1.4, y0 - 0.12, bay_top + 0.25, x1 - 1.4, y0 - 0.06, top - 0.15, trim, skip=("back",))
-    pixel_text(mb, "GARAGE", 0.0, y0 - 0.12, bay_top + 0.25 + (top - 0.4 - bay_top - 5 * 0.13) / 2, 0.13, letters)
+    rm.pixel_text(mb, "GARAGE", 0.0, y0 - 0.12, bay_top + 0.25 + (top - 0.4 - bay_top - 5 * 0.13) / 2, 0.13, letters)
 
     # Inside the bay: walls, floor, the tube light, and the clutter at the back.
     mb.box(bay_x0, y0, 0.0, bay_x1, y1 - 0.3, 0.02, floor, skip=("bottom",))

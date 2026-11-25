@@ -179,7 +179,7 @@ Headless tests already cover the logic (`tests/traffic_test.tscn`, `tests/pedest
 - [ ] Health, cash, position and missions passed come back as saved. The autosave after each mission shows "Free roam, N missions passed".
 - [ ] Save files are in `%APPDATA%\Godot\app_userdata\Rise of the Don\saves\`.
 
-## M6 — Open-world systems (in progress)
+## M6 — Open-world systems
 
 ### Day and night
 - [ ] The clock under the cash runs: about one in-game hour per real minute. Pause → Save, quit and load: the time of day comes back.
@@ -232,3 +232,17 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Building an Empire** (magenta beam by Durai at the verandah house):
   - Walking in with less than ₹6,000 says it needs ₹6,000 and doesn't start. Do side jobs until you have it, then walk in again.
   - Durai talks, then "Buy the verandah house." Buy it at the door: "MISSION PASSED +₹1,000". The house is now your save point and pays rent.
+
+## M7 — Expansion (in progress)
+
+### Downtown and the city (step 1)
+- [ ] **Old Town is unchanged:** the bus stand, shops, police station, garage and the house are where they were, and missions 1–5 play the same.
+- [ ] **Getting there:** from the temple's north gopuram, drive or walk north. At the edge of Old Town the road carries straight on and "DOWNTOWN · VELANAGAR" fades in at the top of the screen. Coming back shows "OLD TOWN".
+- [ ] **Looks by day:** glass towers (one stepped tower with a gold spire, about 120 m), white residential towers with balconies, terracotta offices, shops with CAFE and SALON signs, the cream HOTEL with its rooftop sign. Central Plaza (fountain, palms, benches) sits west of the north road; Vela Mall, with its glass atrium, to the east. Does it read as a business district? Is anything floating, sunk into the ground, or blocking a sidewalk?
+- [ ] **Looks at night:** office floors light up (some floors dark), the hotel and residential windows glow warm, shop signs and lobbies glow. Is it too bright or too dark? Do the neon signs keep their colour?
+- [ ] **The skyline:** from Old Town (from the temple area, or anywhere with a view north) Downtown's towers stand on the horizon, also at night with some lit floors. As you drive north, the simple far-off shapes should turn into the detailed towers without an obvious pop. Is the swap noticeable?
+- [ ] **Traffic and people** come and go in Downtown as in Old Town: cars stop at the many traffic lights, people walk the wide sidewalks.
+- [ ] **Map:** the full map (M) shows both districts with their names written large, and the header shows the district you're in. CENTRAL PLAZA, VELA MALL and POLICE HQ are labelled. Set a waypoint in Downtown from Old Town: the GPS route crosses into it.
+- [ ] **Police:** get busted in Downtown: you're released at the police headquarters there (white building, blue POLICE board, west ring road), not in Old Town.
+- [ ] **The edge:** walls stop you at the north edge of Downtown and at the city's other edges; beyond is plain ground. Roads that reach the east and west edges end in a turning area.
+- [ ] **Performance:** with F3, compare FPS in Downtown's north road and in Old Town. Note both.

@@ -1,9 +1,9 @@
 extends Node
-## Performance baseline for the streamed Old Town. Runs the real game scene in a 1920x1080 window
-## with VSync off, measures several fixed viewpoints and a streaming drive across the district
-## with traffic and pedestrians switched off (M3, comparable across builds), then the spawn
-## street with city life at each density (M4), and prints a Markdown report (paste it into
-## docs/PERFORMANCE.md).
+## Performance baseline for the streamed city (Old Town, and Downtown from M7). Runs the real
+## game scene in a 1920x1080 window with VSync off, measures several fixed viewpoints and a
+## streaming drive across Old Town with traffic and pedestrians switched off (M3, comparable
+## across builds), then the spawn street with city life at each density (M4), and prints a
+## Markdown report (paste it into docs/PERFORMANCE.md).
 ##   "$GODOT" --path . res://tests/perf_baseline.tscn
 ## Needs a real GPU (not --headless). Takes about three minutes; a window opens while it runs.
 
@@ -19,6 +19,10 @@ const VIEWS: Array = [
 	["Temple courtyard", Vector3(22.0, 1.7, 20.0), Vector3(-4.0, 8.0, 0.0)],
 	["Rooftop height over the tank", Vector3(60.0, 14.0, 60.0), Vector3(-20.0, 0.0, -20.0)],
 	["Aerial, whole district (worst case)", Vector3(150.0, 170.0, 150.0), Vector3(0.0, 0.0, 0.0)],
+	["Downtown: north road between the towers", Vector3(3.0, 1.8, -292.0), Vector3(-2.0, 25.0, -470.0)],
+	["Downtown: Central Plaza", Vector3(-60.0, 1.8, -515.0), Vector3(-80.0, 8.0, -552.0)],
+	["Old Town north edge, Downtown skyline ahead", Vector3(-2.0, 1.8, -200.0), Vector3(0.0, 40.0, -600.0)],
+	["Aerial over Downtown (worst case)", Vector3(190.0, 170.0, -230.0), Vector3(0.0, 0.0, -520.0)],
 ]
 const DRIVE_SPEED: float = 20.0   # m/s (72 km/h) along Ring B for the streaming run
 
@@ -39,7 +43,7 @@ func _run() -> void:
 	_game = GAME.instantiate()
 	add_child(_game)
 	await _frames(30)
-	var world := _game.get_node("World") as District
+	var world := _game.get_node("World") as CityWorld
 	var player := _game.get_node("Player") as PlayerController
 	(_game.get_node("HUD") as CanvasLayer).hide()
 	player.process_mode = Node.PROCESS_MODE_DISABLED
@@ -101,7 +105,7 @@ func _set_life(traffic: TrafficManager, people: PedestrianManager, on: bool) -> 
 
 ## The spawn street with no traffic or pedestrians (level -1) or at density `level` once the
 ## ring around the player has filled (up to 40 s), measured like a viewpoint plus CPU times.
-func _measure_life(world: District, player: PlayerController, traffic: TrafficManager,
+func _measure_life(world: CityWorld, player: PlayerController, traffic: TrafficManager,
 		people: PedestrianManager, level: int) -> Dictionary:
 	var view: Array = VIEWS[0]
 	player.global_position = Vector3((view[1] as Vector3).x, 0.2, (view[1] as Vector3).z)
@@ -144,7 +148,7 @@ func _measure_life(world: District, player: PlayerController, traffic: TrafficMa
 	return stats
 
 
-func _measure_view(world: District, player: PlayerController, view: Array, occlusion: bool) -> Dictionary:
+func _measure_view(world: CityWorld, player: PlayerController, view: Array, occlusion: bool) -> Dictionary:
 	var pos: Vector3 = view[1]
 	player.global_position = Vector3(pos.x, 0.2, pos.z)
 	world.streamer.focus = player
@@ -180,7 +184,7 @@ func _measure_view(world: District, player: PlayerController, view: Array, occlu
 
 ## A car-height camera travels along Ring B (z = 112) from the west edge to the east edge at
 ## DRIVE_SPEED while chunks stream in and out around it; records frame times (hitches).
-func _streaming_drive(world: District) -> Dictionary:
+func _streaming_drive(world: CityWorld) -> Dictionary:
 	var marker := Node3D.new()
 	add_child(marker)
 	marker.global_position = Vector3(-240.0, 0.2, 109.0)
@@ -226,7 +230,7 @@ func _frame_stats(times: PackedFloat32Array) -> Dictionary:
 
 func _print_report(results: Array, drive: Dictionary, life: Array) -> void:
 	print("")
-	print("PERFORMANCE BASELINE (Old Town)")
+	print("PERFORMANCE BASELINE (Old Town and Downtown)")
 	print("- GPU: %s (%s)" % [RenderingServer.get_video_adapter_name(), RenderingServer.get_video_adapter_vendor()])
 	print("- CPU: %s, %d threads" % [OS.get_processor_name(), OS.get_processor_count()])
 	print("- Renderer: %s %s, %s, window %s, VSync off" % [ProjectSettings.get_setting("rendering/renderer/rendering_method"),

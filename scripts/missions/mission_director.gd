@@ -31,7 +31,7 @@ const LINGER_DISTANCE: float = 45.0
 var dialogue: DialoguePlayer
 
 var _player: PlayerController
-var _world: District
+var _world: CityWorld
 var _offers: Dictionary = {}          # MissionData -> [start marker, giver or null]
 var _contacts: Dictionary = {}        # StringName -> MissionContactNPC (running mission)
 var _vehicles: Dictionary = {}        # StringName -> VehicleController (running mission)
@@ -68,7 +68,7 @@ func _ready() -> void:
 	add_child(_scene)
 
 
-func setup(player: PlayerController, world: District) -> void:
+func setup(player: PlayerController, world: CityWorld) -> void:
 	_player = player
 	_world = world
 	MissionManager.mission_started.connect(_on_mission_started)

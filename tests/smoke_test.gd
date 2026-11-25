@@ -33,12 +33,13 @@ const VEHICLE_ASSETS: PackedStringArray = [
 ]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
-## Old Town kit pieces that must exist as baked meshes (one surface each).
+## City kit pieces (Old Town and Downtown) that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
 	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
 	"bld_ot_tank", "bld_ot_market_hall", "bld_ot_police_station", "prop_streetlight", "prop_neem_tree",
-	"prop_market_stall_a", "prop_bench",
+	"prop_market_stall_a", "prop_bench", "lot_plaza", "bld_dt_tower_a", "bld_dt_tower_b", "bld_dt_tower_c", "bld_dt_office_a",
+	"bld_dt_office_b", "bld_dt_retail_a", "bld_dt_retail_b", "bld_dt_hotel", "bld_dt_mall", "bld_dt_police", "prop_dt_fountain",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -54,6 +55,9 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_office_01", "buildings/bld_office_02",
 	"buildings/bld_temple_gopuram", "buildings/bld_temple_shrine", "buildings/bld_ot_police_station",
 	"props/prop_streetlight", "props/prop_palm_tree", "props/prop_temple_wall", "props/prop_bench",
+	"buildings/bld_dt_tower_a", "buildings/bld_dt_tower_b", "buildings/bld_dt_tower_c", "buildings/bld_dt_office_a",
+	"buildings/bld_dt_office_b", "buildings/bld_dt_retail_a", "buildings/bld_dt_retail_b", "buildings/bld_dt_hotel",
+	"buildings/bld_dt_mall", "buildings/bld_dt_police", "props/prop_dt_fountain",
 ]
 
 var _catcher: ErrorCatcher
@@ -88,7 +92,7 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
-		_check_streaming, _check_traffic_signals, _check_lane_graph, _check_navmesh,
+		_check_streaming, _check_downtown, _check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
 		_check_vehicle_parked, _check_enter_vehicle, _check_drive_brake_reverse, _check_steering,
@@ -205,13 +209,13 @@ func _check_asset_collisions() -> String:
 		var mesh_path: String = "res://assets/world/kit/%s.res" % kit_name
 		var mesh := load(mesh_path) as ArrayMesh if ResourceLoader.exists(mesh_path) else null
 		if mesh == null or mesh.get_surface_count() != 1 or not (mesh.surface_get_material(0) is ShaderMaterial):
-			return "%s should be one surface with the palette material (run tools/godot/build_old_town.gd)" % mesh_path
+			return "%s should be one surface with the palette material (run tools/godot/build_city.gd)" % mesh_path
 	for asset: String in CHARACTER_ASSETS:
 		var look := load("res://assets/models/%s.glb" % asset) as PackedScene
 		var mesh: ArrayMesh = CharacterBaker.get_mesh(look)
 		if mesh == null or mesh.get_surface_count() != 1:
 			return "%s should bake to one animated surface" % asset
-	print("  ok  %d Blender assets imported, each with visuals and collision (baking to convex hulls); %d vehicle and %d pedestrian models (visuals only, pedestrians bake to one draw call); %d Old Town kit meshes baked to one draw call each" % [
+	print("  ok  %d Blender assets imported, each with visuals and collision (baking to convex hulls); %d vehicle and %d pedestrian models (visuals only, pedestrians bake to one draw call); %d city kit meshes baked to one draw call each" % [
 		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size(), CHARACTER_ASSETS.size(), KIT_MESHES.size()])
 	return ""
 
@@ -288,9 +292,10 @@ func _check_new_game() -> String:
 		return "New Game did not load the game scene"
 	if _player() == null:
 		return "game scene has no player"
-	var world := game.get_node_or_null("World") as District
-	if world == null or world.get_display_name() != "Old Town":
-		return "New Game should start in the Old Town district"
+	var world := game.get_node_or_null("World") as CityWorld
+	var regions := game.get_node_or_null("Regions") as RegionWatcher
+	if world == null or regions == null or regions.get_current_name() != "Old Town":
+		return "New Game should start in the Old Town district of the city"
 	var buildings: int = 0
 	for c: Vector2i in world.streamer.get_loaded_coords():
 		buildings += world.streamer.get_chunk(c).get_node("Buildings").get_child_count()
@@ -465,13 +470,14 @@ func _check_kerb_step_up() -> String:
 ## chunks there stream in on a background thread, the chunk around the spawn is freed and the
 ## sedan parked there freezes (its ground is gone). Then everything is put back.
 func _check_streaming() -> String:
-	var world: District = _world()
+	var world: CityWorld = _world()
 	var streamer: WorldStreamer = world.streamer
-	var data: DistrictData = world.data
-	for z: int in data.chunk_count.y:
-		for x: int in data.chunk_count.x:
-			if not ResourceLoader.exists(data.chunk_path(Vector2i(x, z))):
-				return "chunk scene missing: " + data.chunk_path(Vector2i(x, z))
+	var data: CityData = world.data
+	if data.chunks.size() < 32:
+		return "the city should have at least Old Town's and Downtown's 32 chunks (%d)" % data.chunks.size()
+	for c: Vector2i in data.chunks:
+		if not ResourceLoader.exists(data.chunk_path(c)):
+			return "chunk scene missing: " + data.chunk_path(c)
 	var player: PlayerController = _player()
 	var car: VehicleController = _car()
 	var spawn_chunk: Vector2i = data.chunk_at(player.global_position)
@@ -479,13 +485,14 @@ func _check_streaming() -> String:
 	var corner := Node3D.new()
 	get_tree().current_scene.add_child(corner)
 	corner.global_position = Vector3(-230.0, 0.0, -230.0)
+	var corner_chunk: Vector2i = data.chunk_at(corner.global_position)
 	player.process_mode = Node.PROCESS_MODE_DISABLED
 	streamer.focus = corner
 	var frames: int = 0
-	while frames < 900 and not (streamer.is_chunk_loaded(Vector2i(0, 0)) and not streamer.is_chunk_loaded(spawn_chunk)):
+	while frames < 900 and not (streamer.is_chunk_loaded(corner_chunk) and not streamer.is_chunk_loaded(spawn_chunk)):
 		await get_tree().physics_frame
 		frames += 1
-	var streamed_in: bool = streamer.is_chunk_loaded(Vector2i(0, 0))
+	var streamed_in: bool = streamer.is_chunk_loaded(corner_chunk)
 	var streamed_out: bool = not streamer.is_chunk_loaded(spawn_chunk)
 	var far_count: int = streamer.get_loaded_count()
 	var car_frozen: bool = car.freeze
@@ -495,7 +502,7 @@ func _check_streaming() -> String:
 	corner.queue_free()
 	await _physics_frames(20)
 	if not streamed_in or not streamed_out:
-		return "moving the focus to the far corner should load chunk (0, 0) and free the spawn chunk (in %s, out %s)" % [streamed_in, streamed_out]
+		return "moving the focus to Old Town's far corner should load chunk %s and free the spawn chunk (in %s, out %s)" % [corner_chunk, streamed_in, streamed_out]
 	if not car_frozen or car.freeze:
 		return "the parked sedan should freeze while its chunk is unloaded and thaw when it is back (frozen %s, now %s)" % [car_frozen, car.freeze]
 	if not player.is_on_floor():
@@ -503,8 +510,68 @@ func _check_streaming() -> String:
 	for c: Vector2i in streamer.wanted_chunks(player.global_position):
 		if not streamer.is_chunk_loaded(c):
 			return "after streaming back, chunk %s near the player is missing" % c
-	print("  ok  streaming: %d of 16 chunks around the spawn; at the far corner %d chunks streamed in on a background thread within %.1f s, the spawn chunk was freed and its parked sedan froze; all restored" % [
-		start_count, far_count, frames / 60.0])
+	print("  ok  streaming: %d of the city's %d chunks around the spawn; at Old Town's far corner %d chunks streamed in on a background thread within %.1f s, the spawn chunk was freed and its parked sedan froze; all restored" % [
+		start_count, data.chunks.size(), far_count, frames / 60.0])
+	return ""
+
+
+## M7: Downtown, the second district, north of Old Town. Its streets carry on from Old Town's
+## (a road route crosses the border), it has its own police station, its towers stand on the
+## always-loaded skyline, walls close the edge of the city, and walking in shows its name.
+func _check_downtown() -> String:
+	var game := get_tree().current_scene as GameSession
+	var world: CityWorld = _world()
+	var data: CityData = world.data
+	var downtown: int = data.region_names.find("Downtown")
+	if downtown < 0 or data.region_names.find("Old Town") < 0:
+		return "the city should have Old Town and Downtown (%s)" % data.region_names
+	var rect: Rect2 = data.region_rects[downtown]
+	if not rect.has_point(Vector2(0.0, -512.0)) or not rect.size.is_equal_approx(Vector2(512.0, 512.0)):
+		return "Downtown should be the 512 m square north of Old Town (%s)" % rect
+	var router := RoadRouter.for_graph(world.get_lane_graph())
+	var plaza := Vector3(-80.0, 0.0, -552.0)
+	var route: PackedVector3Array = router.route(Vector3(97.0, 0.0, 4.75), plaza)
+	if route.size() < 2 or Vector2(route[route.size() - 1].x - plaza.x, route[route.size() - 1].z - plaza.z).length() > 40.0:
+		return "no road route from the bus stand to Central Plaza (%d points)" % route.size()
+	var length: float = 0.0
+	for i: int in route.size() - 1:
+		length += route[i].distance_to(route[i + 1])
+	var skyline := world.get_node_or_null("Landmarks/Skyline") as MeshInstance3D
+	if skyline == null or skyline.mesh == null or skyline.mesh.get_aabb().end.y < 60.0:
+		return "the towers should have stand-ins on the always-loaded skyline"
+	var edge := world.get_node_or_null("Landmarks/CityEdge") as StaticBody3D
+	if edge == null or edge.get_child_count() < 6:
+		return "walls should close the edge of the city (Landmarks/CityEdge)"
+	# Walk into Downtown: the chunks there load, towers stand in them, the HUD names the district.
+	var player: PlayerController = _player()
+	var regions := game.get_node("Regions") as RegionWatcher
+	var back := Transform3D(Basis(Vector3.UP, player.model.rotation.y), player.global_position)
+	game.place_player(Transform3D(Basis.IDENTITY, Vector3(8.0, 0.25, -400.0)))   # sidewalk of the north road
+	var frames: int = 0
+	while frames < 120 and regions.get_current_name() != "Downtown":
+		await get_tree().physics_frame
+		frames += 1
+	await _physics_frames(5)
+	var title: String = _hud().get_area_title()
+	var towers: int = 0
+	for c: Vector2i in world.streamer.get_loaded_coords():
+		for b: Node in world.streamer.get_chunk(c).get_node("Buildings").get_children():
+			towers += 1 if str(b.name).contains("dt_tower") else 0
+	var on_floor: bool = player.is_on_floor()
+	game.place_player(back)
+	await _physics_frames(40)
+	if regions.get_current_name() != "Downtown" and title != "DOWNTOWN":
+		return "walking into Downtown should show its name (district '%s', title '%s')" % [regions.get_current_name(), title]
+	if title != "DOWNTOWN":
+		return "the DOWNTOWN title card should show on arrival (got '%s')" % title
+	if towers < 5:
+		return "only %d towers loaded around Downtown's north road" % towers
+	if not on_floor:
+		return "the player should stand on Downtown's sidewalk"
+	if regions.get_current_name() != "Old Town":
+		return "back at the bus stand the player should be in Old Town again (%s)" % regions.get_current_name()
+	print("  ok  Downtown: the 512 m square north of Old Town, its streets carry on from Old Town's (route to Central Plaza %.0f m by road), %d police stations in the city, %d towers around its north road, DOWNTOWN title card on arrival, skyline stand-ins and walls at the city's edge" % [
+		length, data.police_stations.size(), towers])
 	return ""
 
 
@@ -723,8 +790,9 @@ func _check_hud() -> String:
 	var places := game.get_node_or_null("Places") as PlaceDirector
 	if places == null or places.get_map_blips().size() != 2:
 		return "at the start the tiffin stall and the garage should be on the map (the clothes shop and the house come later)"
-	if game.get_node("World").data.police_station.origin == Vector3.ZERO:
-		return "Old Town has no police station to release you at"
+	var stations: Array[Transform3D] = (game.get_node("World") as CityWorld).data.police_stations
+	if stations.size() < 2 or stations[0].origin == Vector3.ZERO:
+		return "Old Town and Downtown should each have a police station to release you at (%d)" % stations.size()
 	print("  ok  HUD health/stamina bars follow the player; F3 toggles the FPS / chunks / cars / people readout; no wanted stars or police at the start; the player is the character model in travelling clothes; the tiffin stall and garage on the map")
 	return ""
 
@@ -1179,8 +1247,8 @@ func _player() -> PlayerController:
 	return scene.get_node_or_null("Player") as PlayerController if scene != null else null
 
 
-func _world() -> District:
-	return get_tree().current_scene.get_node("World") as District
+func _world() -> CityWorld:
+	return get_tree().current_scene.get_node("World") as CityWorld
 
 
 func _car() -> VehicleController:

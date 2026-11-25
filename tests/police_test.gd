@@ -179,9 +179,9 @@ func _check_escalation_and_evading() -> String:
 
 
 func _check_pursuit_and_bust() -> String:
-	var station: Transform3D = _game.world.data.police_station
+	var station: Transform3D = _game.world.data.nearest_police_station(_player.global_position)
 	if station.origin == Vector3.ZERO:
-		return "the district has no police station"
+		return "the city has no police station"
 	EconomyManager.set_cash(1500)
 	var cash: int = EconomyManager.cash
 	var expected_fine: int = maxi(WantedSystem.tuning.fine_min, int(cash * WantedSystem.tuning.fine_share))

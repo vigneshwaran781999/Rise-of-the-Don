@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Re-runs every Blender asset generator, re-imports the project in Godot, then rebuilds the
-# streamed Old Town district (kit meshes, chunk scenes, navmesh, lane graph).
+# streamed city (kit meshes, chunk scenes, navmesh, lane graph, map).
 # Run from the project root in Git Bash:   bash tools/blender/build_all.sh
 set -euo pipefail
 BLENDER="${BLENDER:-/c/Program Files/Blender Foundation/Blender 4.0/blender.exe}"
@@ -14,6 +14,7 @@ GENERATORS=(
   vehicles.py
   characters.py
   old_town.py
+  downtown.py
 )
 
 for gen in "${GENERATORS[@]}"; do
@@ -24,9 +25,9 @@ done
 echo "== Godot import"
 "$GODOT" --headless --path . --import 2>&1 | grep -E "ERROR|SCRIPT ERROR" | grep -v "NET Sdk not found" || true
 
-echo "== Old Town district"
-"$GODOT" --headless --path . --script res://tools/godot/build_old_town.gd 2>&1 | grep -E "build_old_town|ERROR" || true
+echo "== City (every district)"
+"$GODOT" --headless --path . --script res://tools/godot/build_city.gd 2>&1 | grep -E "build_city|ERROR" || true
 
-echo "== Godot import (the district map image the build just drew)"
+echo "== Godot import (the city map image the build just drew)"
 "$GODOT" --headless --path . --import 2>&1 | grep -E "ERROR|SCRIPT ERROR" | grep -v "NET Sdk not found" || true
 echo "done"

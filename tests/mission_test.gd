@@ -97,7 +97,7 @@ func _check_new_game() -> String:
 		return "the first hint should name the movement keys (got '%s')" % _mhud.get_hint_shown()
 	if _mhud.waypoint.target == null or _mhud.waypoint.target.global_position.distance_to(active.objectives[0].position) > 0.5:
 		return "the waypoint doesn't point at the first goal"
-	var spawn: Vector3 = (_game.get_node("World") as District).get_spawn_transform().origin
+	var spawn: Vector3 = (_game.get_node("World") as CityWorld).get_spawn_transform().origin
 	if _player.global_position.distance_to(spawn) > 1.0 or spawn.distance_to(active.start_position) > 1.0:
 		return "the player should start at the bus stand (%s; mission start %s)" % [_player.global_position, active.start_position]
 	if _director.has_offer(MissionManager.get_mission(&"first_opportunity")):
@@ -282,7 +282,7 @@ func _check_restart_and_finish() -> String:
 		return "the clock should start at 2:00 (shows '%s')" % timer_text
 	# Drive: put the car (with the player in it) in the market marker, stopped.
 	var goal: Vector3 = mission.objectives[3].position
-	var world := _game.get_node("World") as District
+	var world := _game.get_node("World") as CityWorld
 	world.streamer.load_around_now(goal)
 	car.teleport(Transform3D(Basis(Vector3.UP, -PI * 0.5), goal + Vector3(1.0, 0.6, 0.0)))
 	await _ticks(10)

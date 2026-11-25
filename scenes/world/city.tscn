@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/city_world.gd" id="1_city"]
+[ext_resource type="Resource" path="res://resources/world/city.tres" id="2_data"]
+[ext_resource type="Script" path="res://scripts/world/world_lighting.gd" id="3_light"]
+[ext_resource type="Resource" path="res://resources/world/old_town_afternoon.tres" id="4_preset"]
+[ext_resource type="Script" path="res://scripts/world/world_streamer.gd" id="5_streamer"]
+[ext_resource type="PackedScene" path="res://scenes/world/chunks/city/landmarks.scn" id="6_landmarks"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="7_sedan"]
+
+[node name="City" type="Node3D"]
+script = ExtResource("1_city")
+data = ExtResource("2_data")
+
+[node name="Lighting" type="Node3D" parent="."]
+script = ExtResource("3_light")
+preset = ExtResource("4_preset")
+
+[node name="WorldStreamer" type="Node3D" parent="."]
+script = ExtResource("5_streamer")
+city = ExtResource("2_data")
+
+[node name="Landmarks" parent="." instance=ExtResource("6_landmarks")]
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+position = Vector3(86.5, 0.2, 8)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="Vehicles" type="Node3D" parent="."]
+
+[node name="Sedan" parent="Vehicles" instance=ExtResource("7_sedan")]
+position = Vector3(62, 0.6, 4.75)
+rotation = Vector3(0, -1.5708, 0)
+
+[node name="SedanRingB" parent="Vehicles" instance=ExtResource("7_sedan")]
+position = Vector3(-130, 0.6, 116.75)
+rotation = Vector3(0, -1.5708, 0)
+
+[node name="SedanNorthRoad" parent="Vehicles" instance=ExtResource("7_sedan")]
+position = Vector3(-4.75, 0.6, -165)
+rotation = Vector3(0, 3.14159, 0)

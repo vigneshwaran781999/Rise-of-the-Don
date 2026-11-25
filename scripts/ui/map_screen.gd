@@ -1,6 +1,6 @@
 class_name MapScreen
 extends CanvasLayer
-## The full map (GDD §11): the whole district with place names, the blips (missions, the
+## The full map (GDD §11): the whole city with district and place names, the blips (missions, the
 ## objective, shops, property, police), the player and the GPS route. Pan by dragging or with
 ## the movement keys / left stick, zoom with the wheel or the zoom keys / triggers; click (or
 ## press accept at the crosshair) to set a waypoint, click it again or right-click to clear it.
@@ -10,7 +10,7 @@ signal closed
 
 const PAN_SPEED: float = 700.0          # screen pixels per second with the keys / stick
 const ZOOM_STEP: float = 1.15
-const MIN_ZOOM_FACTOR: float = 0.8      # of the zoom that fits the whole district
+const MIN_ZOOM_FACTOR: float = 0.8      # of the zoom that fits the whole city
 const MAX_ZOOM: float = 14.0            # pixels per metre
 const CLICK_SLOP: float = 6.0
 
@@ -18,7 +18,7 @@ var _root: Control
 var _view: Control
 var _player: PlayerController
 var _navigator: GpsNavigator
-var _district: DistrictData
+var _city: CityData
 var _texture: Texture2D
 var _font: Font
 var _zoom: float = 2.0
@@ -36,11 +36,11 @@ func _ready() -> void:
 	_root.hide()
 
 
-func setup(player: PlayerController, district: DistrictData, navigator: GpsNavigator) -> void:
+func setup(player: PlayerController, city: CityData, navigator: GpsNavigator) -> void:
 	_player = player
-	_district = district
+	_city = city
 	_navigator = navigator
-	_texture = district.get_map_texture()
+	_texture = city.get_map_texture()
 
 
 func is_open() -> bool:
@@ -48,14 +48,14 @@ func is_open() -> bool:
 
 
 func open(from_pause: bool = false) -> void:
-	if _district == null:
+	if _city == null:
 		return
 	_from_pause = from_pause
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_root.show()
 	_zoom = _fit_zoom()
-	_pan = _district.get_bounds().get_center()     # the whole district in view to begin with
+	_pan = _city.get_bounds().get_center()     # the whole city in view to begin with
 	_view.queue_redraw()
 	AudioManager.play_ui(&"ui_accept")
 
@@ -160,28 +160,38 @@ func _on_view_input(event: InputEvent) -> void:
 
 
 func _fit_zoom() -> float:
-	var bounds: Rect2 = _district.get_bounds()
+	var bounds: Rect2 = _city.get_bounds()
 	return minf(_view.size.x / bounds.size.x, _view.size.y / bounds.size.y) * 0.95
 
 
 func _clamp_pan() -> void:
-	var bounds: Rect2 = _district.get_bounds()
+	var bounds: Rect2 = _city.get_bounds()
 	_pan = _pan.clamp(bounds.position, bounds.end)
 
 
 func _draw_view() -> void:
-	if _district == null:
+	if _city == null:
 		return
-	var bounds: Rect2 = _district.get_bounds()
+	var bounds: Rect2 = _city.get_bounds()
 	var top_left: Vector2 = world_to_screen(bounds.position)
 	_view.draw_rect(Rect2(Vector2.ZERO, _view.size), Color(0.04, 0.05, 0.08))
 	if _texture != null:
 		_view.draw_texture_rect(_texture, Rect2(top_left, bounds.size * _zoom), false)
 	_view.draw_rect(Rect2(top_left, bounds.size * _zoom), Color(UIStyle.CYAN, 0.6), false, 2.0)
+	# Districts: thin borders and their names, big and faint under the place names.
+	for i: int in _city.region_rects.size():
+		var r: Rect2 = _city.region_rects[i]
+		_view.draw_rect(Rect2(world_to_screen(r.position), r.size * _zoom), Color(UIStyle.CYAN, 0.25), false, 1.5)
+		var title: String = _city.region_names[i].to_upper()
+		var title_size: int = clampi(roundi(r.size.x * _zoom * 0.09), 22, 64)
+		var tw: float = _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size).x
+		var title_at: Vector2 = world_to_screen(r.get_center()) + Vector2(-tw * 0.5, title_size * 0.35)
+		_view.draw_string_outline(_font, title_at, title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, 8, Color(0, 0, 0, 0.45))
+		_view.draw_string(_font, title_at, title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Color(UIStyle.MAGENTA, 0.55))
 	# Place names.
-	for i: int in _district.map_label_texts.size():
-		var text: String = _district.map_label_texts[i]
-		var at: Vector2 = world_to_screen(_district.map_label_positions[i])
+	for i: int in _city.map_label_texts.size():
+		var text: String = _city.map_label_texts[i]
+		var at: Vector2 = world_to_screen(_city.map_label_positions[i])
 		var font_size: int = 18 if _zoom < 3.0 else 22
 		var w: float = _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 		_view.draw_string_outline(_font, at - Vector2(w * 0.5, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 6, Color(0, 0, 0, 0.85))
@@ -208,8 +218,9 @@ func _draw_view() -> void:
 	var mid: Vector2 = _view.size * 0.5
 	for d: Vector2 in [Vector2(14, 0), Vector2(-14, 0), Vector2(0, 14), Vector2(0, -14)]:
 		_view.draw_line(mid + d * 0.4, mid + d, Color(1, 1, 1, 0.7), 2.0)
-	_view.draw_string_outline(_font, Vector2(40, 64), "%s  ·  VELANAGAR" % _district.display_name.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 40, 8, Color(0, 0, 0, 0.8))
-	_view.draw_string(_font, Vector2(40, 64), "%s  ·  VELANAGAR" % _district.display_name.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 40, UIStyle.MAGENTA)
+	var header: String = get_header()
+	_view.draw_string_outline(_font, Vector2(40, 64), header, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, 8, Color(0, 0, 0, 0.8))
+	_view.draw_string(_font, Vector2(40, 64), header, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, UIStyle.MAGENTA)
 	var legend_at := Vector2(40, _view.size.y - 40.0 - MapIcons.LEGEND.size() * 30.0)
 	_view.draw_rect(Rect2(legend_at - Vector2(16, 26), Vector2(190, MapIcons.LEGEND.size() * 30.0 + 20.0)), Color(UIStyle.PANEL_BG, 0.85))
 	for i: int in MapIcons.LEGEND.size():
@@ -236,3 +247,11 @@ func _build() -> void:
 	_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_view.draw.connect(_draw_view)
 	_view.gui_input.connect(_on_view_input)
+
+
+## The title at the top: the district the player is in, then the city.
+func get_header() -> String:
+	if _city == null or _player == null:
+		return ""
+	var region: String = _city.get_region_name(_city.region_at(_player.global_position))
+	return "%s  ·  %s" % [region.to_upper(), _city.display_name.to_upper()] if region != "" else _city.display_name.to_upper()

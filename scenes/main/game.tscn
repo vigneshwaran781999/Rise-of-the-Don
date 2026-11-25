@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/systems/game_session.gd" id="1_game"]
-[ext_resource type="PackedScene" path="res://scenes/world/old_town.tscn" id="2_block"]
+[ext_resource type="PackedScene" path="res://scenes/world/city.tscn" id="2_block"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="5_pause"]
@@ -34,6 +34,7 @@
 [ext_resource type="Script" path="res://scripts/ui/shop_menu.gd" id="32_shopmenu"]
 [ext_resource type="Script" path="res://scripts/shops/shop_data.gd" id="33_shopdata"]
 [ext_resource type="Script" path="res://scripts/shops/property_data.gd" id="34_propdata"]
+[ext_resource type="Script" path="res://scripts/world/region_watcher.gd" id="35_regions"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -117,3 +118,6 @@ script = ExtResource("26_busted")
 [node name="ShopMenu" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("32_shopmenu")
+
+[node name="Regions" type="Node" parent="."]
+script = ExtResource("35_regions")

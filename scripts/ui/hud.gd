@@ -71,7 +71,7 @@ func bind_interactor(interactor: VehicleInteractor) -> void:
 
 
 ## Shows the minimap of `district` around the player, with the GPS route.
-func bind_map(player: PlayerController, district: DistrictData, navigator: GpsNavigator) -> void:
+func bind_map(player: PlayerController, district: CityData, navigator: GpsNavigator) -> void:
 	_minimap.bind(player, district, navigator)
 
 

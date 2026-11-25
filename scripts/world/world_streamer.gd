@@ -1,6 +1,6 @@
 class_name WorldStreamer
 extends Node3D
-## Streams a district's chunk scenes in and out around a focus node (GDD §2: "a grid of
+## Streams the city's chunk scenes in and out around a focus node (GDD §2: "a grid of
 ## chunks, each its own scene, streamed in and out around the player by a WorldStreamer").
 ## Chunks within load_distance are loaded on a background thread (ResourceLoader threaded
 ## requests) and added at most one per frame; chunks beyond unload_distance are freed.
@@ -11,7 +11,7 @@ signal chunk_unloaded(coord: Vector2i)
 
 const MONITOR: StringName = &"world/chunks_loaded"
 
-@export var district: DistrictData
+@export var city: CityData
 ## A chunk is loaded when its nearest point is this close to the focus (metres).
 @export var load_distance: float = 200.0
 ## ...and freed when it is further than this (larger, so chunks don't flicker in and out).
@@ -61,19 +61,19 @@ func is_chunk_loaded(coord: Vector2i) -> bool:
 
 
 func is_position_loaded(pos: Vector3) -> bool:
-	return _loaded.has(district.chunk_at(pos))
+	return _loaded.has(city.chunk_at(pos))
 
 
 ## Chunks that should be loaded around pos, nearest first.
 func wanted_chunks(pos: Vector3) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
-	for z: int in district.chunk_count.y:
-		for x: int in district.chunk_count.x:
+	for z: int in city.chunk_count.y:
+		for x: int in city.chunk_count.x:
 			var c := Vector2i(x, z)
-			if district.distance_to_chunk(pos, c) <= load_distance:
+			if city.has_chunk(c) and city.distance_to_chunk(pos, c) <= load_distance:
 				out.append(c)
 	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return district.distance_to_chunk(pos, a) < district.distance_to_chunk(pos, b))
+		return city.distance_to_chunk(pos, a) < city.distance_to_chunk(pos, b))
 	return out
 
 
@@ -87,7 +87,7 @@ func load_around_now(pos: Vector3) -> void:
 			_requested.erase(c)
 			_add_chunk(c, ResourceLoader.load_threaded_get(path) as PackedScene)
 		else:
-			_add_chunk(c, load(district.chunk_path(c)) as PackedScene)
+			_add_chunk(c, load(city.chunk_path(c)) as PackedScene)
 	_unload_far(pos)
 	_update_frozen_vehicles()
 
@@ -95,13 +95,13 @@ func load_around_now(pos: Vector3) -> void:
 func _process(delta: float) -> void:
 	_finish_one_request()
 	_timer -= delta
-	if _timer > 0.0 or focus == null or district == null:
+	if _timer > 0.0 or focus == null or city == null:
 		return
 	_timer = update_interval
 	var pos: Vector3 = focus.global_position
 	for c: Vector2i in wanted_chunks(pos):
 		if not _loaded.has(c) and not _requested.has(c):
-			var path: String = district.chunk_path(c)
+			var path: String = city.chunk_path(c)
 			if ResourceLoader.load_threaded_request(path, "PackedScene") == OK:
 				_requested[c] = path
 	_unload_far(pos)
@@ -120,7 +120,7 @@ func _finish_one_request() -> void:
 		if status != ResourceLoader.THREAD_LOAD_LOADED or scene == null:
 			push_error("WorldStreamer: could not load chunk %s (%s)" % [c, path])
 			return
-		if focus == null or district.distance_to_chunk(focus.global_position, c) <= unload_distance:
+		if focus == null or city.distance_to_chunk(focus.global_position, c) <= unload_distance:
 			_add_chunk(c, scene)
 		return
 
@@ -136,7 +136,7 @@ func _add_chunk(c: Vector2i, scene: PackedScene) -> void:
 
 func _unload_far(pos: Vector3) -> void:
 	for c: Vector2i in _loaded.keys():
-		if district.distance_to_chunk(pos, c) > unload_distance:
+		if city.distance_to_chunk(pos, c) > unload_distance:
 			(_loaded[c] as Node3D).queue_free()
 			_loaded.erase(c)
 			chunk_unloaded.emit(c)

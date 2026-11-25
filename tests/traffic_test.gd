@@ -39,7 +39,7 @@ func _ready() -> void:
 func _run() -> void:
 	_traffic = _game.get_node("Traffic") as TrafficManager
 	_player = _game.get_node("Player") as PlayerController
-	_graph = (_game.get_node("World") as District).get_lane_graph()
+	_graph = (_game.get_node("World") as CityWorld).get_lane_graph()
 	var people := _game.get_node("Pedestrians") as PedestrianManager
 	people.enabled = false     # cars only: people stepping into the road would make it random
 	people.clear()

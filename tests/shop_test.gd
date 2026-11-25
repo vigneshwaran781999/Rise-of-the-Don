@@ -81,7 +81,7 @@ func _run() -> void:
 
 
 func _check_places() -> String:
-	var data: DistrictData = _game.world.data
+	var data: CityData = _game.world.data
 	for place_id: StringName in [&"tiffin", &"textiles", &"garage", &"house", &"police_station"]:
 		if not data.places.has(place_id):
 			return "the district has no place '%s'" % place_id

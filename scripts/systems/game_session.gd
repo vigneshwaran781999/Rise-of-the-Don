@@ -10,9 +10,8 @@ extends Node3D
 
 const ENTER_BLEND_SECONDS: float = 0.6
 const EXIT_BLEND_SECONDS: float = 0.45
-const DISTRICT_ID: String = "old_town"
 
-@onready var world: District = $World
+@onready var world: CityWorld = $World
 @onready var player: PlayerController = $Player
 @onready var hud: Hud = $HUD
 @onready var pause_menu: PauseMenu = $PauseMenu
@@ -29,6 +28,7 @@ const DISTRICT_ID: String = "old_town"
 @onready var busted_screen: BustedScreen = $Busted
 @onready var places: PlaceDirector = $Places
 @onready var shop_menu: ShopMenu = $ShopMenu
+@onready var regions: RegionWatcher = $Regions
 
 
 func _ready() -> void:
@@ -58,7 +58,9 @@ func _ready() -> void:
 		player.stats.set_health(float((saved.get("player", {}) as Dictionary).get("health", player.stats.health)))
 	hud.bind_player(player.stats)
 	hud.bind_interactor(player.get_node("VehicleInteractor") as VehicleInteractor)
-	hud.show_area_title(world.get_display_name().to_upper(), "VELANAGAR")
+	regions.setup(player, world.data)
+	_show_region(regions.get_current())
+	regions.region_changed.connect(_show_region)
 	lane_debug.setup(world.get_lane_graph(), player, world)
 	day_night.setup(world.get_node("Lighting") as WorldLighting, world.streamer)
 	traffic.setup(world.get_lane_graph(), player, world.streamer)
@@ -97,22 +99,22 @@ func collect_player_save() -> Dictionary:
 	if player.is_in_vehicle() and player.vehicle != null:
 		at = (player.get_node("VehicleInteractor") as VehicleInteractor).find_exit_position(player.vehicle)
 	return {
-		"district": DISTRICT_ID,
+		"district": str(regions.get_current_id()),
 		"position": [at.x, at.y, at.z],
 		"yaw": player.camera_rig.get_yaw(),
 		"health": player.stats.health,
 	}
 
 
-## Arrested (GDD §7): the BUSTED card, a fine, out at the police station's door with the police
-## gone; a mission that was running fails.
+## Arrested (GDD §7): the BUSTED card, a fine, out at the nearest police station's door with the
+## police gone; a mission that was running fails.
 func _on_busted() -> void:
 	var tuning: WantedTuning = WantedSystem.tuning
 	var fine: int = mini(EconomyManager.cash, maxi(tuning.fine_min, int(EconomyManager.cash * tuning.fine_share)))
 	var mission_running: bool = MissionManager.is_active() and not MissionManager.is_failed()
 	await busted_screen.play(fine)
 	police.clear_all()
-	place_player(world.data.police_station)
+	place_player(world.data.nearest_police_station(player.global_position))
 	EconomyManager.try_spend(fine, &"fine")
 	if mission_running and MissionManager.is_active():
 		MissionManager.fail("You were busted.")
@@ -157,3 +159,9 @@ func _on_vehicle_exited(_vehicle: VehicleController) -> void:
 	camera_transition.blend_to(rig.camera, EXIT_BLEND_SECONDS)
 	vehicle_camera.deactivate()
 	hud.unbind_vehicle()
+
+
+## The district's name fades in at the top of the screen (on arrival, and when you cross into another).
+func _show_region(index: int) -> void:
+	var title: String = world.data.get_region_name(index)
+	hud.show_area_title((title if title != "" else world.get_display_name()).to_upper(), "VELANAGAR")

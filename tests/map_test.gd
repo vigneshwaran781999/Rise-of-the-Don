@@ -62,14 +62,16 @@ func _run() -> void:
 
 
 func _check_map_image() -> String:
-	var district: DistrictData = _game.world.data
+	var district: CityData = _game.world.data
 	var texture: Texture2D = district.get_map_texture()
 	if texture == null:
 		return "the district has no map texture (%s)" % district.map_texture_path
 	var image: Image = texture.get_image()
+	if image != null and image.is_compressed():
+		image.decompress()     # block-compressed for the GPU (M7)
 	var bounds: Rect2 = district.get_bounds()
 	if image == null or image.get_width() < 1024 or not is_equal_approx(float(image.get_width()) / bounds.size.x, float(image.get_height()) / bounds.size.y):
-		return "the map image is missing or not square to the district (%s)" % [image.get_size() if image else "none"]
+		return "the map image is missing or not to scale with the city (%s)" % [image.get_size() if image else "none"]
 	var sample := func(x: float, z: float) -> Color:
 		var px := Vector2i(int((x - bounds.position.x) / bounds.size.x * image.get_width()), int((z - bounds.position.y) / bounds.size.y * image.get_height()))
 		return image.get_pixelv(px)
@@ -82,7 +84,7 @@ func _check_map_image() -> String:
 		return "the temple tank should be water-blue on the map (%s)" % water.to_html(false)
 	if district.map_label_texts.size() < 4 or district.map_label_texts.size() != district.map_label_positions.size():
 		return "the map has %d place names" % district.map_label_texts.size()
-	_note("map image %dx%d px for the 512 m district: road, building and water where the layout has them; %d place names" % [
+	_note("map image %dx%d px for the whole city: road, building and water where the layout has them; %d place names" % [
 		image.get_width(), image.get_height(), district.map_label_texts.size()])
 	return ""
 

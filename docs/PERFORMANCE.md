@@ -114,3 +114,29 @@ Same machine (Intel UHD Graphics 730, i5-12400) and settings.
 - **The number and reach of real street lights** belong in the graphics quality preset (0 on Low; more on a discrete GPU, where they are far cheaper).
 - **Day/night updates:** update the cycle less often (or only the sky every few seconds) on Low.
 - **The usual levers** from M3: SSAO, glow, shadow distance and 3D resolution.
+
+## M7 step 1: the city and Downtown (2026-11-25)
+
+Same machine (Intel UHD Graphics 730, i5-12400) and settings. The city now has two districts (Old Town and Downtown, 32 chunks); the always-loaded landmark scene also carries the skyline stand-ins (65 tall buildings in one mesh) and the ground and walls at the city's edge.
+
+| Viewpoint | FPS | avg ms | 1% worst ms | draw calls | primitives |
+|---|---:|---:|---:|---:|---:|
+| Spawn street, 13:00 | 36 | 28.03 | 31.73 | 298 | 390,556 |
+| Spawn street, night 21:30 | 29 | 34.83 | 38.75 | 276 | 356,330 |
+| Aerial over Old Town (worst case) | 30 | 33.48 | 37.70 | 242 | 286,582 |
+| Downtown: north road between the towers | 33 | 30.56 | 34.71 | 255 | 267,362 |
+| Downtown: Central Plaza | 37 | 26.92 | 30.87 | 159 | 207,828 |
+| Old Town north edge, Downtown skyline ahead | 34 | 29.18 | 32.83 | 339 | 328,756 |
+| Aerial over Downtown (worst case) | 35 | 28.62 | 31.90 | 177 | 171,902 |
+| Sky only | 64 | 15.70 | 20.58 | 7 | 10,048 |
+| Spawn street, SSAO and glow off | 62 | 16.18 | 17.63 | 296 | 388,284 |
+
+- **Streaming drive along Ring B:** 37 FPS average, worst frame 33.1 ms.
+- **City life at the spawn street:** 36 FPS at every density (27.8–28.2 ms).
+- **Video memory:** 259 MB (the city map is block-compressed: about 4 MB for the two districts).
+
+### What it shows
+
+- **Downtown costs no more than Old Town.** Each tower is one draw call, like any Old Town building, and the big blocks mean fewer buildings and props per chunk than Old Town's tight lanes.
+- **The skyline stand-ins and the ground under the city cost nothing measurable.** Old Town's rows are the same as or slightly faster than in M6.
+- **The fixed cost dominates, as before:** the sky-only row is 15.7 ms. SSAO and glow together are about 12 ms at the spawn street.

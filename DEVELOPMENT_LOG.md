@@ -400,3 +400,52 @@ Dated entries: what was built, what broke, how it was fixed.
     - **Street lights:** the pool is now 4 lights with a 16 m reach; their count, reach and brightness moved into `day_night.tres`. Night is 36 ms against 28 ms by day.
     - **Baseline fixes:** the baseline now holds the clock at 13:00 with a separate night row. It also pauses the cycle while switching SSAO and glow off, because its presets had been switching them back on.
     - **Rename:** the mission test's checks follow the M2 character rename.
+
+## 2026-11-25 — M7: expansion (in progress)
+
+**Scope agreed with the user:**
+- **Districts:** each new district is a 512 m square like Old Town (Countryside about twice that), joined into one city about 1.5 km across.
+- **Story:** a compact campaign of about 10 more missions with 6–8 new characters and 2 endings.
+- **Combat:** fists only, with death sending you to a hospital.
+
+**Built**
+- **Step 1, the city and Downtown (GDD §2):**
+  - **One street generator for every district:**
+    - Old Town's generator is split into a shared `DistrictLayout` (street grid, blocks, sidewalks, frontages, lanes, special buildings) and `OldTownLayout` (temple, tank, market, bus stand, its special buildings).
+    - A fingerprint of every placement, block, crossing, signal, seat, place and lane node proved the split leaves Old Town byte-identical.
+  - **The city:**
+    - `CityLayout` puts districts side by side on 512 m cells, Old Town at the centre.
+    - A road that reaches an edge shared with a neighbour that has the same road carries on into it; their lanes are joined into one lane graph for the whole city. Anywhere else a road ends in a U-turn, as before.
+  - **City build tool:** `tools/godot/build_city.gd` (was `build_old_town.gd`) builds every district's chunks. Each chunk's navmesh now bakes from only the geometry around it, so build time grows with the city's size, not its square; the whole build still takes about 4 s.
+  - **The always-loaded landmark scene now also holds:**
+    - **Skyline stand-ins:** for every building over 30 m, one merged mesh of simple shapes following its collision boxes, a little inside the real walls. Its 3 m floor bands glow at night where the building has lit windows. They keep Downtown on the horizon from Old Town when its chunks aren't loaded.
+    - **The city's edge:** walls along every district edge that faces no other district, a safety floor, and plain ground around and under the districts (so unloaded chunks seen from above aren't empty).
+  - **Rename:** `CityData` (was `DistrictData`) and `CityWorld` (was `District`) describe the whole city. They hold the districts (name and square), every police station, all shop and property doors, and the chunks that exist.
+  - **Districts in play:**
+    - `RegionWatcher` says which district you're in. The HUD shows its name when you cross into it.
+    - The full map draws every district with its name and the district you're in in its header.
+    - An arrest ends at the nearest police station. Saves record the district.
+  - **The map image** covers the whole city. It's saved as a PNG (62 KB) that Godot block-compresses on import (`compress/mode=2`), so the full city's map will fit in about 19 MB of video memory instead of 150 MB.
+  - **Downtown** (`DowntownLayout`, the cell north of Old Town):
+    - All 13 of Old Town's north-south streets carry on for one block. North of the first main road the side lanes stop, giving wide blocks.
+    - Four east-west main roads and three lanes.
+    - Central Plaza (fountain, palms, benches) and Vela Mall on merged blocks; the police headquarters on the west ring road; a long row of buildings along the north edge.
+  - **Downtown kit** (`tools/blender/downtown.py`, 11 models):
+    - three towers (glass office, stepped 120 m landmark with a spire, residential), two offices, two shops (CAFE, SALON), a hotel (HOTEL on the roof), the mall (VELA MALL), the police headquarters and the plaza fountain;
+    - floors 3 m apart, so the shader lights whole floors at night.
+  - **Glow at night:** `KitBaker` also takes night-glow rules by material-name prefix:
+    - `office_glass*`: office windows, lit floor by floor with a soft light;
+    - `neon_*`: signs and lobbies, glowing at night only.
+  - **Shared sign font:** the block-letter font moved to `rotd_mesh.py` and now has the whole alphabet; Old Town's models re-export byte-identical.
+  - **Tests:**
+    - The smoke test checks Downtown: its square, a road route from the bus stand to Central Plaza, the title card, the towers, the skyline and the edge walls. The streaming check now works on the city grid.
+    - The map test reads the compressed map image.
+    - The screenshot tool has `--at=x,y,z` (move the player there first, so far-away shots stream in).
+    - The performance baseline has four Downtown views.
+
+**Broke and fixed**
+- **Step 1:**
+  - **Empty saved map:** the first city map was saved as a `PortableCompressedTexture2D` and came out empty (362 bytes). Outside the editor that class drops its data unless told to keep it. Keeping it worked, but at 4 MB now and about 19 MB for the full city per rebuild in git, so the map is now a small PNG with import settings that make Godot compress it.
+  - **Night glow too bright:** Downtown's office glass and shopfronts first rendered pure white at night. A whole wall of glass needs far less glow than Old Town's small windows. I chased this through two rebuilds that looked unchanged, until pixel sampling showed I'd been reading shopfront pixels, not glass. Glass now glows at 0.07 (Old Town windows 0.75), shopfronts and lobbies lower, and neon low enough to keep its colour under ACES.
+  - **Skyline stand-ins:** at night they looked like pale striped blocks. They use the building's average wall colour, which counts the white fins as much as the dark glass, so they're now darker and glassier, with a fainter glow.
+  - **Old smoke checks:** they assumed one square district (chunk (0, 0) in Old Town's corner, every grid cell a chunk, one police station); they now use the city grid.

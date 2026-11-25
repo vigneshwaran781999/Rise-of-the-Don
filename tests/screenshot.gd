@@ -4,12 +4,13 @@ extends Node
 ##
 ##   "$GODOT" --path . res://tests/screenshot.tscn -- --scene=res://scenes/main/game.tscn \
 ##       --out=C:/path/shot.png [--frames=90] [--view=yaw,pitch] [--cam=x,y,z --look=x,y,z]
-##       [--pause] [--press=ButtonName,OtherButton]
+##       [--at=x,y,z] [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--waypoint=x,z]
 ##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id] [--mission=id[:n] [--talk]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
+## --at moves the player there first (the city streams in around them: for --cam shots far away).
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
 ## --drive puts the player in the test block's sedan; --throttle holds the accelerator for that
 ## many frames (with --steer), --hood picks the hood camera, --health sets the car's health share
@@ -32,6 +33,8 @@ func _run() -> void:
 	var instance: Node = (load(scene_path) as PackedScene).instantiate()
 	add_child(instance)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if args.has("at") and instance is GameSession:
+		(instance as GameSession).place_player(Transform3D(Basis.IDENTITY, _vec3(str(args["at"]))))
 	if args.has("view"):
 		var player: PlayerController = instance.get_node_or_null("Player") as PlayerController
 		if player != null:
@@ -112,7 +115,7 @@ func _police(game: Node, args: Dictionary) -> void:
 	police.enabled = kind == "" or kind == "heli"
 	WantedSystem.set_level(int(args["wanted"]), player.global_position)
 	if kind == "car":
-		var router: RoadRouter = RoadRouter.for_graph((game.get_node("World") as District).get_lane_graph())
+		var router: RoadRouter = RoadRouter.for_graph((game.get_node("World") as CityWorld).get_lane_graph())
 		var car: VehicleController = police.spawn_car_at(router.nearest_node(_vec3(str(args.get("look", "0,0,0")))))
 		car.get_node("Driver").queue_free()
 		car.set_controls(0.0, 0.0, 0.0, true)
@@ -280,7 +283,7 @@ func _shop(game: Node, place_id: StringName) -> void:
 	else:
 		push_warning("screenshot: no shop or property '%s'" % place_id)
 		return
-	(game.get_node("World") as District).streamer.load_around_now(at)
+	(game.get_node("World") as CityWorld).streamer.load_around_now(at)
 	player.global_position = at + Vector3.UP * 0.1
 	player.reset_physics_interpolation()
 	# Wait for the prompt (opening dialogue keeps the interact key for a few seconds).
@@ -318,7 +321,7 @@ func _mission(game: Node, spec: String, talk: bool) -> void:
 		push_warning("screenshot: the objective has no contact to talk to")
 		return
 	var player := game.get_node("Player") as PlayerController
-	(game.get_node("World") as District).streamer.load_around_now(npc.global_position)
+	(game.get_node("World") as CityWorld).streamer.load_around_now(npc.global_position)
 	player.global_position = npc.global_position + npc.global_basis.z * 1.7 + Vector3.UP * 0.1
 	player.reset_physics_interpolation()
 	for i: int in 20:

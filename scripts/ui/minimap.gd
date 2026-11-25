@@ -45,7 +45,7 @@ func _ready() -> void:
 	_overlay.draw.connect(_draw_overlay)
 
 
-func bind(the_player: PlayerController, district: DistrictData, gps: GpsNavigator) -> void:
+func bind(the_player: PlayerController, district: CityData, gps: GpsNavigator) -> void:
 	player = the_player
 	navigator = gps
 	var texture: Texture2D = district.get_map_texture()
