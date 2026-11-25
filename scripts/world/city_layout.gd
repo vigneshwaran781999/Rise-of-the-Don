@@ -8,6 +8,8 @@ extends RefCounted
 
 const CELL: float = 2.0 * DistrictLayout.HALF
 const CHUNK_SIZE: float = 128.0
+## The coastline (world x): the sea lies east of it (GDD §2), along the Beach District's shore.
+const COAST_X: float = CELL + BeachLayout.SHORE
 
 var districts: Array[DistrictLayout] = []
 ## Everything the districts placed, merged (see DistrictLayout for each entry's format).
@@ -19,6 +21,9 @@ var sit_spots: Array[Dictionary] = []
 var places: Dictionary = {}
 var police_stations: Array[Transform3D] = []
 var map_labels: Array = []
+var water: Array[Rect2] = []
+var barriers: Array[Rect2] = []
+var beams: Array[Vector3] = []
 var lane_graph: LaneGraph
 var junction_count: int = 0
 ## Roads that cross from one district into the next.
@@ -30,7 +35,39 @@ static func make_districts() -> Array[DistrictLayout]:
 	var old_town := OldTownLayout.new()
 	var downtown := DowntownLayout.new()
 	downtown.centre = Vector2(0.0, -CELL)
-	return [old_town, downtown]
+	var beach := BeachLayout.new()
+	beach.centre = Vector2(CELL, 0.0)
+	return [old_town, downtown, beach]
+
+
+## The sea (GDD §2: a coastal city): everything east of the coast, out past the edge of the
+## city, except land inside a district (its own `water` areas are sea again). World x/z rects.
+func sea_rects(margin: float) -> Array[Rect2]:
+	var bounds: Rect2 = get_bounds().grow(margin)
+	var sea: Array[Rect2] = [Rect2(COAST_X, bounds.position.y, bounds.end.x - COAST_X, bounds.size.y)]
+	for d: DistrictLayout in districts:
+		sea = _subtract(sea, d.get_rect())
+	sea.append_array(water)
+	return sea
+
+
+## What is left of `rects` once `cut` is taken out of each (as up to four rects apiece).
+static func _subtract(rects: Array[Rect2], cut: Rect2) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for r: Rect2 in rects:
+		var i: Rect2 = r.intersection(cut)
+		if i.size.x <= 0.0 or i.size.y <= 0.0:
+			out.append(r)
+			continue
+		if i.position.y > r.position.y:
+			out.append(Rect2(r.position.x, r.position.y, r.size.x, i.position.y - r.position.y))
+		if i.end.y < r.end.y:
+			out.append(Rect2(r.position.x, i.end.y, r.size.x, r.end.y - i.end.y))
+		if i.position.x > r.position.x:
+			out.append(Rect2(r.position.x, i.position.y, i.position.x - r.position.x, i.size.y))
+		if i.end.x < r.end.x:
+			out.append(Rect2(i.end.x, i.position.y, r.end.x - i.end.x, i.size.y))
+	return out
 
 
 func generate() -> void:
@@ -58,6 +95,9 @@ func generate() -> void:
 		signals.append_array(d.signals)
 		sit_spots.append_array(d.sit_spots)
 		map_labels.append_array(d.map_labels)
+		water.append_array(d.water)
+		barriers.append_array(d.barriers)
+		beams.append_array(d.beams)
 		for place_id: StringName in d.places:
 			if places.has(place_id):
 				push_error("CityLayout: two districts have a place called %s" % place_id)

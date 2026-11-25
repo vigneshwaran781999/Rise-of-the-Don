@@ -23,7 +23,7 @@ const SIGNAL_POLE_PATH: String = "res://assets/models/props/prop_signal_pole.glb
 const SIGNAL_TIMING_PATH: String = "res://resources/world/signal_timing.tres"
 const LOT_COLOURS: Dictionary = {
 	&"lot_paved": Color("8e897f"), &"lot_warm": Color("a08a70"), &"lot_stone": Color("a39581"), &"lot_grass": Color("5f7d3c"),
-	&"lot_plaza": Color("aba79f"),
+	&"lot_plaza": Color("aba79f"), &"lot_sand": Color("c4a878"),
 }
 ## The city map (GDD §11): drawn from the layout, 4 pixels per metre, flat game-map colours,
 ## saved as a small lossless PNG. Its import settings (MAP_IMPORT, written if missing) have Godot
@@ -33,7 +33,7 @@ const MAP_IMPORT: String = "[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTe
 const MAP_PIXELS_PER_METRE: int = 4
 const MAP_COLOURS: Dictionary = {
 	"empty": Color("10131c"), "lot_paved": Color("1d2230"), "lot_stone": Color("2c2a33"),
-	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "lot_plaza": Color("252a38"), "walk": Color("2a3142"),
+	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "lot_plaza": Color("252a38"), "lot_sand": Color("4a4232"), "walk": Color("2a3142"),
 	"road_main": Color("566079"), "road_lane": Color("414960"), "building": Color("353d53"),
 	"building_edge": Color("4d5877"), "tower": Color("3c4a66"), "tower_edge": Color("6a7fa6"),
 	"temple": Color("6e4c36"), "temple_edge": Color("9a6a46"),
@@ -59,6 +59,15 @@ const SURROUND_MARGIN: float = 1000.0
 const SURROUND_COLOUR := Color(0.41, 0.44, 0.25)
 const CITY_GROUND_COLOUR := Color(0.44, 0.43, 0.41)
 const EDGE_WALL_HEIGHT: float = 12.0
+## The sea (M7): its surface stands this high (above the sand, so you wade in it) and it carries
+## on this far past the edge of the city.
+const SEA_LEVEL: float = 0.32
+const SEA_MARGIN: float = 1500.0
+const SEA_SHADER_PATH: String = "res://shaders/sea.gdshader"
+const BEAM_SHADER_PATH: String = "res://shaders/lighthouse_beam.gdshader"
+## Lighthouse beam: how far each of its two cones reaches and how wide it gets.
+const BEAM_LENGTH: float = 140.0
+const BEAM_RADIUS: float = 7.0
 
 var _material: ShaderMaterial
 var _kit: Dictionary = {}          # StringName -> KitPiece (mesh saved in KIT_DIR)
@@ -147,6 +156,8 @@ func _write_map() -> bool:
 	var bounds: Rect2 = _layout.get_bounds()
 	var image := Image.create(int(bounds.size.x) * MAP_PIXELS_PER_METRE, int(bounds.size.y) * MAP_PIXELS_PER_METRE, false, Image.FORMAT_RGB8)
 	image.fill(MAP_COLOURS["empty"])
+	for r: Rect2 in _layout.water:
+		_map_fill(image, bounds, r, MAP_COLOURS["water"])
 	var layers: Array[Array] = [[], [], [], [], []]      # lots, walks, roads, buildings, trees
 	for p: Dictionary in _layout.placements:
 		var kit: String = str(p["kit"])
@@ -331,6 +342,11 @@ func _nav_source(area: Rect2) -> NavigationMeshSourceGeometryData3D:
 			var box := BoxShape3D.new()
 			box.size = Vector3(r.size.x, 0.2, r.size.y)
 			_add_shape(body, box, Transform3D(Basis.IDENTITY, Vector3(r.get_center().x, -0.1, r.get_center().y)))
+	# The sea is never walkable (people stay on the sand).
+	var wet: Array[Rect2] = []
+	for r: Rect2 in _layout.water:
+		if r.intersects(area):
+			wet.append(r.intersection(area.grow(2.0)))
 	var solids: Array[ConvexPolygonShape3D] = []
 	for s: Array in _solids:
 		var box: AABB = s[1]
@@ -346,6 +362,9 @@ func _nav_source(area: Rect2) -> NavigationMeshSourceGeometryData3D:
 	# a raised roof stays walkable) keeps the navmesh outside.
 	for shape: ConvexPolygonShape3D in solids:
 		_add_obstruction(source, shape.points)
+	for r: Rect2 in wet:
+		source.add_projected_obstruction(PackedVector3Array([Vector3(r.position.x, -1.0, r.position.y),
+			Vector3(r.end.x, -1.0, r.position.y), Vector3(r.end.x, -1.0, r.end.y), Vector3(r.position.x, -1.0, r.end.y)]), -1.0, 3.0, false)
 	return source
 
 
@@ -520,6 +539,8 @@ func _build_landmarks() -> bool:
 		mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		_child(root, root, mi, "Skyline")
 	_build_edge(root)
+	_build_sea(root)
+	_build_beams(root)
 	var packed := PackedScene.new()
 	var err: Error = packed.pack(root)
 	if err == OK:
@@ -551,6 +572,10 @@ func _build_edge(root: Node3D) -> void:
 		box.size = Vector3(absf(b.x - a.x) + 4.0, EDGE_WALL_HEIGHT, 2.0) if along else Vector3(2.0, EDGE_WALL_HEIGHT, absf(b.y - a.y) + 4.0)
 		var at: Vector2 = mid - inward * 1.0
 		_own_shape(root, edge, box, Transform3D(Basis.IDENTITY, Vector3(at.x, EDGE_WALL_HEIGHT * 0.5 - 1.0, at.y)))
+	for r: Rect2 in _layout.barriers:
+		var wall := BoxShape3D.new()
+		wall.size = Vector3(r.size.x, EDGE_WALL_HEIGHT, r.size.y)
+		_own_shape(root, edge, wall, Transform3D(Basis.IDENTITY, Vector3(r.get_center().x, EDGE_WALL_HEIGHT * 0.5 - 1.0, r.get_center().y)))
 	var floor_box := BoxShape3D.new()
 	floor_box.size = Vector3(bounds.size.x + 200.0, 2.0, bounds.size.y + 200.0)
 	_own_shape(root, edge, floor_box, Transform3D(Basis.IDENTITY, Vector3(bounds.get_center().x, -4.0, bounds.get_center().y)))
@@ -598,6 +623,68 @@ func _build_edge(root: Node3D) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		_child(root, surround, mi, "Ground%d" % k)
+		k += 1
+
+
+# --------------------------------------------------------------------------- sea
+
+## The sea (shaders/sea.gdshader): one flat mesh over every sea rect (CityLayout.sea_rects), at
+## SEA_LEVEL, out past the edge of the city.
+func _build_sea(root: Node3D) -> void:
+	var rects: Array[Rect2] = _layout.sea_rects(SEA_MARGIN)
+	if rects.is_empty():
+		return
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for r: Rect2 in rects:
+		var corners: Array[Vector3] = [Vector3(r.position.x, SEA_LEVEL, r.position.y), Vector3(r.end.x, SEA_LEVEL, r.position.y),
+			Vector3(r.end.x, SEA_LEVEL, r.end.y), Vector3(r.position.x, SEA_LEVEL, r.end.y)]
+		for i: int in [0, 1, 2, 0, 2, 3]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(corners[i])
+	var material := ShaderMaterial.new()
+	material.shader = load(SEA_SHADER_PATH) as Shader
+	material.set_shader_parameter(&"shore_x", CityLayout.COAST_X)
+	var mesh: ArrayMesh = st.commit()
+	mesh.surface_set_material(0, material)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_child(root, root, mi, "Sea")
+
+
+## A turning beam at each lighthouse lamp (shaders/lighthouse_beam.gdshader turns it): two cones,
+## one each way, from the lamp outwards.
+func _build_beams(root: Node3D) -> void:
+	if _layout.beams.is_empty():
+		return
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var sides: int = 12
+	for direction: float in [1.0, -1.0]:
+		for i: int in sides:
+			var a0: float = TAU * i / sides
+			var a1: float = TAU * (i + 1) / sides
+			var p0 := Vector3(BEAM_LENGTH * direction, cos(a0) * BEAM_RADIUS, sin(a0) * BEAM_RADIUS)
+			var p1 := Vector3(BEAM_LENGTH * direction, cos(a1) * BEAM_RADIUS, sin(a1) * BEAM_RADIUS)
+			for v: Array in [[Vector3.ZERO, 0.0], [p0, 1.0], [p1, 1.0]]:
+				st.set_uv(Vector2(0.0, v[1]))
+				st.add_vertex(v[0])
+	var material := ShaderMaterial.new()
+	material.shader = load(BEAM_SHADER_PATH) as Shader
+	var mesh: ArrayMesh = st.commit()
+	mesh.surface_set_material(0, material)
+	var k: int = 0
+	for lamp: Vector3 in _layout.beams:
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.position = lamp
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		# The shader turns the cones, so the box they fill is the whole circle they sweep.
+		mi.custom_aabb = AABB(Vector3(-BEAM_LENGTH, -BEAM_RADIUS, -BEAM_LENGTH), Vector3(BEAM_LENGTH, BEAM_RADIUS, BEAM_LENGTH) * 2.0)
+		_child(root, root, mi, "Beam%d" % k)
 		k += 1
 
 

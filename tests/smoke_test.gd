@@ -33,13 +33,15 @@ const VEHICLE_ASSETS: PackedStringArray = [
 ]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
-## City kit pieces (Old Town and Downtown) that must exist as baked meshes (one surface each).
+## City kit pieces (Old Town, Downtown, Beach District) that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
 	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
 	"bld_ot_tank", "bld_ot_market_hall", "bld_ot_police_station", "prop_streetlight", "prop_neem_tree",
 	"prop_market_stall_a", "prop_bench", "lot_plaza", "bld_dt_tower_a", "bld_dt_tower_b", "bld_dt_tower_c", "bld_dt_office_a",
 	"bld_dt_office_b", "bld_dt_retail_a", "bld_dt_retail_b", "bld_dt_hotel", "bld_dt_mall", "bld_dt_police", "prop_dt_fountain",
+	"lot_sand", "bld_bh_resort", "bld_bh_hotel", "bld_bh_seafood", "bld_bh_police", "bld_bh_cottage", "bld_bh_lighthouse", "bld_bh_pier",
+	"prop_bh_umbrella", "prop_bh_boat", "prop_bh_lifeguard", "prop_bh_kiosk",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -58,6 +60,9 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_dt_tower_a", "buildings/bld_dt_tower_b", "buildings/bld_dt_tower_c", "buildings/bld_dt_office_a",
 	"buildings/bld_dt_office_b", "buildings/bld_dt_retail_a", "buildings/bld_dt_retail_b", "buildings/bld_dt_hotel",
 	"buildings/bld_dt_mall", "buildings/bld_dt_police", "props/prop_dt_fountain",
+	"buildings/bld_bh_resort", "buildings/bld_bh_hotel", "buildings/bld_bh_seafood", "buildings/bld_bh_police",
+	"buildings/bld_bh_shop_a", "buildings/bld_bh_shop_b", "buildings/bld_bh_cottage", "buildings/bld_bh_lighthouse",
+	"buildings/bld_bh_pier", "props/prop_bh_umbrella", "props/prop_bh_boat", "props/prop_bh_lifeguard", "props/prop_bh_kiosk",
 ]
 
 var _catcher: ErrorCatcher
@@ -92,7 +97,7 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
-		_check_streaming, _check_downtown, _check_traffic_signals, _check_lane_graph, _check_navmesh,
+		_check_streaming, _check_downtown, _check_beach, _check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
 		_check_vehicle_parked, _check_enter_vehicle, _check_drive_brake_reverse, _check_steering,
@@ -575,6 +580,62 @@ func _check_downtown() -> String:
 	return ""
 
 
+## M7: the Beach District east of Old Town. Its streets carry on from Old Town's, the sea and the
+## lighthouse beam are on the always-loaded landmarks, pedestrians' navmesh stops at the water's
+## edge, and walking out to sea you can wade in but not past the barrier.
+func _check_beach() -> String:
+	var game := get_tree().current_scene as GameSession
+	var world: CityWorld = _world()
+	var data: CityData = world.data
+	var beach: int = data.region_names.find("Beach District")
+	if beach < 0 or not data.region_rects[beach].has_point(Vector2(512.0, 0.0)):
+		return "the Beach District should be the 512 m square east of Old Town (%s)" % data.region_names
+	var router := RoadRouter.for_graph(world.get_lane_graph())
+	var coast := Vector3(BeachLayout.COAST_ROAD + 512.0 - 3.0, 0.0, 60.0)
+	var route: PackedVector3Array = router.route(Vector3(97.0, 0.0, 4.75), coast)
+	if route.size() < 2 or Vector2(route[route.size() - 1].x - coast.x, route[route.size() - 1].z - coast.z).length() > 30.0:
+		return "no road route from the bus stand to the Coast Road (%d points)" % route.size()
+	var sea := world.get_node_or_null("Landmarks/Sea") as MeshInstance3D
+	if sea == null or sea.mesh == null or sea.mesh.get_aabb().end.x < 2000.0:
+		return "the sea should be on the always-loaded landmarks, out past the edge of the city"
+	if world.get_node_or_null("Landmarks/Beam0") == null:
+		return "the lighthouse should have its beam"
+	var player: PlayerController = _player()
+	var back := Transform3D(Basis(Vector3.UP, player.model.rotation.y), player.global_position)
+	var shore: float = CityLayout.COAST_X
+	var barrier: float = 512.0 + BeachLayout.BARRIER
+	game.place_player(Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3(shore - 12.0, 0.3, -60.0)))   # on the sand, facing the sea
+	var regions := game.get_node("Regions") as RegionWatcher
+	var wait: int = 0
+	while wait < 120 and regions.get_current_name() != "Beach District":
+		await get_tree().physics_frame
+		wait += 1
+	await _physics_frames(5)
+	var nav_map: RID = player.get_world_3d().navigation_map
+	var on_shore: Vector3 = NavigationServer3D.map_get_closest_point(nav_map, Vector3(shore + 60.0, 0.3, -60.0))
+	var title: String = _hud().get_area_title()
+	var furthest: float = player.global_position.x
+	_key(KEY_W, true)
+	for i: int in 900:
+		await get_tree().physics_frame
+		furthest = maxf(furthest, player.global_position.x)
+	_key(KEY_W, false)
+	var wading: bool = player.global_position.x > shore and player.is_on_floor()
+	game.place_player(back)
+	await _physics_frames(30)
+	if title != "BEACH DISTRICT":
+		return "the BEACH DISTRICT title card should show on arrival (got '%s')" % title
+	if on_shore.x > shore + 1.0:
+		return "pedestrians' navmesh should stop at the water's edge (nearest walkable point to the sea at x %.1f)" % on_shore.x
+	if furthest < shore + 10.0 or furthest > barrier:
+		return "walking out to sea you should wade in but stop at the barrier (got as far as x %.1f; water from %.0f, barrier at %.0f)" % [furthest, shore, barrier]
+	if not wading:
+		return "the player should be standing in the shallows when stopped by the barrier"
+	print("  ok  Beach District: east of Old Town, a road route to the Coast Road, the sea and the lighthouse beam always loaded, BEACH DISTRICT title card; pedestrians stay on the sand; you can wade %.0f m out, no further" % [
+		furthest - shore])
+	return ""
+
+
 func _check_traffic_signals() -> String:
 	var signals: Array[Node] = get_tree().get_nodes_in_group(TrafficSignal.GROUP)
 	if signals.size() < 4:
@@ -661,11 +722,12 @@ func _check_navmesh() -> String:
 	var north_walk := Vector3(70.0, 0.15, -8.0)
 	var south_walk := Vector3(70.0, 0.15, 8.0)
 	# Navigation regions are processed in the background: wait until the map has synced the
-	# chunks (streamed back in by the previous check).
-	var waited: int = 0
-	while waited < 300 and _flat(NavigationServer3D.map_get_closest_point(map, south_walk)).distance_to(_flat(south_walk)) > 0.6:
+	# chunks (streamed back in by the earlier checks). The map rebuilds on a thread in real time,
+	# so wait by the clock (with --fixed-fps 60 frames go by faster than real time).
+	var started: int = Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < 20000 and _flat(NavigationServer3D.map_get_closest_point(map, south_walk)).distance_to(_flat(south_walk)) > 0.6:
 		await get_tree().physics_frame
-		waited += 1
+	var sync_seconds: float = (Time.get_ticks_msec() - started) / 1000.0
 	var regions: int = NavigationServer3D.map_get_regions(map).size()
 	if regions < 4:
 		return "only %d navmesh regions are registered" % regions
@@ -701,8 +763,8 @@ func _check_navmesh() -> String:
 		probe.position = p + Vector3.UP * 0.6
 		if p != Vector3.ZERO and not space.intersect_point(probe, 1).is_empty():
 			return "the navmesh at %s is inside solid geometry (a building?)" % p
-	print("  ok  navmesh: %d regions; roads aren't walkable; crossing the road detours %.0f m via the zebra; routes join across chunk borders; none of 400 sampled points is inside a building" % [
-		regions, length])
+	print("  ok  navmesh: %d regions (synced in %.1f s); roads aren't walkable; crossing the road detours %.0f m via the zebra; routes join across chunk borders; none of 400 sampled points is inside a building" % [
+		regions, sync_seconds, length])
 	return ""
 
 

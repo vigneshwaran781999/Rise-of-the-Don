@@ -140,3 +140,20 @@ Same machine (Intel UHD Graphics 730, i5-12400) and settings. The city now has t
 - **Downtown costs no more than Old Town.** Each tower is one draw call, like any Old Town building, and the big blocks mean fewer buildings and props per chunk than Old Town's tight lanes.
 - **The skyline stand-ins and the ground under the city cost nothing measurable.** Old Town's rows are the same as or slightly faster than in M6.
 - **The fixed cost dominates, as before:** the sky-only row is 15.7 ms. SSAO and glow together are about 12 ms at the spawn street.
+
+## M7 step 2: the Beach District (2026-11-25)
+
+Same machine and settings; three districts (48 chunks), with the sea and the lighthouse beam always loaded.
+
+| Viewpoint | FPS | avg ms | 1% worst ms | draw calls | primitives |
+|---|---:|---:|---:|---:|---:|
+| Spawn street, 13:00 | 35 | 28.25 | 33.01 | 297 | 390,556 |
+| Spawn street, night 21:30 | 28 | 35.39 | 40.39 | 276 | 356,330 |
+| Downtown: north road | 33 | 30.74 | 34.63 | 256 | 267,370 |
+| Beach District: promenade, looking along the sand | 44 | 22.63 | 27.98 | 112 | 120,788 |
+| Beach District: Coast Road | 37 | 27.17 | 32.19 | 246 | 282,390 |
+
+- **Streaming drive along Ring B:** 36 FPS average, worst frame 42.6 ms. Ten chunks loaded on the way: at Ring B's east end the Beach District's first chunks now come in.
+- **City life at the spawn street:** 35–37 FPS at every density.
+- **Video memory:** 272 MB (+13 MB for the Beach kit and the sea).
+- The sea is one flat mesh with a cheap shader; the open view along the beach is one of the lightest in the city.

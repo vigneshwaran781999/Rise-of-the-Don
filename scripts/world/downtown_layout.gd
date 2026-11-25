@@ -7,7 +7,7 @@ extends DistrictLayout
 ##   the main road at z = -304; north of it the side lanes stop, leaving wide blocks for towers.
 ## - Main roads run east-west at z = -656, -512, -432 and -304; lanes at -720, -592 and -368.
 ## - Central Plaza (a fountain, palms and benches) and Vela Mall sit on merged blocks either side
-##   of the north road; the police headquarters is on the west ring road.
+##   of the north road; the police headquarters is on the central road, west of the plaza.
 ## - Along the northern edge of the city, one long row of buildings backs onto the boundary.
 
 const SEED: int = 4417
@@ -39,8 +39,8 @@ const LANE_FRONT: Array = [
 	[&"bld_dt_office_b", 12.0, 14.0, 2.0], [&"bld_dt_retail_a", 12.0, 14.0, 1.0], [&"bld_dt_retail_b", 12.0, 14.0, 1.0],
 	[&"bld_dt_office_a", 16.0, 16.0, 1.0], [&"bld_dt_tower_c", 18.0, 18.0, 0.5],
 ]
-## The police headquarters takes the place of the mid-rise office nearest this point on the
-## west ring road (door spot 9.6 m in front of its centre: half its depth plus the sidewalk).
+## The police headquarters takes the place of the mid-rise office nearest this point, just west
+## of Central Plaza (door spot 9.6 m in front of its centre: half its depth plus the sidewalk).
 const SPECIAL_BUILDINGS: Array = [
 	[&"police_downtown", &"bld_dt_office_a", Vector3(-130.0, 0.0, 40.0), &"bld_dt_police", 9.6],
 ]

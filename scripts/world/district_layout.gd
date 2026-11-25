@@ -62,6 +62,12 @@ var police_station := Transform3D()
 var has_police_station: bool = false
 ## Map labels: [text, world Vector2].
 var map_labels: Array = []
+## Sea inside the district (world x/z): drawn as water, never walked on by pedestrians.
+var water: Array[Rect2] = []
+## Invisible walls (world x/z footprints, full height), e.g. how far out into the sea you can wade.
+var barriers: Array[Rect2] = []
+## Lighthouse lamps (world positions): the city builder adds a turning beam at each.
+var beams: Array[Vector3] = []
 ## Built only when the district is generated on its own (generate()); in the city, CityLayout
 ## builds one graph for every district.
 var lane_graph: LaneGraph
@@ -274,18 +280,30 @@ func _find_segments() -> void:
 		var spans: Array[float] = _pz if ax == 0 else _px
 		var span_classes: Array[int] = _cls_z if ax == 0 else _cls_x
 		for line: int in range(1, lines.size() - 1):
+			var current: int = -1       # the segment the previous interval belongs to, if it carries on
 			for interval: int in range(0, spans.size() - 1):
 				if not _enabled(ax, line, interval):
+					current = -1
 					continue
 				var lo: int = interval
 				var hi: int = interval + 1
 				var j0: Variant = _junction_key(ax, line, lo)
 				var j1: Variant = _junction_key(ax, line, hi)
-				var a0: float = spans[lo] + (ROAD_HALF[span_classes[lo]] if j0 != null else 0.0)
 				var a1: float = spans[hi] - (ROAD_HALF[span_classes[hi]] if j1 != null else 0.0)
+				if current >= 0 and j0 == null:
+					# The street runs straight on past a crossing street that has been dropped here
+					# (no junction): one segment, not two ending in U-turns.
+					var running: Dictionary = _segments[current]
+					running["a1"] = a1
+					running["j1"] = j1
+					if j1 != null:
+						(_junctions[j1]["seg"] as Array)[N if ax == 0 else W] = current
+					continue
+				var a0: float = spans[lo] + (ROAD_HALF[span_classes[lo]] if j0 != null else 0.0)
 				var seg: Dictionary = {"ax": ax, "c": lines[line], "cls": classes[line], "a0": a0, "a1": a1, "j0": j0, "j1": j1}
 				_segments.append(seg)
 				var index: int = _segments.size() - 1
+				current = index
 				if j0 != null:   # this segment leaves j0 southwards (ax 0) or eastwards (ax 1)
 					(_junctions[j0]["seg"] as Array)[S if ax == 0 else E] = index
 				if j1 != null:

@@ -243,6 +243,18 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **The skyline:** from Old Town (from the temple area, or anywhere with a view north) Downtown's towers stand on the horizon, also at night with some lit floors. As you drive north, the simple far-off shapes should turn into the detailed towers without an obvious pop. Is the swap noticeable?
 - [ ] **Traffic and people** come and go in Downtown as in Old Town: cars stop at the many traffic lights, people walk the wide sidewalks.
 - [ ] **Map:** the full map (M) shows both districts with their names written large, and the header shows the district you're in. CENTRAL PLAZA, VELA MALL and POLICE HQ are labelled. Set a waypoint in Downtown from Old Town: the GPS route crosses into it.
-- [ ] **Police:** get busted in Downtown: you're released at the police headquarters there (white building, blue POLICE board, west ring road), not in Old Town.
+- [ ] **Police:** get busted in Downtown: you're released at the police headquarters there (white building, blue POLICE board, on the central east-west road just west of Central Plaza), not in Old Town.
 - [ ] **The edge:** walls stop you at the north edge of Downtown and at the city's other edges; beyond is plain ground. Roads that reach the east and west edges end in a turning area.
 - [ ] **Performance:** with F3, compare FPS in Downtown's north road and in Old Town. Note both.
+
+### The Beach District (step 2)
+- [ ] **Getting there:** drive east from the bus stand along the east gopuram road. Past the garage, Old Town ends and "BEACH DISTRICT" fades in. Keep going to the Coast Road and the sea.
+- [ ] **Looks by day:** seafood restaurants (coral walls, SEAFOOD board with a fish), the yellow BEACH INN, striped-awning shops, pastel cottages with thatched porches, the two white Sea Breeze resorts facing the sea with their pools behind. Across the road: palms and benches on the promenade, kiosks, rows of red-and-white umbrellas, blue fishing boats near the water, lifeguard towers. Is the sand the right colour (not glaring white)?
+- [ ] **The sea:** turquoise near the shore, deeper blue further out, small waves, a band of foam washing at the water's edge. It carries on to the horizon past the edge of the city. Does the shoreline look right where the sand meets the water?
+- [ ] **Wading:** walk (or drive) into the sea: you can go about 40 m out, then something invisible stops you. Is that acceptable for now, or should the water get deep and stop you another way?
+- [ ] **The pier:** walk up the ramp and out to the end. Railings stop you falling off; lamps on posts.
+- [ ] **The lighthouse** (south end of the beach): red and white bands, a lantern that glows at night, and a beam that sweeps slowly round from dusk. Is the beam too strong or too faint? Does it look right from the Coast Road and from Old Town?
+- [ ] **Sunset on the beach** (about 18:00–18:40): this is the district's best hour. Worth a look.
+- [ ] **People** walk the promenade and the sand but never into the sea.
+- [ ] **Map:** VELA BEACH, PIER, LIGHTHOUSE and the two SEA BREEZE resorts are labelled; the sea is blue.
+- [ ] **Police:** busted on the beach, you're released at the Beach District police post (white with a blue POLICE board, on the main road just north-west of the northern resort).

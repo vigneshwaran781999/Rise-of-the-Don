@@ -429,7 +429,7 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Downtown** (`DowntownLayout`, the cell north of Old Town):
     - All 13 of Old Town's north-south streets carry on for one block. North of the first main road the side lanes stop, giving wide blocks.
     - Four east-west main roads and three lanes.
-    - Central Plaza (fountain, palms, benches) and Vela Mall on merged blocks; the police headquarters on the west ring road; a long row of buildings along the north edge.
+    - Central Plaza (fountain, palms, benches) and Vela Mall on merged blocks; the police headquarters just west of the plaza; a long row of buildings along the north edge.
   - **Downtown kit** (`tools/blender/downtown.py`, 11 models):
     - three towers (glass office, stepped 120 m landmark with a spire, residential), two offices, two shops (CAFE, SALON), a hotel (HOTEL on the roof), the mall (VELA MALL), the police headquarters and the plaza fountain;
     - floors 3 m apart, so the shader lights whole floors at night.
@@ -442,6 +442,20 @@ Dated entries: what was built, what broke, how it was fixed.
     - The map test reads the compressed map image.
     - The screenshot tool has `--at=x,y,z` (move the player there first, so far-away shots stream in).
     - The performance baseline has four Downtown views.
+- **Step 2, the Beach District (GDD §2 district 2):**
+  - **`BeachLayout`** (the cell east of Old Town):
+    - Old Town's 13 east-west streets carry on to Beach Road; the main roads and the lanes beside the temple axis go on to the Coast Road along the seafront.
+    - Seafood restaurants, small hotels and beach shops face the Coast Road. Two Sea Breeze resorts (pools behind) sit on merged blocks; cottages and Old Town's pastel houses fill the lanes; a police post.
+    - East of the Coast Road: the promenade (palms, benches looking out to sea, kiosks), the sand (umbrellas, fishing boats, lifeguard towers), a walkable pier and the lighthouse.
+  - **Beach kit** (`tools/blender/beach.py`, 13 models).
+  - **The sea:**
+    - The coastline is a straight north-south line (`CityLayout.COAST_X`). `CityLayout.sea_rects()` gives the sea: everything east of it, out 1.5 km past the city, minus land in any district, plus each district's own `water`.
+    - `shaders/sea.gdshader` draws it as one flat always-loaded mesh at 0.32 m: waves from the normal alone, turquoise to deep blue, foam washing at the shoreline.
+    - You can wade in up to an invisible barrier 40 m out (`DistrictLayout.barriers`, built into the city's edge body).
+    - The navmesh bake marks water as an obstruction, so pedestrians stay on the sand.
+  - **The lighthouse beam:** two long faint cones turned by `shaders/lighthouse_beam.gdshader` (no script), showing from dusk with the city lights.
+  - **Street generator fix:** a street that runs straight past a point where its cross street has been dropped is now one segment. It used to become two segments ending in U-turns, which left stubs at the Beach's edges cut off from the network. Old Town's fingerprint is unchanged.
+  - **Tests:** the smoke test checks the Beach District: its square, a road route to the Coast Road, the sea and beam on the landmarks, the title card, the navmesh stopping at the water, and wading out to the barrier and no further. The performance baseline has two Beach views.
 
 **Broke and fixed**
 - **Step 1:**
@@ -449,3 +463,6 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Night glow too bright:** Downtown's office glass and shopfronts first rendered pure white at night. A whole wall of glass needs far less glow than Old Town's small windows. I chased this through two rebuilds that looked unchanged, until pixel sampling showed I'd been reading shopfront pixels, not glass. Glass now glows at 0.07 (Old Town windows 0.75), shopfronts and lobbies lower, and neon low enough to keep its colour under ACES.
   - **Skyline stand-ins:** at night they looked like pale striped blocks. They use the building's average wall colour, which counts the white fins as much as the dark glass, so they're now darker and glassier, with a fainter glow.
   - **Old smoke checks:** they assumed one square district (chunk (0, 0) in Old Town's corner, every grid cell a chunk, one police station); they now use the city grid.
+- **Step 2:**
+  - **100 lane nodes disconnected:** the first build had them at the Beach's north and south edges. There, the side lanes are dropped east of Beach Road, so a north-south street passed the dropped lane's crossing point with no junction there. It became two segments ending in U-turns, and the stub at the edge was cut off from the network. Fixed in `DistrictLayout._find_segments` (see Built).
+  - **Midday sand** was close to white; it's a darker tan now. The beam was turned down for full night.

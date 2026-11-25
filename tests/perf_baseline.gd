@@ -1,9 +1,9 @@
 extends Node
-## Performance baseline for the streamed city (Old Town, and Downtown from M7). Runs the real
-## game scene in a 1920x1080 window with VSync off, measures several fixed viewpoints and a
-## streaming drive across Old Town with traffic and pedestrians switched off (M3, comparable
-## across builds), then the spawn street with city life at each density (M4), and prints a
-## Markdown report (paste it into docs/PERFORMANCE.md).
+## Performance baseline for the streamed city (Old Town; Downtown and the Beach from M7).
+## Runs the real game scene in a 1920x1080 window with VSync off and measures several fixed
+## viewpoints and a streaming drive across Old Town with traffic and pedestrians switched off
+## (M3, comparable across builds), then the spawn street with city life at each density (M4).
+## Prints a Markdown report (paste it into docs/PERFORMANCE.md).
 ##   "$GODOT" --path . res://tests/perf_baseline.tscn
 ## Needs a real GPU (not --headless). Takes about three minutes; a window opens while it runs.
 
@@ -23,6 +23,8 @@ const VIEWS: Array = [
 	["Downtown: Central Plaza", Vector3(-60.0, 1.8, -515.0), Vector3(-80.0, 8.0, -552.0)],
 	["Old Town north edge, Downtown skyline ahead", Vector3(-2.0, 1.8, -200.0), Vector3(0.0, 40.0, -600.0)],
 	["Aerial over Downtown (worst case)", Vector3(190.0, 170.0, -230.0), Vector3(0.0, 0.0, -520.0)],
+	["Beach District: promenade, looking along the sand", Vector3(546.0, 2.2, 10.0), Vector3(600.0, 1.0, 80.0)],
+	["Beach District: Coast Road", Vector3(523.0, 1.8, -100.0), Vector3(523.0, 3.0, -20.0)],
 ]
 const DRIVE_SPEED: float = 20.0   # m/s (72 km/h) along Ring B for the streaming run
 
@@ -230,7 +232,7 @@ func _frame_stats(times: PackedFloat32Array) -> Dictionary:
 
 func _print_report(results: Array, drive: Dictionary, life: Array) -> void:
 	print("")
-	print("PERFORMANCE BASELINE (Old Town and Downtown)")
+	print("PERFORMANCE BASELINE (Old Town, Downtown, Beach District)")
 	print("- GPU: %s (%s)" % [RenderingServer.get_video_adapter_name(), RenderingServer.get_video_adapter_vendor()])
 	print("- CPU: %s, %d threads" % [OS.get_processor_name(), OS.get_processor_count()])
 	print("- Renderer: %s %s, %s, window %s, VSync off" % [ProjectSettings.get_setting("rendering/renderer/rendering_method"),
