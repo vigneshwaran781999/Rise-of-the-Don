@@ -284,3 +284,12 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **People** walk the villages and the lake banks, never into the water. You can wade into the lakes.
 - [ ] **Police:** busted out here, you're released at the village police post.
 - [ ] **The whole city** (full map, M): six districts, Countryside twice the size of the others; two empty cells south of Old Town and the Beach where roads end at the city's edge.
+
+### More vehicles (step 6)
+`tests/fleet_test.tscn` checks each one's handling numbers. These checks are about feel.
+- [ ] **Sports car** (yellow, outside the estate gate in the Luxury District): quick (0–100 in about 5 s), grippy, rear-wheel drive. Does it feel faster and sharper than the sedan? Too twitchy?
+- [ ] **SUV** (green, by Central Plaza, Downtown): heavier, softer, all-wheel drive, sits higher. Does it lean and feel heavy in corners?
+- [ ] **City bus** (red, at the Old Town bus stand, right where you arrive): walk up to its front door (left side) and press F. Slow (80 km/h top), wide turning circle, the camera sits further back. Can you get it round Old Town's corners? Does it feel like a bus?
+- [ ] **Truck** (blue cab, on the harbour road in the Industrial Zone): get in at the cab door. Heavy and slow to stop when loaded with speed.
+- [ ] **Traffic:** sports cars and SUVs now mix with the sedans in traffic, in random colours.
+- [ ] Crash each one: damage, smoke, a wreck; they right themselves when flipped.

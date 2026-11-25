@@ -118,7 +118,7 @@ func _update_view(delta: float, snap: bool) -> void:
 		_pitch = clampf(_pitch, deg_to_rad(settings.min_pitch_degrees), deg_to_rad(settings.max_pitch_degrees))
 		_yaw = wrapf(_yaw, -PI, PI)
 		global_basis = Basis.IDENTITY
-		var goal: Vector3 = car_xf.origin + Vector3.UP * settings.pivot_height
+		var goal: Vector3 = car_xf.origin + Vector3.UP * settings.pivot_height * vehicle.stats.camera_scale
 		if snap:
 			global_position = goal
 		else:
@@ -129,7 +129,7 @@ func _update_view(delta: float, snap: bool) -> void:
 			pos.z = lerpf(pos.z, goal.z, k_h)
 			pos.y = lerpf(pos.y, goal.y, k_v)
 			global_position = pos
-		_arm.spring_length = settings.distance + settings.distance_speed_bonus * speed_share
+		_arm.spring_length = (settings.distance + settings.distance_speed_bonus * speed_share) * vehicle.stats.camera_scale
 		fov_goal = settings.base_fov + settings.speed_fov_bonus * speed_share
 	else:
 		var limit: float = deg_to_rad(settings.hood_look_limit_degrees)

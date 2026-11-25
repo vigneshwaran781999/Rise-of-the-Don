@@ -72,7 +72,7 @@ func spawn_at(node: int, speed: float = 0.0, paint: Color = Color(0, 0, 0, 0)) -
 	var direction: Vector3 = _graph.get_position(_graph.get_next(node)[0]) - start
 	direction.y = 0.0
 	direction = direction.normalized()
-	var car := car_scene.instantiate() as VehicleController
+	var car := _pick_model().instantiate() as VehicleController
 	car.name = "Traffic%d" % _serial
 	_serial += 1
 	add_child(car)
@@ -179,3 +179,13 @@ func _prune() -> void:
 	for i: int in range(_cars.size() - 1, -1, -1):
 		if not is_instance_valid(_cars[i]) or _cars[i].is_queued_for_deletion():
 			_cars.remove_at(i)
+
+
+## The car for a new spawn: one of the tuning's traffic models by its share, otherwise car_scene.
+func _pick_model() -> PackedScene:
+	var roll: float = _rng.randf()
+	for i: int in mini(tuning.traffic_models.size(), tuning.traffic_model_shares.size()):
+		roll -= tuning.traffic_model_shares[i]
+		if roll < 0.0 and tuning.traffic_models[i] != null:
+			return tuning.traffic_models[i]
+	return car_scene

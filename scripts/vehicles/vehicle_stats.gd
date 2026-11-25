@@ -76,6 +76,13 @@ enum Drive { FRONT, REAR, ALL }
 @export var shift_up_rpm: float = 5800.0
 @export var shift_down_rpm: float = 2500.0
 
+@export_group("Size and camera")
+## How much longer than the sedan the vehicle reaches each way from its centre (metres): you can
+## get in from that much further along it (a bus, a truck), with the same reach to the side.
+@export var extra_half_length: float = 0.0
+## Scales the chase camera's distance and pivot height (a bus needs the camera further back).
+@export var camera_scale: float = 1.0
+
 @export_group("Damage")
 ## A sudden change of speed (a crash) smaller than this does no damage.
 @export var impact_threshold_kmh: float = 12.0

@@ -1,6 +1,10 @@
 [gd_resource type="Resource" script_class="PopulationTuning" format=3]
 
 [ext_resource type="Script" path="res://scripts/npc/population_tuning.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sports.tscn" id="2_sports"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/suv.tscn" id="3_suv"]
 
 [resource]
 script = ExtResource("1_script")
+traffic_models = Array[PackedScene]([ExtResource("2_sports"), ExtResource("3_suv")])
+traffic_model_shares = PackedFloat32Array(0.12, 0.2)

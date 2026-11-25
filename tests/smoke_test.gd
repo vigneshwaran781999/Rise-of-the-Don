@@ -30,6 +30,8 @@ const REQUIRED_ACTIONS: PackedStringArray = [
 ## Vehicle models: visuals only, no static '-colonly' body (a car is a moving rigid body).
 const VEHICLE_ASSETS: PackedStringArray = [
 	"vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel", "vehicles/veh_police_lightbar", "vehicles/veh_police_heli",
+	"vehicles/veh_sports_body", "vehicles/veh_suv_body", "vehicles/veh_bus_body", "vehicles/veh_truck_body",
+	"vehicles/veh_wheel_sport", "vehicles/veh_wheel_suv", "vehicles/veh_wheel_heavy",
 ]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
@@ -108,7 +110,7 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
-		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury, _check_countryside,
+		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury, _check_countryside, _check_fleet,
 		_check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
@@ -789,6 +791,46 @@ func _check_countryside() -> String:
 	if paddy_tiles == 0 or not paddy_as_ground:
 		return "paddy fields should be laid as ground: in Ground, no shadows, always drawn (%d tiles)" % paddy_tiles
 	print("  ok  Countryside: two cells west and south-west of Old Town, road routes to the village police post and from the estate down the south road, lakes always loaded, paddy laid as ground (%d tiles near the lake), one COUNTRYSIDE title for both halves" % paddy_tiles)
+	return ""
+
+
+## M7: the rest of the fleet is parked round the city (the bus at the bus stand, a truck at the
+## harbour, a sports car at the estate, an SUV at Central Plaza). You get into the 11 m bus at its
+## front door as you would a sedan, and the chase camera pulls back to fit it.
+func _check_fleet() -> String:
+	var world: CityWorld = _world()
+	for path: String in ["Vehicles/BusAtStand", "Vehicles/TruckHarbour", "Vehicles/SportsEstate", "Vehicles/SuvPlaza"]:
+		if world.get_node_or_null(path) as VehicleController == null:
+			return "%s is missing from the city" % path
+	var bus := world.get_node("Vehicles/BusAtStand") as VehicleController
+	var player: PlayerController = _player()
+	var hud: Hud = _hud()
+	var back: Vector3 = player.global_position
+	var door: Vector3 = (bus.get_node("ExitPoints/DriverDoor") as Node3D).global_position
+	await _teleport(player, _flat(door) + Vector3.UP * 0.2)
+	await _physics_frames(5)
+	var prompt: String = hud.get_prompt_text()
+	if not prompt.contains("GET IN"):
+		return "no 'GET IN' prompt at the bus's front door, %.1f m from its centre (got '%s')" % [
+			_flat(door).distance_to(_flat(bus.global_position)), prompt]
+	_tap(KEY_F)
+	await _physics_frames(90)
+	if not player.is_in_vehicle() or player.vehicle != bus:
+		return "F at the bus's door should put the player in the bus"
+	var arm := get_tree().current_scene.get_node("VehicleCamera/Yaw/Pitch/SpringArm3D") as SpringArm3D
+	var sedan_distance: float = _vehicle_camera().settings.distance
+	var arm_length: float = arm.spring_length
+	_tap(KEY_F)
+	await _physics_frames(90)
+	var out: bool = not player.is_in_vehicle()
+	await _teleport(player, back)
+	await _physics_frames(30)
+	if arm_length < sedan_distance * 1.6:
+		return "the chase camera should pull back for the bus (arm %.1f m, a sedan's %.1f m)" % [arm_length, sedan_distance]
+	if not out:
+		return "F in the stopped bus should get the player out"
+	print("  ok  fleet: bus, truck, sports car and SUV parked round the city; got into the bus at its front door (%.1f m from its centre), chase camera %.1f m back (sedan %.1f m), got out" % [
+		_flat(door).distance_to(_flat(bus.global_position)), arm_length, sedan_distance])
 	return ""
 
 

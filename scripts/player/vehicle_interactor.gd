@@ -86,12 +86,15 @@ func _clear_spot(point: Vector3, car: VehicleController) -> Variant:
 func _nearest_vehicle() -> VehicleController:
 	var best: VehicleController = null
 	var best_distance: float = _player.tuning.vehicle_enter_radius
-	var here := Vector2(_player.global_position.x, _player.global_position.z)
 	for node: Node in get_tree().get_nodes_in_group(VehicleController.GROUP):
 		var car := node as VehicleController
 		if car == null or car.is_occupied():
 			continue
-		var distance: float = here.distance_to(Vector2(car.global_position.x, car.global_position.z))
+		# Distance in the car's own frame, with its extra length (a bus, a truck) taken off along it,
+		# so you can get in at the door of a long vehicle as at a sedan's.
+		var local: Vector3 = car.global_transform.affine_inverse() * _player.global_position
+		var along: float = maxf(absf(local.z) - car.stats.extra_half_length, 0.0)
+		var distance: float = Vector2(local.x, along).length()
 		if distance <= best_distance:
 			best = car
 			best_distance = distance

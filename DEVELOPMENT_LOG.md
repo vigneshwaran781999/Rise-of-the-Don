@@ -484,6 +484,15 @@ Dated entries: what was built, what broke, how it was fixed.
   - **District titles:** `RegionWatcher` announces a district only when its name changes, so the Countryside's two cells count as one.
   - **The whole city:** seven cells, six districts, 112 chunks, 60 roads crossing between districts, one lane graph of about 22,000 nodes with none disconnected, five police stations. The build takes about 23 s.
   - **Tests:** the smoke test checks the Countryside: both cells, routes to the village police post and from the estate down the south road, the lakes, paddy laid as ground, and one title for both halves. The performance baseline has Luxury and Countryside views.
+- **Step 6, more vehicles (GDD §5 roster):**
+  - **Four new vehicles**, each a body and wheel model, a scene and a handling resource like the sedan's: a sports car (rear-wheel drive, 0–100 km/h in 5 s, 231 km/h), an SUV (all-wheel drive, softer and higher), an 11 m city bus (doors on the kerb side, 80 km/h) and a cargo truck (95 km/h).
+  - **Models:** in `tools/blender/vehicles.py`, with parametric helpers for arches and cabins. The sedan's own code is untouched and re-exports byte-identical. There are three new wheel sizes.
+  - **Long vehicles:** `VehicleStats.extra_half_length` lets you get in anywhere along a long vehicle with the same side reach as a sedan, so you board the bus at its front door; `camera_scale` pulls the chase camera back (the bus's sits 10 m behind).
+  - **Traffic mix:** `population.tres` lists extra traffic models with their shares. About a third of new traffic is sports cars and SUVs; buses and trucks stay out of traffic for now.
+  - **Parked round the city:** the bus at the Old Town bus stand, a truck on the harbour road, the sports car outside the estate, an SUV by Central Plaza. Each model has its own paint.
+  - **Tests:**
+    - New `tests/fleet_test.tscn` drives each vehicle on a test pad: ride height matches its model, acceleration, top speed, braking, turning circle and a full-lock turn at speed, each in a range for its kind.
+    - The smoke test boards the bus at its door and checks the camera.
 
 **Broke and fixed**
 - **Step 1:**
@@ -499,3 +508,7 @@ Dated entries: what was built, what broke, how it was fixed.
 - **Step 5:**
   - **The new smoke check didn't find the paddy fields that were there:** it kept a reference to the paddy batch, then moved the player to the southern half; that unloaded the chunk and freed the node, and a freed node compares equal to null. It now reads the batch before moving on.
   - **One smoke run failed** in the streaming check with an engine-internal error ("Initializing already initialized RID"), while chunks were loading on the background thread. It didn't happen in the next four runs. Noted as an intermittent engine-side race to watch.
+- **Step 6:**
+  - **Fleet test, turning check:** it failed the first turning check: five seconds at full lock turned the sports car past 180 degrees, so the heading difference wrapped round. The test now adds up the yaw rate.
+  - **Sports car ride height:** I first moved its wheel mounts the wrong way (lowering them raises the body); it now sits at its model's ride height.
+  - **Scene format:** `Color("hex")` isn't valid in a text scene file; the paint colours are written as floats.

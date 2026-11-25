@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="VehicleStats" format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_stats.gd" id="1_stats"]
+
+[resource]
+script = ExtResource("1_stats")
+mass = 1350.0
+center_of_mass_height = -0.3
+max_health = 900.0
+drive = 1
+engine_force = 7600.0
+engine_power = 230000.0
+top_speed_kmh = 235.0
+reverse_force = 3600.0
+reverse_top_speed_kmh = 30.0
+drag_coefficient = 0.32
+rolling_resistance = 180.0
+engine_braking = 900.0
+downforce = 3.0
+brake_force = 14000.0
+brake_bias_front = 0.6
+handbrake_force = 7500.0
+parking_brake_force = 6000.0
+handbrake_rear_grip = 0.4
+max_steer_degrees = 30.0
+high_speed_steer_degrees = 7.0
+steer_falloff_speed_kmh = 130.0
+steer_speed = 3.0
+steer_return_speed = 4.5
+suspension_stiffness = 60.0
+suspension_rest_length = 0.15
+suspension_travel = 0.15
+damping_compression = 3.0
+damping_relaxation = 3.6
+suspension_max_force = 18000.0
+roll_influence = 0.08
+front_grip = 1.6
+rear_grip = 1.7
+gear_top_speeds_kmh = PackedFloat32Array(55, 90, 130, 170, 205, 240)
+idle_rpm = 950.0
+redline_rpm = 7800.0
+shift_up_rpm = 7200.0
+shift_down_rpm = 3200.0
+impact_threshold_kmh = 12.0
+damage_per_kmh = 10.0
+smoke_below = 0.35
+heavy_smoke_below = 0.15
+flip_recovery_seconds = 2.5

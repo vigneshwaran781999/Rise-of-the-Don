@@ -1,0 +1,121 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_controller.gd" id="1_ctrl"]
+[ext_resource type="Resource" path="res://resources/vehicles/truck_stats.tres" id="2_stats"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/veh_truck_body.glb" id="3_body"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/veh_wheel_heavy.glb" id="4_wheel"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_engine.gd" id="5_engine"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_damage.gd" id="6_damage"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_lights.gd" id="7_lights"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_audio.gd" id="8_audio"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_recovery.gd" id="9_recovery"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_model.gd" id="10_model"]
+[ext_resource type="Script" path="res://scripts/vehicles/vehicle_bumper.gd" id="11_bumper"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cab"]
+size = Vector3(2.4, 2.45, 1.95)
+[sub_resource type="BoxShape3D" id="BoxShape3D_cargo"]
+size = Vector3(2.4, 2.65, 5.65)
+[sub_resource type="BoxShape3D" id="BoxShape3D_frame"]
+size = Vector3(1.1, 0.3, 7.5)
+
+[node name="Truck" type="VehicleBody3D"]
+collision_layer = 4
+collision_mask = 5
+mass = 7000.0
+script = ExtResource("1_ctrl")
+stats = ExtResource("2_stats")
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("10_model")
+body_scene = ExtResource("3_body")
+wheel_scene = ExtResource("4_wheel")
+paint_color = Color(0.1725, 0.3725, 0.6196, 1)
+
+[node name="Cab" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.375, 2.975)
+shape = SubResource("BoxShape3D_cab")
+
+[node name="Cargo" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.825, -0.975)
+shape = SubResource("BoxShape3D_cargo")
+
+[node name="Frame" type="CollisionShape3D" parent="."]
+position = Vector3(0, -0.62, 0)
+shape = SubResource("BoxShape3D_frame")
+
+[node name="WheelFrontLeft" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, -0.595, 2.8)
+wheel_radius = 0.5
+
+[node name="WheelFrontRight" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, -0.595, 2.8)
+wheel_radius = 0.5
+
+[node name="WheelRearLeft" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, -0.595, -2.4)
+wheel_radius = 0.5
+
+[node name="WheelRearRight" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, -0.595, -2.4)
+wheel_radius = 0.5
+
+[node name="Seat" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.35, 3.0)
+
+[node name="ExitPoints" type="Node3D" parent="."]
+
+[node name="DriverDoor" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, -1.15, 2.9)
+
+[node name="PassengerDoor" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, -1.15, 2.9)
+
+[node name="Behind" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, -4.8)
+
+[node name="InFront" type="Marker3D" parent="ExitPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, 5.0)
+
+[node name="HoodCamera" type="Marker3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.25, 3.6)
+
+[node name="SmokePoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 3.5)
+
+[node name="Engine" type="Node" parent="."]
+script = ExtResource("5_engine")
+
+[node name="Damage" type="Node" parent="."]
+script = ExtResource("6_damage")
+
+[node name="Lights" type="Node3D" parent="."]
+script = ExtResource("7_lights")
+
+[node name="HeadlightLeft" type="SpotLight3D" parent="Lights"]
+visible = false
+rotation = Vector3(-0.10472, 3.14159, 0)
+position = Vector3(0.9, -0.35, 3.92)
+light_color = Color(1, 0.94, 0.82, 1)
+light_energy = 6.0
+spot_range = 36.0
+spot_angle = 30.0
+
+[node name="HeadlightRight" type="SpotLight3D" parent="Lights"]
+visible = false
+rotation = Vector3(-0.10472, 3.14159, 0)
+position = Vector3(-0.9, -0.35, 3.92)
+light_color = Color(1, 0.94, 0.82, 1)
+light_energy = 6.0
+spot_range = 36.0
+spot_angle = 30.0
+
+[node name="Audio" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.5)
+script = ExtResource("8_audio")
+
+[node name="Recovery" type="Node" parent="."]
+script = ExtResource("9_recovery")
+
+[node name="Bumper" type="Area3D" parent="."]
+script = ExtResource("11_bumper")

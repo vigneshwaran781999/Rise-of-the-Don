@@ -7,6 +7,10 @@
 [ext_resource type="Script" path="res://scripts/world/world_streamer.gd" id="5_streamer"]
 [ext_resource type="PackedScene" path="res://scenes/world/chunks/city/landmarks.scn" id="6_landmarks"]
 [ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="7_sedan"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/bus.tscn" id="8_bus"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/truck.tscn" id="9_truck"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sports.tscn" id="10_sports"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/suv.tscn" id="11_suv"]
 
 [node name="City" type="Node3D"]
 script = ExtResource("1_city")
@@ -39,3 +43,19 @@ rotation = Vector3(0, -1.5708, 0)
 [node name="SedanNorthRoad" parent="Vehicles" instance=ExtResource("7_sedan")]
 position = Vector3(-4.75, 0.6, -165)
 rotation = Vector3(0, 3.14159, 0)
+
+[node name="BusAtStand" parent="Vehicles" instance=ExtResource("8_bus")]
+position = Vector3(101, 1.45, 4.75)
+rotation = Vector3(0, -1.5708, 0)
+
+[node name="TruckHarbour" parent="Vehicles" instance=ExtResource("9_truck")]
+position = Vector3(523.75, 1.35, -620)
+rotation = Vector3(0, 3.14159, 0)
+
+[node name="SportsEstate" parent="Vehicles" instance=ExtResource("10_sports")]
+position = Vector3(-490, 0.65, -516.75)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="SuvPlaza" parent="Vehicles" instance=ExtResource("11_suv")]
+position = Vector3(-80, 0.65, -516.75)
+rotation = Vector3(0, 1.5708, 0)

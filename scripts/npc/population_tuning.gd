@@ -13,6 +13,10 @@ extends Resource
 @export var traffic_visible_spawn_min: float = 95.0
 ## ...and are removed beyond this distance when out of view.
 @export var traffic_despawn: float = 130.0
+## Other cars in the traffic mix besides the default (the traffic manager's car), with their share of
+## new cars (M7: sports cars and SUVs). The sedan takes whatever share is left.
+@export var traffic_models: Array[PackedScene] = []
+@export var traffic_model_shares: PackedFloat32Array = PackedFloat32Array()
 @export var paint_colours: PackedColorArray = PackedColorArray([
 	Color("f1f1ee"), Color("c9ccd1"), Color("1c1d22"), Color("a3162b"), Color("23508f"),
 	Color("2f6d4e"), Color("e3b21f"), Color("7a7f87"), Color("f1f1ee"), Color("c9ccd1"),
