@@ -21,6 +21,7 @@ var enabled: bool = true
 var headlights_on: bool = false
 
 var _graph: LaneGraph
+var _router: RoadRouter
 var _focus: Node3D
 var _streamer: WorldStreamer
 var _cars: Array[VehicleController] = []
@@ -47,6 +48,7 @@ func _exit_tree() -> void:
 
 func setup(graph: LaneGraph, focus: Node3D, streamer: WorldStreamer) -> void:
 	_graph = graph
+	_router = RoadRouter.for_graph(graph)
 	_focus = focus
 	_streamer = streamer
 
@@ -123,8 +125,9 @@ func _try_spawn() -> void:
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 	for attempt: int in 16:
-		var node: int = _rng.randi() % _graph.size()
-		if _graph.flags[node] != 0 or _graph.get_next(node).is_empty():
+		# A node near the player (sampling the whole city's graph would mostly miss the ring).
+		var node: int = _router.random_node_near(here, tuning.traffic_spawn_min, tuning.traffic_spawn_max, _rng)
+		if node < 0 or _graph.flags[node] != 0 or _graph.get_next(node).is_empty():
 			continue    # only plain lane nodes, not stop lines, junctions or U-turns
 		var pos: Vector3 = _graph.get_position(node)
 		var distance: float = Vector2(pos.x - here.x, pos.z - here.z).length()

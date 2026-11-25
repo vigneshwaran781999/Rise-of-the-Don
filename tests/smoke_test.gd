@@ -33,7 +33,7 @@ const VEHICLE_ASSETS: PackedStringArray = [
 ]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
-## City kit pieces (Old Town, Downtown, Beach District, Industrial Zone) that must exist as baked meshes (one surface each).
+## City kit pieces (every district) that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
 	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
@@ -44,6 +44,7 @@ const KIT_MESHES: PackedStringArray = [
 	"prop_bh_umbrella", "prop_bh_boat", "prop_bh_lifeguard", "prop_bh_kiosk",
 	"lot_concrete", "bld_in_warehouse_a", "bld_in_warehouse_b", "bld_in_factory", "bld_in_office", "bld_in_police", "bld_in_tanks",
 	"bld_in_crane", "bld_in_ship", "bld_in_fish_shed", "prop_in_container_a", "prop_streetlight_sodium",
+	"bld_lx_villa_a", "bld_lx_villa_b", "bld_lx_villa_c", "bld_lx_mansion", "prop_lx_guard_booth", "prop_lx_hedge",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -69,6 +70,8 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_in_police", "buildings/bld_in_tanks", "buildings/bld_in_crane", "buildings/bld_in_ship",
 	"buildings/bld_in_fish_shed", "props/prop_in_container_a", "props/prop_in_container_b", "props/prop_in_container_c",
 	"props/prop_streetlight_sodium",
+	"buildings/bld_lx_villa_a", "buildings/bld_lx_villa_b", "buildings/bld_lx_villa_c", "buildings/bld_lx_mansion",
+	"props/prop_lx_guard_booth", "props/prop_lx_hedge",
 ]
 
 var _catcher: ErrorCatcher
@@ -103,7 +106,7 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
-		_check_streaming, _check_downtown, _check_beach, _check_industrial,
+		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury,
 		_check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
@@ -683,6 +686,48 @@ func _check_industrial() -> String:
 	if not data.region_rects[zone].has_point(Vector2(station.x, station.z)):
 		return "an arrest in the Industrial Zone should end at its own police post (nearest is at %s)" % station
 	print("  ok  Industrial Zone: routes in from Downtown and from the Beach, three harbour cranes on the skyline, %d sodium lamps around its west side (in the street-light pool), its own police post" % sodium)
+	return ""
+
+
+## M7: the Luxury District west of Downtown: Downtown's streets carry on into it, its villa plots
+## are walled (a car can't drive through a compound wall), and the estate's gate is a known place.
+func _check_luxury() -> String:
+	var world: CityWorld = _world()
+	var data: CityData = world.data
+	var luxury: int = data.region_names.find("Luxury District")
+	if luxury < 0 or not data.region_rects[luxury].has_point(Vector2(-512.0, -512.0)):
+		return "the Luxury District should be the 512 m square west of Downtown (%s)" % data.region_names
+	if not data.places.has(&"estate"):
+		return "the estate's gate should be a place in the city manifest"
+	var gate: Vector3 = (data.places[&"estate"] as Transform3D).origin
+	var router := RoadRouter.for_graph(world.get_lane_graph())
+	var route: PackedVector3Array = router.route(Vector3(97.0, 0.0, 4.75), gate)
+	if route.size() < 2 or Vector2(route[route.size() - 1].x - gate.x, route[route.size() - 1].z - gate.z).length() > 30.0:
+		return "no road route from the bus stand to the estate's gate (%d points)" % route.size()
+	var game := get_tree().current_scene as GameSession
+	var player: PlayerController = _player()
+	var back := Transform3D(Basis(Vector3.UP, player.model.rotation.y), player.global_position)
+	game.place_player(Transform3D(Basis.IDENTITY, gate + Vector3.UP * 0.2))
+	await _physics_frames(10)
+	# Straight ahead of the gate (into the grounds) a ray at chest height meets the gate.
+	var space: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
+	var ray := PhysicsRayQueryParameters3D.create(gate + Vector3(0.0, 1.0, 0.0), gate + Vector3(0.0, 1.0, -6.0), 1)
+	var hit: Dictionary = space.intersect_ray(ray)
+	var villas: int = 0
+	for c: Vector2i in world.streamer.get_loaded_coords():
+		for b: Node in world.streamer.get_chunk(c).get_node("Buildings").get_children():
+			villas += 1 if str(b.name).contains("lx_villa") else 0
+	game.place_player(back)
+	await _physics_frames(30)
+	if hit.is_empty():
+		return "the estate's gate should be closed (nothing solid just inside it)"
+	if villas < 20:
+		return "only %d villa plots around the estate" % villas
+	var length: float = 0.0
+	for i: int in route.size() - 1:
+		length += route[i].distance_to(route[i + 1])
+	print("  ok  Luxury District: west of Downtown, a road route to the estate's gate (%.0f m from the bus stand), the gate is shut, %d walled villa plots around it" % [
+		length, villas])
 	return ""
 
 

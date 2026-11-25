@@ -267,3 +267,11 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Driving:** the big yards and wide roads make for good chases. Do traffic and the police cope with the long straight roads and the T-junctions at the harbour road?
 - [ ] **Police:** busted here, you're released at the Industrial Zone's police post (a small white office with a blue POLICE board).
 - [ ] **Map:** HARBOUR, CONTAINER YARD, FISHING HARBOUR and FACTORY are labelled.
+
+### The Luxury District (step 4)
+- [ ] **Getting there:** from Downtown, drive west along any east-west road. "LUXURY DISTRICT" fades in.
+- [ ] **Looks:** avenues lined with walled villa plots: white modern villas, sand-coloured ones with tiled roofs and porticos, grey-and-timber ones; lawns, pools, closed black gates with lamps on the gate pillars. Green verges and trees between plots. Does it feel quiet and wealthy? Any villa poking through its own wall, or a wall across a sidewalk?
+- [ ] **The estate** (in the middle, gate on the central east-west road): the mansion with its columns and pediment, the fountain court, the gatehouse, two garages, palms round the grounds. The gate is shut: you can't drive in (yet).
+- [ ] **Sandalwood Park** next to it: trees, hedges, benches.
+- [ ] **Guard booths** stand where the two main roads leave south for the Countryside (the Countryside comes in the next step; for now the roads end at the city's edge).
+- [ ] **At night:** gate lamps and ground-floor glass glow; streets are darker than Downtown.

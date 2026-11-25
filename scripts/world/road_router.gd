@@ -102,6 +102,22 @@ func nearest_node(pos: Vector3) -> int:
 	return best if best >= 0 else graph.nearest(pos)
 
 
+## A random lane node between min_distance and max_distance (horizontally) from pos, or -1 if
+## the cell tried has none there. Picks a random grid cell in that ring, then a node in it, so it
+## costs the same however big the city's lane graph is (traffic spawns this way).
+func random_node_near(pos: Vector3, min_distance: float, max_distance: float, rng: RandomNumberGenerator) -> int:
+	var reach: int = ceili(max_distance / GRID)
+	var centre := Vector2i(floori(pos.x / GRID), floori(pos.z / GRID))
+	var cell := centre + Vector2i(rng.randi_range(-reach, reach), rng.randi_range(-reach, reach))
+	var nodes: PackedInt32Array = _grid.get(cell, PackedInt32Array())
+	if nodes.is_empty():
+		return -1
+	var node: int = nodes[rng.randi() % nodes.size()]
+	var p: Vector3 = graph.get_position(node)
+	var d: float = Vector2(p.x - pos.x, p.z - pos.z).length()
+	return node if d >= min_distance and d <= max_distance else -1
+
+
 ## The nearest lane node within 20 m whose lane runs along `heading` (falls back to the nearest).
 func nearest_node_heading(pos: Vector3, heading: Vector3) -> int:
 	var flat := Vector3(heading.x, 0.0, heading.z).normalized()

@@ -39,7 +39,9 @@ static func make_districts() -> Array[DistrictLayout]:
 	beach.centre = Vector2(CELL, 0.0)
 	var industrial := IndustrialLayout.new()
 	industrial.centre = Vector2(CELL, -CELL)
-	return [old_town, downtown, beach, industrial]
+	var luxury := LuxuryLayout.new()
+	luxury.centre = Vector2(-CELL, -CELL)
+	return [old_town, downtown, beach, industrial, luxury]
 
 
 ## The sea (GDD §2: a coastal city): everything east of the coast, out past the edge of the

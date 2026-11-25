@@ -465,6 +465,14 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Sodium street lamps:** `DistrictLayout._streetlight_kit()` lets a district choose its streetlight; the Industrial Zone's is `prop_streetlight_sodium` (the same shape, an orange lens). `StreetLightPool` reads both kinds of lamp and lights sodium lamps orange.
   - **Cranes** are landmarks (always loaded), so they stay on the skyline.
   - **Tests:** the smoke test checks the Industrial Zone: routes in from Downtown and from the Beach, the cranes, sodium lamps in the street-light pool, and the nearest police post. The performance baseline has two Industrial views.
+- **Step 4, the Luxury District (GDD §2 district 5):**
+  - **`LuxuryLayout`** (the cell west of Downtown):
+    - Downtown's seven east-west streets carry on into it. Two main roads run north-south and will carry on into the Countryside; the side lanes stop short of the north and south edges.
+    - Every street is lined with walled villa plots. Each villa model is a whole 28 x 24 m plot (compound wall, a closed gate with lamps, lawn, the house, a pool), so a row of plots makes a gated street.
+    - The estate (a walled mansion with a colonnade, fountain court, gatehouse and garages) on a merged block, with Sandalwood Park beside it. Guard booths where the main roads leave south. No police station.
+    - The estate's gate is recorded as a place (`estate`) for the story to use.
+  - **Luxury kit** (`tools/blender/luxury.py`, 6 models).
+  - **Tests:** the smoke test checks the Luxury District: its square, a road route from the bus stand to the estate's gate, the gate shut (a ray just inside hits it), and walled villa plots around it.
 
 **Broke and fixed**
 - **Step 1:**
@@ -476,3 +484,4 @@ Dated entries: what was built, what broke, how it was fixed.
   - **100 lane nodes disconnected:** the first build had them at the Beach's north and south edges. There, the side lanes are dropped east of Beach Road, so a north-south street passed the dropped lane's crossing point with no junction there. It became two segments ending in U-turns, and the stub at the edge was cut off from the network. Fixed in `DistrictLayout._find_segments` (see Built).
   - **Midday sand** was close to white; it's a darker tan now. The beam was turned down for full night.
 - **Step 3:** no failures. The step 2 street-generator fix meant the Industrial Zone's dropped lanes built cleanly the first time (0 disconnected lane nodes).
+- **Step 4:** the traffic test came up short at High density (17 cars, expected 22). Traffic picked spawn points at random from the whole city's lane graph and kept only those in the ring around the player; with five districts most picks missed, so cars came too slowly. `RoadRouter.random_node_near()` now picks from the grid cells around the player, which costs the same however big the city gets.
