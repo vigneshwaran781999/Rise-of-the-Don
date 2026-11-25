@@ -8,6 +8,7 @@ var _speed := PackedFloat32Array()
 var _junction := PackedInt32Array()
 var _axis := PackedInt32Array()
 var _flags := PackedInt32Array()
+var _side := PackedInt32Array()
 var _next: Array[PackedInt32Array] = []
 
 
@@ -17,6 +18,7 @@ func add_node(pos: Vector3, speed_kmh: float, junction: int = -1, axis: int = -1
 	_junction.append(junction)
 	_axis.append(axis)
 	_flags.append(flags)
+	_side.append(-1)
 	_next.append(PackedInt32Array())
 	return _positions.size() - 1
 
@@ -47,6 +49,7 @@ func build() -> LaneGraph:
 	graph.junction = _junction
 	graph.signal_axis = _axis
 	graph.flags = _flags
+	graph.side_lane = _side
 	var start := PackedInt32Array()
 	var targets := PackedInt32Array()
 	for list: PackedInt32Array in _next:
@@ -56,3 +59,9 @@ func build() -> LaneGraph:
 	graph.next_start = start
 	graph.next_list = targets
 	return graph
+
+
+## Marks a and b as level with each other in neighbouring lanes that go the same way.
+func set_side_lanes(a: int, b: int) -> void:
+	_side[a] = b
+	_side[b] = a

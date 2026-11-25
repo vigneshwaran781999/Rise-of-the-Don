@@ -9,6 +9,15 @@
 [ext_resource type="Resource" path="res://resources/vehicles/vehicle_camera.tres" id="7_vcamset"]
 [ext_resource type="Script" path="res://scripts/systems/camera_transition.gd" id="8_transition"]
 [ext_resource type="Script" path="res://scripts/world/lane_graph_debug.gd" id="9_lanedebug"]
+[ext_resource type="Script" path="res://scripts/npc/traffic_manager.gd" id="10_traffic"]
+[ext_resource type="Script" path="res://scripts/npc/pedestrian_manager.gd" id="11_peds"]
+[ext_resource type="Resource" path="res://resources/characters/population.tres" id="12_population"]
+[ext_resource type="Resource" path="res://resources/vehicles/traffic_driver.tres" id="13_driver"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="14_sedan"]
+[ext_resource type="PackedScene" path="res://scenes/npc/pedestrian.tscn" id="15_ped"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_man.glb" id="16_man"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_woman.glb" id="17_woman"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_elder.glb" id="18_elder"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -36,6 +45,18 @@ fov = 72.0
 
 [node name="CameraTransition" type="Camera3D" parent="."]
 script = ExtResource("8_transition")
+
+[node name="Traffic" type="Node3D" parent="."]
+script = ExtResource("10_traffic")
+tuning = ExtResource("12_population")
+driver_tuning = ExtResource("13_driver")
+car_scene = ExtResource("14_sedan")
+
+[node name="Pedestrians" type="Node3D" parent="."]
+script = ExtResource("11_peds")
+tuning = ExtResource("12_population")
+pedestrian_scene = ExtResource("15_ped")
+looks = Array[PackedScene]([ExtResource("16_man"), ExtResource("17_woman"), ExtResource("18_elder")])
 
 [node name="LaneDebug" type="MeshInstance3D" parent="."]
 script = ExtResource("9_lanedebug")

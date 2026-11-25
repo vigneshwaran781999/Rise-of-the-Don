@@ -121,3 +121,32 @@ Since M3, **New Game starts in Old Town**. The M1 test block is still in the pro
 - [ ] The ring roads are fun to drive, and the lanes are tight but drivable.
 - [ ] Kerbs bump the car up onto sidewalks, and buildings and walls stop it (and damage it).
 - [ ] Invisible walls stop you at the edge of the district.
+
+## M4 — Life in the city
+
+Headless tests already cover the logic (`tests/traffic_test.tscn`, `tests/pedestrian_test.tscn` and the smoke test). These checks are about how it looks and feels. Play at the default **Medium** density unless a step says otherwise.
+
+### Traffic
+- [ ] Within a few seconds of New Game, cars are driving on the roads around you. Their colours vary (white, silver, black, red, blue, green, yellow, grey), and they keep **left**.
+- [ ] Cars never pop into existence or vanish where you are looking at close range. They appear in the distance or out of sight.
+- [ ] At traffic lights, cars stop before the line on red. They leave a car's gap to the car in front, brake lights glow, and they pull away on green. Nobody runs a red.
+- [ ] Where a lane meets a main road, cars stop briefly at the line, then pull out when the junction is clear.
+- [ ] Following: cars slow down behind slower cars and leave a gap. Stand in a lane in front of a car: it stops short of you and honks after about 5 s.
+- [ ] Park your car in the outer lane of a main road (four lanes) and watch: cars change into the other lane, drive past and carry on. In a narrow lane they stop behind it and honk instead.
+- [ ] Ram a traffic car: it stops for a few seconds, then drives on. Traffic cars can be wrecked and pushed like your own car.
+- [ ] Steering looks smooth: no weaving in straight lanes, sensible lines through turns, no cutting across kerbs.
+- [ ] Turn F3 on: the third line shows the number of cars and people about. Set Traffic density to Low, then High, in pause → Settings: the car count settles at 7 / 22 within a few seconds (Medium is 14).
+
+### Pedestrians
+- [ ] People walk the sidewalks in varied looks: men in shirts and trousers, women in long skirts with a braid, older men in white veshtis. Their legs and arms swing as they walk.
+- [ ] They cross roads at zebra crossings and at the corners of lanes, not in the middle of a road.
+- [ ] Some stop, and pairs stand facing each other chatting with small hand movements. Some sit on benches: in the temple courtyard, the parks, the market and the tank yard. Does the sitting pose (upright, legs forward to the ground) read well?
+- [ ] Nobody floats, sinks into the ground, walks inside a building or stands on a bench.
+- [ ] Walk into someone: they step out of your way.
+- [ ] Honk at people in front of your car: they hurry aside.
+- [ ] Crash your car hard near people: everyone nearby runs.
+- [ ] Hit someone with the car at speed: they fall flat. The car isn't stopped dead by the impact. Nearby people run, and the person gets up after about 3 s and runs away from the car.
+- [ ] Set Pedestrian density to Low / Medium / High: about 12 / 26 / 42 people (F3).
+
+### Performance
+- [ ] With F3 at Medium density, the FPS at the spawn street should be about the same as without people and cars. This machine measured 37–38 FPS at every density (GPU-bound; `docs/PERFORMANCE.md`). Is it still smooth on yours, including at High?

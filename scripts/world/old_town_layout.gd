@@ -70,6 +70,8 @@ var blocks: Array[Dictionary] = []
 var crossings: Array[Rect2] = []
 ## {junction: int, position: Vector3, heads: [[Transform3D, axis]]}
 var signals: Array[Dictionary] = []
+## Where a pedestrian sits on a bench: {xform: Transform3D of their feet, facing +Z, kind: &"prop" or &"landmark"}
+var sit_spots: Array[Dictionary] = []
 var lane_graph: LaneGraph
 var junction_count: int = 0
 
@@ -298,6 +300,7 @@ func _add_block(ix0: int, ix1: int, iz0: int, iz1: int, kind: StringName) -> voi
 			for corner: Vector2 in [Vector2(0.06, 0.06), Vector2(0.94, 0.06), Vector2(0.06, 0.94), Vector2(0.94, 0.94)]:
 				_place(&"prop_neem_tree", Vector3(yard.position.x + yard.size.x * corner.x, LOT_TOP,
 					yard.position.y + yard.size.y * corner.y), _rng.randf() * TAU, Vector3.ONE, &"prop")
+			_benches_facing_in(yard, 1.8, &"prop")
 		&"market":
 			var square: Rect2 = _frontages(interior, [MAIN_FRONT, null, MAIN_FRONT, null], MAX_DEPTH)
 			_market(square)
@@ -477,6 +480,25 @@ func _park(interior: Rect2) -> void:
 				_rng.randf() * TAU, Vector3.ONE, &"prop")
 			z += 9.0
 		x += 9.0
+	_benches_facing_in(interior, 2.0, &"prop")
+
+
+## A bench at the middle of each side of `r`, `inset` metres in, facing the middle.
+func _benches_facing_in(r: Rect2, inset: float, kind: StringName) -> void:
+	var c: Vector2 = r.get_center()
+	_bench(Vector3(c.x, LOT_TOP, r.position.y + inset), 0.0, kind)
+	_bench(Vector3(c.x, LOT_TOP, r.end.y - inset), PI, kind)
+	_bench(Vector3(r.position.x + inset, LOT_TOP, c.y), PI * 0.5, kind)
+	_bench(Vector3(r.end.x - inset, LOT_TOP, c.y), -PI * 0.5, kind)
+
+
+## A stone bench facing +Z rotated by yaw, with two places to sit.
+func _bench(pos: Vector3, yaw: float, kind: StringName) -> void:
+	_place(&"prop_bench", pos, yaw, Vector3.ONE, kind)
+	var basis := Basis(Vector3.UP, yaw)
+	for side: float in [-0.45, 0.45]:
+		# Feet origin of a seated figure: hips (0.92 m up) just above the 0.47 m seat.
+		sit_spots.append({"xform": Transform3D(basis, pos + basis * Vector3(side, -0.41, 0.16)), "kind": kind})
 
 
 func _market(square: Rect2) -> void:
@@ -495,6 +517,8 @@ func _market(square: Rect2) -> void:
 		_place(&"prop_flower_stall", Vector3(square.end.x - 2.0, LOT_TOP, z), PI * 0.5, Vector3.ONE, &"prop")
 	_place(&"prop_handcart", Vector3(square.end.x - 2.5, LOT_TOP, square.position.y + 31.0), 0.4, Vector3.ONE, &"prop")
 	_place(&"prop_handcart", Vector3(square.position.x + 3.0, LOT_TOP, square.end.y - 2.5), -1.2, Vector3.ONE, &"prop")
+	for bench_x: float in [square.position.x + 10.0, square.position.x + 20.0]:
+		_bench(Vector3(bench_x, LOT_TOP, square.end.y - 2.0), PI, &"prop")
 
 
 ## The temple compound (always loaded as the skyline landmark): walls, four gopurams, the
@@ -526,6 +550,12 @@ func _temple() -> void:
 		_place(&"prop_palm_tree", Vector3(p.x, LOT_TOP, p.y), _rng.randf() * TAU, Vector3.ONE, &"landmark")
 	for p: Vector2 in [Vector2(-18, -22), Vector2(18, -22), Vector2(-18, 22), Vector2(18, 22)]:
 		_place(&"prop_neem_tree", Vector3(p.x, LOT_TOP, p.y), _rng.randf() * TAU, Vector3.ONE, &"landmark")
+	# Benches along the inside of the walls, between the gopurams, facing the shrine.
+	for s: float in [-10.0, 10.0]:
+		_bench(Vector3(s, LOT_TOP, -31.5), 0.0, &"landmark")
+		_bench(Vector3(s, LOT_TOP, 31.5), PI, &"landmark")
+		_bench(Vector3(-31.5, LOT_TOP, s), PI * 0.5, &"landmark")
+		_bench(Vector3(31.5, LOT_TOP, s), -PI * 0.5, &"landmark")
 
 
 # --------------------------------------------------------------------------- signals, crossings
@@ -622,6 +652,10 @@ func _build_lanes() -> void:
 						flags |= LaneGraph.Flag.GIVE_WAY
 					builder.set_flags(previous, flags, int(jd["id"]), int(seg["ax"]))
 				lanes.append([first, previous])
+			if lanes.size() == 2:
+				# Both lanes have the same number of nodes, added in order: link them pairwise.
+				for k: int in int(lanes[0][1]) - int(lanes[0][0]) + 1:
+					builder.set_side_lanes(int(lanes[0][0]) + k, int(lanes[1][0]) + k)
 			per_dir.append(lanes)
 		chains.append(per_dir)
 
@@ -676,6 +710,11 @@ func _build_lanes() -> void:
 				var back_entry: int = int((back[mini(k, back.size() - 1)] as Array)[0])   # inner to inner, outer to outer
 				_link(builder, int(lane[1]), back_entry, travel, 15.0, -1, LaneGraph.Flag.U_TURN, false)
 	lane_graph = builder.build()
+	var centres := PackedVector3Array()
+	centres.resize(junction_count)
+	for jd: Dictionary in _junctions.values():
+		centres[int(jd["id"])] = Vector3(float(jd["x"]), 0.0, float(jd["z"]))
+	lane_graph.junction_positions = centres
 
 
 ## Joins two lane nodes with a short curve (two in-between nodes). Turns bend around the point

@@ -296,10 +296,14 @@ func _apply_wheel_forces(drive_force: float, brake_force: float, coasting: bool,
 		wheel.wheel_friction_slip = grip * (stats.handbrake_rear_grip if handbrake and not is_front else 1.0)
 
 
+## Largest front-wheel angle at the current speed, radians (steering input 1.0 gives this).
+func get_steer_lock() -> float:
+	var falloff: float = clampf(get_speed_kmh() / stats.steer_falloff_speed_kmh, 0.0, 1.0)
+	return deg_to_rad(lerpf(stats.max_steer_degrees, stats.high_speed_steer_degrees, falloff))
+
+
 func _apply_steering(delta: float) -> void:
-	var speed_kmh: float = get_speed_kmh()
-	var falloff: float = clampf(speed_kmh / stats.steer_falloff_speed_kmh, 0.0, 1.0)
-	var lock: float = deg_to_rad(lerpf(stats.max_steer_degrees, stats.high_speed_steer_degrees, falloff))
+	var lock: float = get_steer_lock()
 	var target: float = _steer_input * lock if _driver != null else 0.0
 	var returning: bool = absf(target) < absf(_steer_angle) or signf(target) != signf(_steer_angle)
 	var rate: float = stats.steer_return_speed if returning else stats.steer_speed

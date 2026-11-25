@@ -1,5 +1,6 @@
 extends Node
-## Player-facing settings: audio volumes and mouse look. Changes apply immediately and are
+## Player-facing settings: audio volumes, mouse look and how busy the streets are (pedestrian and
+## traffic density, GDD §6). Changes apply immediately and are
 ## persisted to user://settings.cfg (GDD §14). Autoload: Settings.
 
 signal changed(key: StringName)
@@ -7,6 +8,8 @@ signal changed(key: StringName)
 const SAVE_PATH: String = "user://settings.cfg"
 const MOUSE_SENSITIVITY_MIN: float = 0.2
 const MOUSE_SENSITIVITY_MAX: float = 3.0
+## Density levels for pedestrians and traffic (index = level).
+const DENSITY_NAMES: PackedStringArray = ["Low", "Medium", "High"]
 ## Volume setting -> audio bus it drives.
 const VOLUME_BUSES: Dictionary = {
 	&"master_volume": &"Master",
@@ -22,6 +25,9 @@ var music_volume: float = 0.6
 var sfx_volume: float = 0.8
 var mouse_sensitivity: float = 1.0
 var invert_y: bool = false
+## 0 low, 1 medium, 2 high (counts per level: resources/characters/population.tres).
+var pedestrian_density: int = 1
+var traffic_density: int = 1
 
 
 func _ready() -> void:
@@ -74,6 +80,24 @@ func set_invert_y(enabled: bool) -> void:
 	changed.emit(&"invert_y")
 
 
+## key: &"pedestrian_density" or &"traffic_density"; level 0 low, 1 medium, 2 high.
+func set_density(key: StringName, level: int) -> void:
+	var value: int = clampi(level, 0, DENSITY_NAMES.size() - 1)
+	match key:
+		&"pedestrian_density":
+			pedestrian_density = value
+		&"traffic_density":
+			traffic_density = value
+		_:
+			push_error("Settings: unknown density key '%s'" % key)
+			return
+	changed.emit(key)
+
+
+func get_density(key: StringName) -> int:
+	return pedestrian_density if key == &"pedestrian_density" else traffic_density
+
+
 func save_settings() -> void:
 	if not persist:
 		return
@@ -83,6 +107,8 @@ func save_settings() -> void:
 	cfg.set_value("audio", "sfx_volume", sfx_volume)
 	cfg.set_value("controls", "mouse_sensitivity", mouse_sensitivity)
 	cfg.set_value("controls", "invert_y", invert_y)
+	cfg.set_value("world", "pedestrian_density", pedestrian_density)
+	cfg.set_value("world", "traffic_density", traffic_density)
 	var err: Error = cfg.save(SAVE_PATH)
 	if err != OK:
 		push_warning("Settings: could not save %s (error %d)" % [SAVE_PATH, err])
@@ -98,6 +124,8 @@ func load_settings() -> void:
 	mouse_sensitivity = clampf(float(cfg.get_value("controls", "mouse_sensitivity", mouse_sensitivity)),
 			MOUSE_SENSITIVITY_MIN, MOUSE_SENSITIVITY_MAX)
 	invert_y = bool(cfg.get_value("controls", "invert_y", invert_y))
+	pedestrian_density = clampi(int(cfg.get_value("world", "pedestrian_density", pedestrian_density)), 0, 2)
+	traffic_density = clampi(int(cfg.get_value("world", "traffic_density", traffic_density)), 0, 2)
 
 
 func _apply_volume(key: StringName) -> void:

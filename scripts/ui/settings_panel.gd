@@ -1,6 +1,7 @@
 class_name SettingsPanel
 extends MenuPanel
-## Master / music / effects volume, mouse sensitivity and invert-Y (M1 subset of GDD §10).
+## Master / music / effects volume, mouse sensitivity, invert-Y, pedestrian and traffic density
+## (subset of GDD §10).
 ## Changes apply instantly; they are written to user://settings.cfg when the panel closes.
 
 const PREVIEW_INTERVAL_MS: int = 120
@@ -10,6 +11,7 @@ var _volume_labels: Dictionary = {}   # StringName -> Label
 var _sensitivity: HSlider
 var _sensitivity_label: Label
 var _invert: Button
+var _density_buttons: Dictionary = {}  # StringName -> Button
 var _last_preview_ms: int = 0
 
 
@@ -29,6 +31,8 @@ func _on_opening() -> void:
 	_show_sensitivity(Settings.mouse_sensitivity)
 	_invert.set_pressed_no_signal(Settings.invert_y)
 	_invert.text = "ON" if Settings.invert_y else "OFF"
+	for key: StringName in _density_buttons:
+		(_density_buttons[key] as Button).text = "◀  %s  ▶" % Settings.DENSITY_NAMES[Settings.get_density(key)].to_upper()
 
 
 func _on_closing() -> void:
@@ -73,6 +77,9 @@ func _build() -> void:
 	grid.add_child(_invert)
 	grid.add_child(Control.new())
 
+	_add_density_row(grid, "Pedestrians", &"pedestrian_density", "PedestrianDensityButton")
+	_add_density_row(grid, "Traffic", &"traffic_density", "TrafficDensityButton")
+
 	box.add_child(HSeparator.new())
 	box.add_child(_make_back_button())
 
@@ -86,6 +93,25 @@ func _add_volume_row(grid: GridContainer, text: String, key: StringName, node_na
 	grid.add_child(label)
 	_volume_sliders[key] = slider
 	_volume_labels[key] = label
+
+
+## A button that cycles Low -> Medium -> High (how many people / cars are on the streets).
+func _add_density_row(grid: GridContainer, text: String, key: StringName, node_name: String) -> void:
+	grid.add_child(_row_label(text))
+	var button := Button.new()
+	button.name = node_name
+	button.custom_minimum_size = Vector2(200.0, 48.0)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.pressed.connect(_on_density_pressed.bind(key, button))
+	grid.add_child(button)
+	grid.add_child(Control.new())
+	_density_buttons[key] = button
+
+
+func _on_density_pressed(key: StringName, button: Button) -> void:
+	Settings.set_density(key, (Settings.get_density(key) + 1) % Settings.DENSITY_NAMES.size())
+	button.text = "◀  %s  ▶" % Settings.DENSITY_NAMES[Settings.get_density(key)].to_upper()
+	AudioManager.play_ui(&"ui_move")
 
 
 func _on_volume_changed(value: float, key: StringName) -> void:

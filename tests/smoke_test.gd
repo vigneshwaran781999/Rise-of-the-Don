@@ -4,12 +4,14 @@ extends Node
 ## Prints "SMOKE TEST PASSED" and exits 0, or "FAILED: <reason>" and exits 1.
 ## Any engine or script error logged while it runs also fails the test.
 ##
-## It drives the real game: main menu -> New Game (Old Town) -> chunk streaming, traffic
-## signals, lane graph, pedestrian navmesh -> walk, sprint, jump, kerb, look, HUD -> get in the
-## sedan, drive, brake, reverse, steer, cameras, horn, lights, crash, get out -> pause -> back
-## to the main menu. Input goes through the real input map (simulated key events).
-## More detail lives in per-feature tests: tests/vehicle_test.tscn (handling figures) and
-## tests/player_test.tscn (kerb, ramps and gateway on the M1 test block).
+## It drives the real game: main menu -> New Game (Old Town) -> traffic and pedestrians appear
+## (then switched off) -> chunk streaming, traffic signals, lane graph, pedestrian navmesh ->
+## walk, sprint, jump, kerb, look, HUD -> get in the sedan, drive, brake, reverse, steer,
+## cameras, horn, lights, crash, get out -> pause -> back to the main menu. Input goes through
+## the real input map (simulated key events).
+## More detail lives in per-feature tests: tests/vehicle_test.tscn (handling figures),
+## tests/player_test.tscn (kerb, ramps and gateway on the M1 test block),
+## tests/traffic_test.tscn and tests/pedestrian_test.tscn (M4 city life).
 
 const ErrorCatcher := preload("res://tests/error_catcher.gd")
 const TIMEOUT_SEC: float = 180.0
@@ -25,11 +27,13 @@ const REQUIRED_ACTIONS: PackedStringArray = [
 ]
 ## Vehicle models: visuals only, no static '-colonly' body (a car is a moving rigid body).
 const VEHICLE_ASSETS: PackedStringArray = ["vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel"]
+## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
+const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
 ## Old Town kit pieces that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
 	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
-	"bld_ot_tank", "bld_ot_market_hall", "prop_streetlight", "prop_neem_tree", "prop_market_stall_a",
+	"bld_ot_tank", "bld_ot_market_hall", "prop_streetlight", "prop_neem_tree", "prop_market_stall_a", "prop_bench",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -44,7 +48,7 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_apartment_01", "buildings/bld_apartment_02",
 	"buildings/bld_office_01", "buildings/bld_office_02",
 	"buildings/bld_temple_gopuram", "buildings/bld_temple_shrine",
-	"props/prop_streetlight", "props/prop_palm_tree", "props/prop_temple_wall",
+	"props/prop_streetlight", "props/prop_palm_tree", "props/prop_temple_wall", "props/prop_bench",
 ]
 
 var _catcher: ErrorCatcher
@@ -75,7 +79,7 @@ func _run() -> void:
 func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
-		_check_asset_collisions, _check_main_menu, _check_new_game, _check_spawn,
+		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
 		_check_streaming, _check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
@@ -171,7 +175,7 @@ func _check_asset_collisions() -> String:
 		node.free()
 		if meshes < 1 or bodies < 1:
 			return "%s should have a mesh and a '-colonly' body (meshes %d, bodies %d)" % [asset, meshes, bodies]
-	for asset: String in VEHICLE_ASSETS:
+	for asset: String in VEHICLE_ASSETS + CHARACTER_ASSETS:
 		var path: String = "res://assets/models/%s.glb" % asset
 		if not ResourceLoader.exists(path):
 			return "asset not imported: " + path
@@ -186,8 +190,13 @@ func _check_asset_collisions() -> String:
 		var mesh := load(mesh_path) as ArrayMesh if ResourceLoader.exists(mesh_path) else null
 		if mesh == null or mesh.get_surface_count() != 1 or not (mesh.surface_get_material(0) is ShaderMaterial):
 			return "%s should be one surface with the palette material (run tools/godot/build_old_town.gd)" % mesh_path
-	print("  ok  %d Blender assets imported, each with visuals and collision; %d vehicle models; %d Old Town kit meshes baked to one draw call each" % [
-		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size(), KIT_MESHES.size()])
+	for asset: String in CHARACTER_ASSETS:
+		var look := load("res://assets/models/%s.glb" % asset) as PackedScene
+		var mesh: ArrayMesh = CharacterBaker.get_mesh(look)
+		if mesh == null or mesh.get_surface_count() != 1:
+			return "%s should bake to one animated surface" % asset
+	print("  ok  %d Blender assets imported, each with visuals and collision; %d vehicle and %d pedestrian models (visuals only, pedestrians bake to one draw call); %d Old Town kit meshes baked to one draw call each" % [
+		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size(), CHARACTER_ASSETS.size(), KIT_MESHES.size()])
 	return ""
 
 
@@ -222,6 +231,20 @@ func _check_main_menu() -> String:
 	sensitivity.value = old_sensitivity
 	if not volume_ok or not sensitivity_ok:
 		return "settings sliders did not update Settings (volume %s, sensitivity %s)" % [volume_ok, sensitivity_ok]
+	# Density buttons cycle Low -> Medium -> High -> Low and show the level.
+	for pair: Array in [["PedestrianDensityButton", &"pedestrian_density"], ["TrafficDensityButton", &"traffic_density"]]:
+		var button := _find(settings_panel, pair[0]) as Button
+		if button == null:
+			return "the settings panel has no %s" % pair[0]
+		var before: int = Settings.get_density(pair[1])
+		var seen: Array[int] = []
+		for press: int in 3:
+			button.pressed.emit()
+			seen.append(Settings.get_density(pair[1]))
+			if not button.text.to_upper().contains(str(Settings.DENSITY_NAMES[seen[press]]).to_upper()):
+				return "%s shows '%s' for level %s" % [pair[0], button.text, Settings.DENSITY_NAMES[seen[press]]]
+		if seen[2] != before or seen[0] == before or seen[1] == before or seen[0] == seen[1]:
+			return "%s should cycle through all three levels (from %d: %s)" % [pair[0], before, seen]
 	(_find(settings_panel, "BackButton") as Button).pressed.emit()
 	await _process_frames(2)
 	if settings_panel.visible:
@@ -237,7 +260,7 @@ func _check_main_menu() -> String:
 	var grid := _find(menu, "BindingsGrid") as GridContainer
 	if grid == null or grid.get_child_count() < 3 * 4:
 		return "controls screen lists no bindings"
-	print("  ok  main menu (buttons, Continue disabled, settings sliders work, controls, credits)")
+	print("  ok  main menu (buttons, Continue disabled, settings sliders and density buttons work, controls, credits)")
 	return ""
 
 
@@ -263,6 +286,41 @@ func _check_new_game() -> String:
 		return "no OLD TOWN title card on arrival (got '%s')" % _hud().get_area_title()
 	print("  ok  New Game starts in Old Town: %d chunks, %d buildings around the spawn, temple landmark, title card" % [
 		world.streamer.get_loaded_count(), buildings])
+	return ""
+
+
+## Traffic and pedestrians appear around the player after New Game and get moving. Then both
+## are switched off and cleared so the player and car checks that follow run on quiet streets
+## (tests/traffic_test.tscn and tests/pedestrian_test.tscn cover them in depth).
+func _check_city_life() -> String:
+	var game: Node = get_tree().current_scene
+	var traffic := game.get_node_or_null("Traffic") as TrafficManager
+	var people := game.get_node_or_null("Pedestrians") as PedestrianManager
+	if traffic == null or people == null:
+		return "the game scene has no Traffic or Pedestrians manager"
+	var car_moving: bool = false
+	var person_walking: bool = false
+	var frames: int = 0
+	while not (car_moving and person_walking) and frames < 60 * 15:
+		await get_tree().physics_frame
+		frames += 1
+		for car: VehicleController in traffic.get_cars():
+			car_moving = car_moving or car.get_speed_kmh() > 10.0
+		for person: Pedestrian in people.get_pedestrians():
+			person_walking = person_walking or (person.state == Pedestrian.State.WALK and person.velocity.length() > 0.5)
+	if not car_moving or not person_walking:
+		return "after %.0f s: %d cars (one moving: %s), %d people (one walking: %s)" % [
+			frames / 60.0, traffic.get_count(), car_moving, people.get_count(), person_walking]
+	var counts := Vector2i(traffic.get_count(), people.get_count())
+	if counts.x > traffic.target_count() or counts.y > people.target_count():
+		return "more cars or people than the density allows (%s)" % counts
+	traffic.enabled = false
+	people.enabled = false
+	traffic.clear()
+	people.clear()
+	await _physics_frames(5)
+	print("  ok  city life: within %.1f s of New Game %d cars were driving and %d people walking around the player (then switched off for the checks below)" % [
+		frames / 60.0, counts.x, counts.y])
 	return ""
 
 
@@ -514,7 +572,7 @@ func _check_navmesh() -> String:
 	# Navigation regions are processed in the background: wait until the map has synced the
 	# chunks (streamed back in by the previous check).
 	var waited: int = 0
-	while waited < 180 and NavigationServer3D.map_get_closest_point(map, south_walk) == Vector3.ZERO:
+	while waited < 300 and _flat(NavigationServer3D.map_get_closest_point(map, south_walk)).distance_to(_flat(south_walk)) > 0.6:
 		await get_tree().physics_frame
 		waited += 1
 	var regions: int = NavigationServer3D.map_get_regions(map).size()
@@ -540,7 +598,19 @@ func _check_navmesh() -> String:
 	var across: PackedVector3Array = NavigationServer3D.map_get_path(map, west, east, true)
 	if across.is_empty() or _flat(across[across.size() - 1]).distance_to(_flat(east)) > 0.6 or _path_length(across) > 70.0:
 		return "no sensible route along the temple plaza across the chunk border (%.1f m)" % _path_length(across)
-	print("  ok  navmesh: %d regions; roads aren't walkable; crossing the road detours %.0f m via the zebra; routes join across chunk borders" % [
+	# No walkable islands inside buildings (a closed hull's floor once read as open ground).
+	var space: PhysicsDirectSpaceState3D = _player().get_world_3d().direct_space_state
+	var probe := PhysicsPointQueryParameters3D.new()
+	probe.collision_mask = 1
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var here: Vector3 = _player().global_position
+	for i: int in 400:
+		var p: Vector3 = NavigationServer3D.map_get_closest_point(map, here + Vector3(rng.randf_range(-120.0, 120.0), 0.0, rng.randf_range(-120.0, 120.0)))
+		probe.position = p + Vector3.UP * 0.6
+		if p != Vector3.ZERO and not space.intersect_point(probe, 1).is_empty():
+			return "the navmesh at %s is inside solid geometry (a building?)" % p
+	print("  ok  navmesh: %d regions; roads aren't walkable; crossing the road detours %.0f m via the zebra; routes join across chunk borders; none of 400 sampled points is inside a building" % [
 		regions, length])
 	return ""
 
@@ -609,12 +679,15 @@ func _check_hud() -> String:
 	_key(KEY_F3, false)
 	await _process_frames(2)
 	var shown: bool = hud.is_fps_visible()
+	var readout: String = (_find(hud, "FpsLabel") as Label).text
+	if not (readout.contains("FPS") and readout.contains("chunks") and readout.contains("cars") and readout.contains("people")):
+		return "the F3 readout should show FPS, chunks, cars and people (got '%s')" % readout.replace("\n", " | ")
 	_key(KEY_F3, true)
 	_key(KEY_F3, false)
 	await _process_frames(2)
 	if not shown or hud.is_fps_visible():
 		return "F3 did not toggle the FPS counter on and off"
-	print("  ok  HUD health/stamina bars follow the player; F3 toggles FPS")
+	print("  ok  HUD health/stamina bars follow the player; F3 toggles the FPS / chunks / cars / people readout")
 	return ""
 
 

@@ -1,7 +1,8 @@
 extends Node3D
 ## Root of the game scene: puts the player on the district's spawn point and streams the city in
-## around them, hooks the HUD up to the player, hands the view between the on-foot and vehicle
-## cameras when the player gets in or out, and captures the mouse for camera look.
+## around them, starts traffic and pedestrians around the player, hooks the HUD up to the
+## player, hands the view between the on-foot and vehicle cameras when the player gets in or
+## out, and captures the mouse for camera look.
 
 const ENTER_BLEND_SECONDS: float = 0.6
 const EXIT_BLEND_SECONDS: float = 0.45
@@ -13,6 +14,8 @@ const EXIT_BLEND_SECONDS: float = 0.45
 @onready var vehicle_camera: VehicleCamera = $VehicleCamera
 @onready var camera_transition: CameraTransition = $CameraTransition
 @onready var lane_debug: LaneGraphDebug = $LaneDebug
+@onready var traffic: TrafficManager = $Traffic
+@onready var pedestrians: PedestrianManager = $Pedestrians
 
 
 func _ready() -> void:
@@ -30,6 +33,8 @@ func _ready() -> void:
 	hud.bind_interactor(player.get_node("VehicleInteractor") as VehicleInteractor)
 	hud.show_area_title(world.get_display_name().to_upper(), "VELANAGAR")
 	lane_debug.setup(world.get_lane_graph(), player, world)
+	traffic.setup(world.get_lane_graph(), player, world.streamer)
+	pedestrians.setup(player, world.streamer)
 	player.vehicle_entered.connect(_on_vehicle_entered)
 	player.vehicle_exited.connect(_on_vehicle_exited)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

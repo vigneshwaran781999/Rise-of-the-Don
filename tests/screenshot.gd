@@ -6,12 +6,15 @@ extends Node
 ##       --out=C:/path/shot.png [--frames=90] [--view=yaw,pitch] [--cam=x,y,z --look=x,y,z]
 ##       [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
+##       [--crowd[=x,y,z]] [--chase[=n]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
 ## --drive puts the player in the test block's sedan; --throttle holds the accelerator for that
 ## many frames (with --steer), --hood picks the hood camera, --health sets the car's health share
 ## (below 0.35 it smokes), --headlights switches them on. --lanes shows the F4 lane/navmesh view.
+## --crowd puts pedestrians at the --look point, or at x,y,z (chatting, walking, one going to sit down).
+## --chase looks over traffic car n (default the first) once the frames have passed.
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -43,6 +46,9 @@ func _run() -> void:
 		(instance.get_node("LaneDebug") as LaneGraphDebug).visible = true
 	if args.has("drive"):
 		await _drive(instance, args)
+	if args.has("crowd"):
+		var where: String = str(args["crowd"]) if str(args["crowd"]).count(",") == 2 else str(args.get("look", "0,0,0"))
+		await _crowd(instance, _vec3(where))
 	if args.has("pause"):
 		var pause_menu: PauseMenu = instance.get_node_or_null("PauseMenu") as PauseMenu
 		if pause_menu != null:
@@ -55,6 +61,8 @@ func _run() -> void:
 			await get_tree().process_frame
 	for i: int in frames:
 		await get_tree().process_frame
+	if args.has("chase"):
+		await _chase(instance, str(args["chase"]))
 	await RenderingServer.frame_post_draw
 	print("RENDER STATS  fps %d | draw calls %d | objects %d | primitives %d | video memory %.0f MB" % [
 		Performance.get_monitor(Performance.TIME_FPS),
@@ -67,6 +75,57 @@ func _run() -> void:
 	var err: Error = image.save_png(out_path)
 	print("SCREENSHOT %s -> %s" % ["SAVED" if err == OK else "FAILED (%d)" % err, out_path])
 	get_tree().quit(0 if err == OK else 1)
+
+
+## Puts a camera behind and above traffic car number `which` (in the traffic manager's list;
+## anything else = the first), looking up the road ahead of it.
+func _chase(game: Node, which: String) -> void:
+	var traffic := game.get_node_or_null("Traffic") as TrafficManager
+	if traffic == null or traffic.get_cars().is_empty():
+		return
+	var cars: Array[VehicleController] = traffic.get_cars()
+	var car: VehicleController = cars[(int(which) if which.is_valid_int() else 0) % cars.size()]
+	var cam := Camera3D.new()
+	cam.fov = 60.0
+	cam.far = 2000.0
+	add_child(cam)
+	cam.make_current()
+	for i: int in 3:
+		var back: Vector3 = -car.global_basis.z
+		back.y = 0.0
+		back = back.normalized()
+		cam.global_position = car.global_position + back * 9.0 + Vector3.UP * 3.5
+		cam.look_at(car.global_position - back * 8.0, Vector3.UP)
+		await get_tree().process_frame
+	var driver := car.get_node("Driver") as TrafficDriver
+	print("CHASE %s at %s, %.0f km/h, '%s'" % [car.name, car.global_position.snapped(Vector3.ONE), car.get_speed_kmh(), driver.get_reason()])
+
+
+## Puts people where the camera looks (normal spawning keeps out of sight): two chatting at
+## `around`, four walkers near them and one heading for the nearest free bench seat.
+func _crowd(game: Node, around: Vector3) -> void:
+	var people := game.get_node_or_null("Pedestrians") as PedestrianManager
+	if people == null:
+		return
+	people.enabled = false
+	people.clear()
+	var map: RID = people.get_world_3d().navigation_map
+	var spot := Vector3.ZERO
+	for i: int in 300:   # until the streamed chunks' navmeshes have reached the navigation map
+		await get_tree().physics_frame
+		if NavigationServer3D.map_get_iteration_id(map) > 0:
+			spot = NavigationServer3D.map_get_closest_point(map, around)
+			if spot != Vector3.ZERO and Vector2(spot.x - around.x, spot.z - around.z).length() < 6.0:
+				break
+	print("CROWD at %s" % spot)
+	people.spawn_pair(spot)
+	for i: int in 4:
+		var angle: float = TAU * i / 4.0 + 0.4
+		people.spawn_at(NavigationServer3D.map_get_closest_point(map, around + Vector3(cos(angle), 0.0, sin(angle)) * 7.0))
+	var sitter: Pedestrian = people.spawn_at(NavigationServer3D.map_get_closest_point(map, around + Vector3(2.0, 0.0, -2.0)))
+	var seat: Node3D = people.claim_seat(sitter)
+	if seat != null:
+		sitter.go_sit(seat)
 
 
 func _drive(game: Node, args: Dictionary) -> void:

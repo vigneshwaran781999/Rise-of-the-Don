@@ -86,8 +86,8 @@ func _build() -> void:
 	column.add_child(filler)
 	var footer := Label.new()
 	footer.name = "Footer"
-	footer.text = "v%s  ·  Milestone 2: first car      Enter / A select   ·   Esc / B back" % \
-			str(ProjectSettings.get_setting("application/config/version", "0.2.0"))
+	footer.text = "v%s  ·  Milestone 4: life in the city      Enter / A select   ·   Esc / B back" % \
+			str(ProjectSettings.get_setting("application/config/version", "0.4.0"))
 	footer.add_theme_font_size_override("font_size", 18)
 	footer.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
 	column.add_child(footer)

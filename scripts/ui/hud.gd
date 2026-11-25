@@ -1,6 +1,7 @@
 class_name Hud
 extends CanvasLayer
-## In-game HUD (GDD §10, M2 subset): health and stamina bars, an FPS counter (F3), the
+## In-game HUD (GDD §10, M2 subset): health and stamina bars, an FPS counter (F3, also showing
+## loaded chunks and how many traffic cars and pedestrians are about), the
 ## "get in" prompt near a vehicle, and while driving a speedometer with gear, revs and the
 ## car's health, plus a short reminder of the driving controls when you first get in.
 
@@ -149,6 +150,9 @@ func _process(_delta: float) -> void:
 			int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))]
 		if Performance.has_custom_monitor(WorldStreamer.MONITOR):
 			text += "   %d chunks" % int(Performance.get_custom_monitor(WorldStreamer.MONITOR))
+		if Performance.has_custom_monitor(TrafficManager.MONITOR) and Performance.has_custom_monitor(PedestrianManager.MONITOR):
+			text += "\n%d cars   %d people" % [int(Performance.get_custom_monitor(TrafficManager.MONITOR)),
+				int(Performance.get_custom_monitor(PedestrianManager.MONITOR))]
 		_fps_label.text = text
 	if _vehicle != null:
 		_speedometer.set_reading(_vehicle.get_speed_kmh(), _engine.get_rpm_fraction(), _engine.get_gear_text())
@@ -240,7 +244,7 @@ func _build() -> void:
 	_fps_label.offset_left = -320.0
 	_fps_label.offset_right = -30.0
 	_fps_label.offset_top = 26.0
-	_fps_label.offset_bottom = 92.0
+	_fps_label.offset_bottom = 122.0
 
 	_build_prompt(root)
 	_build_vehicle_panel(root)

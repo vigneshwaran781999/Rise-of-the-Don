@@ -181,6 +181,7 @@ func _parse_nav_source() -> NavigationMeshSourceGeometryData3D:
 		var box := BoxShape3D.new()
 		box.size = Vector3(r.size.x, 0.2, r.size.y)
 		_add_shape(body, box, Transform3D(Basis.IDENTITY, Vector3(r.get_center().x, -0.1, r.get_center().y)))
+	var solids: Array[ConvexPolygonShape3D] = []
 	for p: Dictionary in _layout.placements:
 		if p["kind"] == &"ground":
 			continue
@@ -188,10 +189,34 @@ func _parse_nav_source() -> NavigationMeshSourceGeometryData3D:
 			var shape: ConvexPolygonShape3D = _hull_shape(hull, p["xform"])
 			if shape != null:
 				_add_shape(body, shape)
+				solids.append(shape)
 	var source := NavigationMeshSourceGeometryData3D.new()
 	NavigationServer3D.parse_source_geometry_data(_nav_template(), source, root)
 	root.free()
+	# Recast only sees surfaces: a closed hull's floor face, with its roof cut off by the bake's
+	# height filter, reads as open floor, which left a walkable island inside every building.
+	# Marking each hull's footprint as solid (over its own height range only, so the floor under
+	# a raised roof stays walkable) keeps the navmesh outside.
+	for shape: ConvexPolygonShape3D in solids:
+		_add_obstruction(source, shape.points)
 	return source
+
+
+func _add_obstruction(source: NavigationMeshSourceGeometryData3D, points: PackedVector3Array) -> void:
+	var flat := PackedVector2Array()
+	var low: float = INF
+	var high: float = -INF
+	for p: Vector3 in points:
+		flat.append(Vector2(p.x, p.z))
+		low = minf(low, p.y)
+		high = maxf(high, p.y)
+	var outline: PackedVector2Array = Geometry2D.convex_hull(flat)
+	if outline.size() < 4:     # convex_hull repeats the first point at the end
+		return
+	var vertices := PackedVector3Array()
+	for k: int in outline.size() - 1:
+		vertices.append(Vector3(outline[k].x, low, outline[k].y))
+	source.add_projected_obstruction(vertices, low - 0.3, high - low + 0.3, false)
 
 
 # --------------------------------------------------------------------------- chunks
@@ -277,6 +302,8 @@ func _build_chunk(coord: Vector2i, source: NavigationMeshSourceGeometryData3D, t
 			k += 1
 		_stats["signals"] += 1
 
+	_add_sit_spots(root, &"prop", coord)
+
 	var region := NavigationRegion3D.new()
 	var nav: NavigationMesh = _nav_template()
 	# Bake the chunk grown by the border size: the border is trimmed off again, which leaves edges
@@ -309,6 +336,7 @@ func _build_landmarks() -> bool:
 	var body := _child(root, root, StaticBody3D.new(), "Collision") as StaticBody3D
 	body.collision_layer = WORLD_LAYER
 	body.collision_mask = 0
+	_add_sit_spots(root, &"landmark", Vector2i(-1, -1))
 	var groups: Dictionary = {}
 	for p: Dictionary in _layout.placements:
 		if p["kind"] != &"landmark":
@@ -381,6 +409,22 @@ func _hull_shape(hull: PackedVector3Array, xform: Transform3D) -> ConvexPolygonS
 	var shape := ConvexPolygonShape3D.new()
 	shape.points = pts
 	return shape
+
+
+## Bench seats as markers in the persistent "sit_spots" group (pedestrians look them up).
+## kind &"landmark" = the temple's (any chunk), &"prop" = the benches in this chunk.
+func _add_sit_spots(root: Node3D, kind: StringName, coord: Vector2i) -> void:
+	var spots := _child(root, root, Node3D.new(), "SitSpots")
+	var k: int = 0
+	for s: Dictionary in _layout.sit_spots:
+		var xform: Transform3D = s["xform"]
+		if s["kind"] != kind or (kind == &"prop" and OldTownLayout.chunk_of(xform.origin.x, xform.origin.z) != coord):
+			continue
+		var marker := Marker3D.new()
+		marker.transform = xform
+		marker.add_to_group(&"sit_spots", true)
+		_child(root, spots, marker, "Seat%d" % k)
+		k += 1
 
 
 ## Box occluder inside a building's upper floors (never over open shopfronts or verandahs).

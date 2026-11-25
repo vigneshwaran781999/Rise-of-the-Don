@@ -8,7 +8,7 @@ Target (GDD §16): 60 FPS at 1080p on a mid-range gaming laptop (GTX 1650 / RTX 
 "$GODOT_CONSOLE" --path . res://tests/perf_baseline.tscn
 ```
 
-This runs the real game scene in a 1920×1080 window with VSync off. It needs a real GPU, so it can't run headless, and it takes about 1.5 minutes. For each viewpoint it streams in the chunks around the camera, waits 90 frames, then averages 240 frames. It ends with a drive along a main road across the whole district at 72 km/h while chunks stream in and out, to catch loading hitches. The results print as Markdown; paste them below with the date.
+This runs the real game scene in a 1920×1080 window with VSync off. It needs a real GPU, so it can't run headless, and it takes about 3 minutes. For each viewpoint it streams in the chunks around the camera, waits 90 frames, then averages 240 frames; traffic and pedestrians are off for these, so the figures stay comparable with M3. Then it drives along a main road across the whole district at 72 km/h while chunks stream in and out, to catch loading hitches. Last, it measures the spawn street with city life at each density (M4) once the ring around the player has filled. The results print as Markdown; paste them below with the date.
 
 ## Baseline: M3, Old Town (2026-11-25)
 
@@ -49,3 +49,35 @@ This GPU is well below the target class: a GTX 1650 has roughly five times its g
 - **Medium/Low presets:** SSAO and glow off, which gives 60+ FPS on this integrated GPU, and a 3D render scale.
 - **Mesh LODs** for the baked kit meshes. The temple courtyard view draws 0.56 M primitives, which matters more on a discrete GPU.
 - **Shadow distance and split counts** in the lighting preset.
+
+## M4: city life (2026-11-25)
+
+Same machine and settings. The M3 viewpoints, re-measured with traffic and pedestrians off, are within 1 FPS of the table above (spawn street 37 FPS, market square 41, aerial 36; streaming drive 38 FPS average, worst frame 29.8 ms).
+
+City life at the spawn street, with the traffic and pedestrian densities set together and measured once the ring around the player had filled:
+
+| Density | cars | people | FPS | avg ms | 1% worst ms | physics ms | process ms | draw calls |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| None | 0 | 0 | 38 | 26.53 | 28.59 | 1.83 | 26.71 | 401 |
+| Low | 7 | 12 | 38 | 26.50 | 31.31 | 5.50 | 24.87 | 409 |
+| Medium | 14 | 26 | 38 | 26.64 | 35.26 | 7.21 | 23.36 | 408 |
+| High | 22 | 42 | 37 | 26.72 | 33.61 | 8.57 | 22.11 | 450 |
+
+"physics ms" is the CPU time spent on physics per rendered frame, including every NPC script. At 38 FPS, each rendered frame runs about 1.6 physics steps (60 per second).
+
+### What it shows
+
+- **City life costs no GPU time here.** The frame rate is set by per-pixel work (see M3), and the extra cars and people add only 10–50 draw calls. Each pedestrian is one draw call (body, limbs and clothes baked into one mesh, animated in the vertex shader). Each car is six draw calls (body, lenses and four wheels).
+- **The CPU cost is moderate.** A headless run, measured per physics step, separated it out:
+  - no NPCs: 1.9 ms;
+  - 14 cars: 3.4 ms;
+  - 26 people: 3.9 ms;
+  - both: 4.5 ms.
+- **Within that, the scripts are small.** All AI drivers together take 0.40 ms per step and all pedestrian scripts 0.97 ms. The rest is Jolt (14 full vehicle bodies, 26 character bodies) and navigation avoidance.
+- **The slightly worse 1% frames** (31–35 ms against 29 ms) come from occasional spikes: cars or people spawning and despawning, and a crowd re-pathing when everyone runs from a crash.
+
+### Levers for later
+
+- **Cheaper distant traffic:** GDD §16's kinematic cars beyond about 60 m, with full physics only up close. This only matters once traffic counts rise well above 22.
+- **Spreading the work:** stagger pedestrian path requests and spawns across frames to flatten the spikes.
+- **LODs:** a lower-detail pedestrian mesh and car body for distant NPCs, when draw calls start to matter on a discrete GPU.

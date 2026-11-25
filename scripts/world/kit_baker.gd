@@ -20,7 +20,10 @@ static func bake(scene: PackedScene, material: Material) -> KitPiece:
 	return piece
 
 
-static func bake_mesh(root: Node3D, material: Material) -> ArrayMesh:
+## Surfaces whose material is named in `exclude` are left out (see extract_surfaces()); those
+## named in `tint` take each instance's `tint` colour instead of their own (car paint).
+static func bake_mesh(root: Node3D, material: Material, exclude: PackedStringArray = PackedStringArray(),
+		tint: PackedStringArray = PackedStringArray()) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
@@ -31,6 +34,8 @@ static func bake_mesh(root: Node3D, material: Material) -> ArrayMesh:
 		var mesh: Mesh = mesh_instance.mesh
 		for surface: int in mesh.get_surface_count():
 			var mat := mesh_instance.get_active_material(surface) as BaseMaterial3D
+			if mat != null and exclude.has(mat.resource_name):
+				continue
 			var albedo := Color(0.8, 0.8, 0.8)
 			var roughness: float = 0.9
 			var metallic: float = 0.0
@@ -43,6 +48,7 @@ static func bake_mesh(root: Node3D, material: Material) -> ArrayMesh:
 				if mat.emission_enabled:
 					emission = mat.emission.srgb_to_linear() * mat.emission_energy_multiplier
 				double_sided = mat.cull_mode == BaseMaterial3D.CULL_DISABLED
+			albedo.a = 0.0 if mat != null and tint.has(mat.resource_name) else 1.0
 			var arrays: Array = mesh.surface_get_arrays(surface)
 			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 			var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
@@ -64,6 +70,29 @@ static func bake_mesh(root: Node3D, material: Material) -> ArrayMesh:
 	st.index()
 	var out: ArrayMesh = st.commit()
 	out.surface_set_material(0, material)
+	return out
+
+
+## The surfaces whose material is named in `names`, merged in root space with their original
+## materials (one surface per material): e.g. lamp lenses that are switched on at runtime.
+static func extract_surfaces(root: Node3D, names: PackedStringArray) -> ArrayMesh:
+	var tools: Dictionary = {}   # material name -> [SurfaceTool, Material]
+	for node: Node in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		var xf: Transform3D = relative_transform(root, mesh_instance)
+		for surface: int in mesh_instance.mesh.get_surface_count():
+			var mat: Material = mesh_instance.get_active_material(surface)
+			if mat == null or not names.has(mat.resource_name):
+				continue
+			if not tools.has(mat.resource_name):
+				var st := SurfaceTool.new()
+				st.begin(Mesh.PRIMITIVE_TRIANGLES)
+				st.set_material(mat)
+				tools[mat.resource_name] = st
+			(tools[mat.resource_name] as SurfaceTool).append_from(mesh_instance.mesh, surface, xf)
+	var out := ArrayMesh.new()
+	for key: String in tools:
+		(tools[key] as SurfaceTool).commit(out)
 	return out
 
 

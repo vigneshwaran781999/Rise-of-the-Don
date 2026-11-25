@@ -147,3 +147,64 @@ Dated entries: what was built, what broke, how it was fixed.
 - **Fused collision boxes:** would have filled verandahs and blocked the gopuram passage once baked into hulls. Fixed with separate convex pieces (`CollisionSet`); `tests/player_test.tscn` still walks through the M1 gopuram.
 - **Streaming test expectation:** expected the chunk count to return exactly to its starting value, but a chunk inside the 200 to 250 m hysteresis band is correctly kept. The test now checks that every wanted chunk is loaded.
 - **Haze:** too thick looking into the sun at first (0.0055), now 0.0042.
+
+## 2026-11-25 — M4: life in the city
+
+**Built**
+- **Pedestrian models** (`tools/blender/characters.py`): a man (shirt and trousers), a woman (long skirt, braid) and an older man (veshti, shoulder towel), 400-456 triangles each. Body, legs and arms are separate parts with their joints at the object origins. Clothes, skin and hair use white materials that the game tints per person.
+- **One draw call per person:**
+  - `CharacterBaker` bakes a model into one surface, storing in each vertex its part, its joint and which colour channel tints it.
+  - `shaders/character.gdshader` swings the limbs in the vertex shader (walk and run cycle, small chat gestures, sitting pose). Colours are per-instance shader parameters.
+- **Car paint variety:** the palette shader gained a per-instance tint. `VehicleModel` bakes the sedan body into one surface (plus a lenses surface for the lights) and repaints each traffic car.
+- **Benches:** `prop_bench` (stone, with collision) in the temple courtyard, the parks, the market and the tank yard. The district builder writes their 44 seats as `sit_spots` markers.
+- **Pedestrians** (`Pedestrian`, `scenes/npc/pedestrian.tscn`): a CharacterBody3D steered by a NavigationAgent3D with avoidance.
+  - **States:** wander, idle, chat in pairs face to face, walk to a free bench and sit, run from danger, step aside, and be knocked down. Knocked-down people lie for 3 s, then get up and run from the car.
+  - **Knocking people down:** `VehicleBumper` (an Area3D on every car) knocks people down before contact, so the car rolls on instead of stopping dead against a body.
+- **`PedestrianManager`:**
+  - **Spawning:** keeps the density's count of people on the navmesh 25-80 m from the player (never closer than 60 m in view), some as chatting pairs, and removes them beyond 100 m.
+  - **Seats and partners:** hands out bench seats and chat partners.
+  - **Alarms:** turns events into reactions. A crash over 10 km/h makes everyone within 18 m run; a horn makes people within 8 m in front of the car step aside; a knockdown makes people within 15 m run; the player walking into someone makes them step aside.
+- **Traffic** (`TrafficDriver` drives a full physics sedan through `set_controls`, like the player):
+  - **Steering:** pure pursuit along a route of lane nodes, with weighted straight, left and right choices at junctions.
+  - **Speed:** slows early for tight turns and stops at stop lines: on red, on amber if it can, briefly at give-way lines, and before turning right across oncoming traffic. A junction counts as clear when nobody is in its middle and no moving car will arrive within 3 s.
+  - **Obstacles:** three forward rays keep a gap to anything in front. On roads with two lanes each way, the driver changes lanes to pass a parked or wrecked car if that lane is free.
+  - **Patience:** honks after 5 s held up, and pauses 3 s after a crash.
+- **`TrafficManager`:** keeps the density's count of cars on lanes 40-110 m from the player (never closer than 95 m in view). It removes cars beyond 130 m, and also cars stuck for 40 s out of view.
+- **Lane graph:** new `side_lane` links between the two lanes of each main-road direction (2,200 nodes), used for passing.
+- **Settings:** pedestrian and traffic density, Low / Medium / High (12 / 26 / 42 people, 7 / 14 / 22 cars), saved with the other settings and cycled with buttons in the settings panel. All tunables are in `resources/characters/population.tres`, `resources/characters/pedestrian.tres` and `resources/vehicles/traffic_driver.tres`.
+- **HUD:** F3 also shows how many cars and people are about.
+- **Tests:**
+  - **New `tests/traffic_test.tscn`:** density, cars moving without jams or crashes, far cars removed, red light then green, give way, queueing and honking behind a parked car on a one-lane road, passing one on a two-lane road, crash pause.
+  - **New `tests/pedestrian_test.tscn`:** density, everyone on the navmesh and none inside buildings, walking, chatting, sitting on a bench, fleeing, crash and horn reactions, knock-down, player bump.
+  - **Smoke test:** adds the character and bench assets, the density buttons, cars and people appearing after New Game (then switched off for the deterministic checks), the F3 readout, and no navmesh inside buildings.
+  - **Screenshot tool:** gained `--crowd` and `--chase`.
+  - **Perf baseline:** gained a city-life table.
+- **Version:** 0.4.0, also shown in the main-menu footer, which had still said Milestone 2.
+
+**Performance** (`docs/PERFORMANCE.md`): on this machine's integrated GPU the spawn street runs at 37–38 FPS at every density, the same as with no NPCs, because the frame is GPU-bound. On the CPU, physics including all NPC scripts takes 4.5 ms per step at Medium (headless), against 1.9 ms with no NPCs. The driver scripts take 0.40 ms and the pedestrian scripts 0.97 ms of that.
+
+**Broke / fixed**
+- **People inside buildings (an M3 bug, found here):**
+  - **Cause:** a building's collision hull is a closed box, and the navmesh bake is cut off at 2.6 m to drop rooftops. Recast saw each hull's floor face with nothing above it and made it walkable, so every building had an unreachable island of navmesh inside.
+  - **What it caused:** people spawned there were inside solid geometry and fell through the floor. The manager then quietly replaced them, so it never showed in a count.
+  - **Fix:** every solid hull is now added to the bake as a projected obstruction over its own height range, so walk-under roofs like stalls and the pavilion still leave the floor walkable. The navmesh now has 11,699 polygons (14,386 at M3, before the benches and this fix), and 0 of 3,000 sampled navmesh points lie inside geometry. The smoke and pedestrian tests check this now.
+- **Give-way deadlock:** the first "junction clear" test counted cars waiting at the other stop lines, so two give-way lines waited for each other forever. Now only cars in the junction box, or arriving within 3 s, count.
+- **Give-way livelock:** cars crept over the line and stopped again and again. Once the 1 s wait was done, the car sped up, its "waited" timer reset, and it was stopped again because its centre hadn't passed the stop node yet. A driver now remembers the line it was released at.
+- **Traffic queued forever behind the parked sedans:** all three sedans from M3 are parked in the outer lane of a main road. Drivers now change lanes to pass them (GDD §6, "swerve or brake").
+  - With very little room (one test case had 9 m), the swerve cut it fine, with 0.5 m between bodies.
+  - Now the pull-out distance scales with the room available, and the driver tracks the path more tightly while passing, giving about 2.9 m beside the parked car.
+- **A chatting pair stood on a bench:** `spawn_pair` offset the two people 0.6 m without checking the spots, and one landed inside the bench. Both spots must now be on the navmesh.
+- **Knocked-down people ran into the car:** on getting up they ran from where the car had been, which was behind them, so they ran into it where it had stopped. They now run from where the car is.
+- **Looks:**
+  - A dark "collar shadow" box read as a black square on every chest; it's now a small skin-coloured neckline.
+  - Sitting legs stuck straight out with the feet in the air. They now angle down to the ground, and the seat point moved forward so the thighs don't cut through the bench.
+- **"ObjectDB instances leaked at exit":**
+  - **Cause:** traffic engine sounds. `AudioManager.quit_game` stopped every sound, but during its 0.1 s wait running car engines started their sounds again.
+  - **Fix:** the game is now paused first. A short real-time wait follows the game-time one, for `--fixed-fps` runs where 0.1 s of game time passes in milliseconds.
+- **Smoke test timing:** the navmesh check waited for any navmesh after the streaming check reloaded the spawn chunk, so a far region answered first. It now waits until the sidewalk it tests is on the map.
+- **Smaller slips:**
+  - a loop variable named `x` clashed with another `x` (parse error);
+  - a sed edit changed the camera spring arm's collision mask as well as the player's (reverted);
+  - a sed edit made `_halt()` call itself;
+  - navigation queries ran before the map's first sync (now guarded);
+  - the knock-down test braked with the brake pedal alone, which reverses at a standstill, so it ran the person over twice (it now holds both pedals, as the AI does).

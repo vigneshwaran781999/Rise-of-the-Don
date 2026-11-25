@@ -20,6 +20,9 @@ const LAMP_OFF: float = 0.04
 ## Seconds into the cycle at load, so neighbouring junctions don't all change together.
 @export var time_offset: float = 0.0
 
+## Loaded signals by junction id (traffic asks for the junction ahead of it).
+static var _by_junction: Dictionary = {}
+
 var _time: float = 0.0
 ## _lamps[axis][Light] -> StandardMaterial3D
 var _lamps: Array = [[], []]
@@ -51,6 +54,20 @@ func _ready() -> void:
 					_lamps[axis][lamp] = copy
 				mesh_instance.set_surface_override_material(surface, _lamps[axis][lamp])
 	_update_lamps()
+
+
+func _enter_tree() -> void:
+	_by_junction[junction_id] = self
+
+
+func _exit_tree() -> void:
+	if _by_junction.get(junction_id) == self:
+		_by_junction.erase(junction_id)
+
+
+## The loaded signal at a junction, or null (unsignalized, or its chunk isn't loaded).
+static func find(junction: int) -> TrafficSignal:
+	return _by_junction.get(junction) as TrafficSignal
 
 
 func _physics_process(delta: float) -> void:

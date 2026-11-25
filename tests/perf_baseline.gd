@@ -1,9 +1,11 @@
 extends Node
-## Performance baseline for the streamed Old Town (milestone M3). Runs the real game scene in a
-## 1920x1080 window with VSync off, measures several fixed viewpoints and a streaming drive across
-## the district, and prints a Markdown report (paste it into docs/PERFORMANCE.md).
+## Performance baseline for the streamed Old Town. Runs the real game scene in a 1920x1080 window
+## with VSync off, measures several fixed viewpoints and a streaming drive across the district
+## with traffic and pedestrians switched off (M3, comparable across builds), then the spawn
+## street with city life at each density (M4), and prints a Markdown report (paste it into
+## docs/PERFORMANCE.md).
 ##   "$GODOT" --path . res://tests/perf_baseline.tscn
-## Needs a real GPU (not --headless). Takes about a minute; a window opens while it runs.
+## Needs a real GPU (not --headless). Takes about three minutes; a window opens while it runs.
 
 const GAME: PackedScene = preload("res://scenes/main/game.tscn")
 const WARMUP_FRAMES: int = 90
@@ -46,6 +48,9 @@ func _run() -> void:
 	_camera.fov = 70.0
 	add_child(_camera)
 	_camera.make_current()
+	var traffic := _game.get_node("Traffic") as TrafficManager
+	var people := _game.get_node("Pedestrians") as PedestrianManager
+	_set_life(traffic, people, false)
 
 	var results: Array = []
 	for view: Array in VIEWS:
@@ -65,8 +70,64 @@ func _run() -> void:
 	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - 75% 3D resolution", VIEWS[0][1], VIEWS[0][2]], true))
 	get_viewport().scaling_3d_scale = 1.0
 	var drive: Dictionary = await _streaming_drive(world)
-	_print_report(results, drive)
+	var life: Array = []
+	for level: int in [-1, 0, 1, 2]:
+		life.append(await _measure_life(world, player, traffic, people, level))
+	_print_report(results, drive, life)
 	AudioManager.quit_game(0)
+
+
+func _set_life(traffic: TrafficManager, people: PedestrianManager, on: bool) -> void:
+	traffic.enabled = on
+	people.enabled = on
+	if not on:
+		traffic.clear()
+		people.clear()
+
+
+## The spawn street with no traffic or pedestrians (level -1) or at density `level` once the
+## ring around the player has filled (up to 40 s), measured like a viewpoint plus CPU times.
+func _measure_life(world: District, player: PlayerController, traffic: TrafficManager,
+		people: PedestrianManager, level: int) -> Dictionary:
+	var view: Array = VIEWS[0]
+	player.global_position = Vector3((view[1] as Vector3).x, 0.2, (view[1] as Vector3).z)
+	world.streamer.focus = player
+	world.streamer.load_around_now(player.global_position)
+	_camera.global_position = view[1]
+	_camera.look_at(view[2], Vector3.UP)
+	_set_life(traffic, people, level >= 0)
+	if level >= 0:
+		Settings.set_density(&"traffic_density", level)
+		Settings.set_density(&"pedestrian_density", level)
+		var waited: int = 0
+		while waited < 60 * 40 and (traffic.get_count() < traffic.target_count() or people.get_count() < people.target_count()):
+			await get_tree().physics_frame
+			waited += 1
+		await _frames(60 * 5)    # let them drive and walk about a bit (some into view)
+	else:
+		await _frames(WARMUP_FRAMES)
+	var times := PackedFloat32Array()
+	var physics_ms: float = 0.0
+	var process_ms: float = 0.0
+	var draw: float = 0.0
+	var last: int = Time.get_ticks_usec()
+	for i: int in MEASURE_FRAMES:
+		await get_tree().process_frame
+		var now: int = Time.get_ticks_usec()
+		times.append((now - last) / 1000.0)
+		last = now
+		physics_ms += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+		process_ms += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+		draw += Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
+	var stats: Dictionary = _frame_stats(times)
+	stats["name"] = "None" if level < 0 else Settings.DENSITY_NAMES[level]
+	stats["cars"] = traffic.get_count()
+	stats["people"] = people.get_count()
+	stats["physics_ms"] = physics_ms / MEASURE_FRAMES
+	stats["process_ms"] = process_ms / MEASURE_FRAMES
+	stats["draw"] = draw / MEASURE_FRAMES
+	print("  measured: city life %s  %.0f FPS" % [stats["name"], stats["fps"]])
+	return stats
 
 
 func _measure_view(world: District, player: PlayerController, view: Array, occlusion: bool) -> Dictionary:
@@ -149,7 +210,7 @@ func _frame_stats(times: PackedFloat32Array) -> Dictionary:
 		"max_ms": sorted[sorted.size() - 1] if not sorted.is_empty() else 0.0}
 
 
-func _print_report(results: Array, drive: Dictionary) -> void:
+func _print_report(results: Array, drive: Dictionary, life: Array) -> void:
 	print("")
 	print("PERFORMANCE BASELINE (Old Town)")
 	print("- GPU: %s (%s)" % [RenderingServer.get_video_adapter_name(), RenderingServer.get_video_adapter_vendor()])
@@ -165,6 +226,14 @@ func _print_report(results: Array, drive: Dictionary) -> void:
 	print("")
 	print("Streaming drive along Ring B (480 m at %.0f km/h): %.0f FPS average, 1%% worst frame %.1f ms, worst frame %.1f ms, %d chunks loaded and %d unloaded on the way." % [
 		DRIVE_SPEED * 3.6, drive["fps"], drive["p99_ms"], drive["max_ms"], drive["loads"], drive["unloads"]])
+	print("")
+	print("City life at the spawn street (traffic and pedestrian density set together):")
+	print("")
+	print("| Density | cars | people | FPS | avg ms | 1% worst ms | physics ms | process ms | draw calls |")
+	print("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+	for r: Dictionary in life:
+		print("| %s | %d | %d | %.0f | %.2f | %.2f | %.2f | %.2f | %.0f |" % [r["name"], r["cars"], r["people"], r["fps"],
+			r["avg_ms"], r["p99_ms"], r["physics_ms"], r["process_ms"], r["draw"]])
 
 
 func _frames(count: int) -> void:

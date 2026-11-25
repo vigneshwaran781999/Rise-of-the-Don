@@ -15,7 +15,8 @@ builder (tools/godot/build_old_town.gd) gives each block one bevelled slab inste
   road_walk_corner   4 x 4 m corner tile, kerbs on -X and -Y (scaled down for footpaths)
 
 Props: prop_signal_pole (lamp materials sig_red / sig_amber / sig_green are switched at
-runtime), prop_market_stall_a/b, prop_flower_stall, prop_handcart, prop_bollard, prop_neem_tree.
+runtime), prop_market_stall_a/b, prop_flower_stall, prop_handcart, prop_bollard, prop_neem_tree,
+prop_bench (people sit on it, M4).
 
 Buildings (pivot at the base centre, front facing Blender -Y): a family of Old Town row houses
 and shops (bld_ot_house_*, bld_ot_shop_*, bld_ot_lodge_01), bld_ot_market_hall,
@@ -315,6 +316,23 @@ def prop_bollard() -> None:
     mb.sphere((0, 0, 0.85), 0.11, 8, 4, conc)
     mb.build(name)
     box_collision(name, [(-0.13, -0.13, 0.0, 0.13, 0.13, 0.95)])
+    rm.export_glb("props", name)
+
+
+def prop_bench() -> None:
+    """Stone bench, 1.8 m long, seat at 0.45 m; people sit facing Blender -Y (Godot +Z)."""
+    name = "prop_bench"
+    rm.clear_scene()
+    stone = rm.material("bench_stone", "#b3a892", roughness=0.9)
+    dark = rm.material("bench_leg", "#857a69", roughness=0.9)
+    mb = rm.MeshBuilder()
+    mb.box(-0.9, -0.24, 0.38, 0.9, 0.24, 0.47, stone)
+    for x in (-0.7, 0.55):
+        mb.box(x, -0.18, 0.0, x + 0.15, 0.18, 0.38, dark, skip=("bottom", "top"))
+    mb.build(name)
+    col = rm.CollisionSet(name)
+    col.box(-0.9, -0.24, 0.0, 0.9, 0.24, 0.47)
+    col.build()
     rm.export_glb("props", name)
 
 
@@ -683,6 +701,7 @@ BUILDERS = {
     "prop_handcart": prop_handcart,
     "prop_bollard": prop_bollard,
     "prop_neem_tree": prop_neem_tree,
+    "prop_bench": prop_bench,
     "bld_ot_market_hall": market_hall,
     "bld_ot_mandapam": mandapam,
     "bld_ot_vimana": vimana,

@@ -54,12 +54,15 @@ func _exit_tree() -> void:
 
 
 ## Stops every sound, gives the audio thread a moment to release them, then quits. Quitting
-## while a sound plays makes Godot report the playing stream as leaked at exit.
+## while a sound plays makes Godot report the playing stream as leaked at exit. The game is
+## paused first so nothing (a running car engine, for one) starts a sound again meanwhile.
 func quit_game(exit_code: int = 0) -> void:
+	get_tree().paused = true
 	_silence()
 	for node: Node in get_tree().root.find_children("*", "AudioStreamPlayer3D", true, false):
 		(node as AudioStreamPlayer3D).stop()
 	await get_tree().create_timer(0.1, true, false, true).timeout
+	OS.delay_msec(60)   # real time for the audio thread (game time can run faster, e.g. --fixed-fps)
 	get_tree().quit(exit_code)
 
 

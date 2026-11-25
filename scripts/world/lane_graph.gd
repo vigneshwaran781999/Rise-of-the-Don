@@ -21,6 +21,11 @@ enum Flag {
 ## For stop lines: 0 = travelling along Z (north-south), 1 = along X. Matches TrafficSignal axes.
 @export var signal_axis: PackedInt32Array = PackedInt32Array()
 @export var flags: PackedInt32Array = PackedInt32Array()
+## For nodes on a road with two lanes each way: the node level with this one in the other lane
+## going the same way (traffic changes lanes to pass a parked car), otherwise -1.
+@export var side_lane: PackedInt32Array = PackedInt32Array()
+## Centre of each junction, by junction id (traffic checks whether a junction is clear).
+@export var junction_positions: PackedVector3Array = PackedVector3Array()
 @export var next_start: PackedInt32Array = PackedInt32Array()
 @export var next_list: PackedInt32Array = PackedInt32Array()
 
