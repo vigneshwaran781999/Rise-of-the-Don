@@ -46,6 +46,7 @@ var _missions: MissionHud
 var _minimap: Minimap
 var _vehicle_target: VehicleController
 var _mission_prompt: Array = ["", ""]   # [action, text]
+var _place_prompt: Array = ["", ""]     # [action, text] from shops and properties
 
 
 func _ready() -> void:
@@ -69,7 +70,6 @@ func bind_interactor(interactor: VehicleInteractor) -> void:
 	_on_vehicle_target_changed(interactor.get_target())
 
 
-## Shows the running mission's objective, hints, dialogue, waypoint and prompts.
 ## Shows the minimap of `district` around the player, with the GPS route.
 func bind_map(player: PlayerController, district: DistrictData, navigator: GpsNavigator) -> void:
 	_minimap.bind(player, district, navigator)
@@ -79,9 +79,19 @@ func get_minimap() -> Minimap:
 	return _minimap
 
 
+## Shows the running mission's objective, hints, dialogue, waypoint and prompts.
 func bind_missions(director: MissionDirector, player: Node3D) -> void:
 	_missions.bind(director, player)
 	director.prompt_changed.connect(_on_mission_prompt_changed)
+
+
+## Shows the shop and property prompts (below a mission's, above "get in") and their messages
+## (as hints).
+func bind_places(places: PlaceDirector) -> void:
+	places.prompt_changed.connect(func(action: String, text: String) -> void:
+		_place_prompt = [action, text]
+		_refresh_prompt())
+	places.message.connect(_missions.show_hint)
 
 
 func get_mission_hud() -> MissionHud:
@@ -225,11 +235,16 @@ func _on_mission_prompt_changed(action: String, text: String) -> void:
 	_refresh_prompt()
 
 
-## A mission action (talk, hand over) takes the prompt over from "get in".
+## A mission action (talk, hand over) takes the prompt over from a shop or property, and both
+## from "get in".
 func _refresh_prompt() -> void:
 	if _mission_prompt[0] != "":
 		_prompt_key.text = _key_text(_mission_prompt[0])
 		_prompt_text.text = _mission_prompt[1]
+		_prompt.show()
+	elif _place_prompt[0] != "":
+		_prompt_key.text = _key_text(_place_prompt[0])
+		_prompt_text.text = _place_prompt[1]
 		_prompt.show()
 	elif _vehicle_target != null:
 		_prompt_key.text = _key_text("vehicle_enter_exit")

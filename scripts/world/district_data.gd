@@ -13,6 +13,8 @@ extends Resource
 @export var lane_graph: LaneGraph
 ## Where you are released after an arrest (GDD §7), facing its -Z.
 @export var police_station := Transform3D()
+## Spots at the doors of shops and properties (on the sidewalk, facing out), by place id.
+@export var places: Dictionary = {}
 
 @export_group("Map")
 ## The district drawn from above (minimap and full map, GDD §11); it covers get_bounds().

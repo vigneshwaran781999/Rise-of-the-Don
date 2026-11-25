@@ -204,3 +204,13 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Five stars:** a helicopter flies in and circles overhead (rotor thudding), with its searchlight on you. At night a faint beam shows. It's hard to get out of its sight.
 - [ ] Is the chase fair and fun? Can you escape two or three stars in a car? Do police cars cope with corners and narrow lanes, or get stuck? Does the siren get tiring?
 - [ ] Street lamps and palm trees are solid: you can't walk or drive through them.
+
+### The player, shops, the house and side jobs
+- [ ] You are a low-poly man (Vetri) in a blue shirt and khaki trousers, not a capsule. Walking, his legs and arms swing in step; running and sprinting, the stride lengthens and the swing widens; in a jump the legs stay apart. Does it look right, or do the feet slide?
+- [ ] **Tiffin stall** (green "TIFFIN" board across the road from the bus stand): after the conductor's lines, step into the green ring: "E  BUY FOOD". The menu shows coffee, idli and vada, and full meals with prices; your cash is top right. Hurt yourself (a fall or a crash), then eat: health goes up and cash goes down. When full: "You're not hungry."
+- [ ] **Velanagar Textiles** (pink building, "TEXTILES" board, Ring B west of the police station): six outfits. Buy one: you're wearing it at once (look at Vetri when you leave). Switch back to the travelling clothes and again: free. One you can't afford says so.
+- [ ] **Garage** (red "GARAGE" board, far east on the east road): drive in under the board and stop: "E  RESPRAY". With 1–3 stars and no police in sight: the screen fades, and the car comes out a new colour, smoke gone, tyres fixed, stars gone, ₹500 less. With 4+ stars, or police watching, it refuses and charges nothing. Is the bay easy to drive into?
+- [ ] **House for sale** (verandah house north of Ring B, east, with a yellow FOR SALE board): "E  BUY VERANDAH HOUSE  ₹6,000". Without the cash it says so. Once bought: the board goes, the map badge turns to H, and E at the door opens the save slots (Esc goes straight back to the game). Rent arrives every in-game day at midnight ("Rent from the verandah house: +₹400").
+- [ ] Map: green F, C and G badges for the shops, an orange ₹ for the house (H once bought).
+- [ ] **Side jobs** (after First Opportunity): a magenta beam by Selvi at the tiffin stall and by Murugan at the garage. **Tiffin Delivery:** she hands you a carrier; run (or drive) to the marked door within 100 s for ₹250. **Garage Run:** take the yellow car to its owner within 120 s for ₹600. Both come back on offer, usually with another address.
+- [ ] Save, quit and load: your outfit, the house and the outfits you've bought come back.

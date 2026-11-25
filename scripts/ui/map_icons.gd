@@ -32,7 +32,7 @@ static func colour(kind: StringName, blip: Dictionary = {}) -> Color:
 		&"shop":
 			return blip.get("colour", SHOP)
 		&"property":
-			return PROPERTY
+			return blip.get("colour", PROPERTY)
 		&"police":
 			return POLICE_RED if int(Time.get_ticks_msec() / 250) % 2 == 0 else POLICE_BLUE
 		&"zone":

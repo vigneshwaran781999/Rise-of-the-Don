@@ -7,7 +7,7 @@ extends Node
 ##       [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--waypoint=x,z]
-##       [--wanted=1..5 [--police=off|car|roadblock|heli]]
+##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
@@ -17,6 +17,8 @@ extends Node
 ## --crowd puts pedestrians at the --look point, or at x,y,z (chatting, walking, one going to sit down).
 ## --chase looks over traffic car n (default the first) once the frames have passed.
 ## --hour sets the in-game clock (day/night) before the frames run; --waypoint=x,z sets a GPS waypoint.
+## --outfit dresses the player (an Outfit id); --shop=id puts them at that shop or property's door
+## and opens it (the shop menu, or the offer for a property on sale).
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -59,6 +61,10 @@ func _run() -> void:
 		await _drive(instance, args)
 	if args.has("wanted"):
 		await _police(instance, args)
+	if args.has("outfit"):
+		GameState.set_outfit(StringName(str(args["outfit"])))
+	if args.has("shop"):
+		await _shop(instance, StringName(str(args["shop"])))
 	if args.has("crowd"):
 		var where: String = str(args["crowd"]) if str(args["crowd"]).count(",") == 2 else str(args.get("look", "0,0,0"))
 		await _crowd(instance, _vec3(where))
@@ -257,3 +263,27 @@ func _parse_args(raw: PackedStringArray) -> Dictionary:
 func _vec3(text: String) -> Vector3:
 	var parts: PackedStringArray = text.split(",")
 	return Vector3(float(parts[0]), float(parts[1]), float(parts[2]))
+
+
+func _shop(game: Node, place_id: StringName) -> void:
+	var places := game.get_node("Places") as PlaceDirector
+	var player := game.get_node("Player") as PlayerController
+	var at := Vector3.ZERO
+	var shop: ShopData = places.get_shop(place_id)
+	var property: PropertyData = places.get_property(place_id)
+	if shop != null:
+		at = places.get_spot(shop)
+	elif property != null:
+		at = places.get_place(property.place).origin
+	else:
+		push_warning("screenshot: no shop or property '%s'" % place_id)
+		return
+	(game.get_node("World") as District).streamer.load_around_now(at)
+	player.global_position = at + Vector3.UP * 0.1
+	player.reset_physics_interpolation()
+	# Wait for the prompt (opening dialogue keeps the interact key for a few seconds).
+	for i: int in 60 * 20:
+		await get_tree().physics_frame
+		if places.get_prompt()[0] != "":
+			break
+	places.interact()

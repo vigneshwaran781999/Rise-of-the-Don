@@ -48,6 +48,16 @@ func is_smoking() -> bool:
 	return _smoke.emitting
 
 
+## Back to full health (a respray garage): the smoke stops and a wrecked engine runs again.
+func repair() -> void:
+	var was_wrecked: bool = is_wrecked()
+	health = _vehicle.stats.max_health
+	health_changed.emit(health, _vehicle.stats.max_health)
+	_update_smoke()
+	if was_wrecked:
+		_vehicle.set_engine_disabled(false)
+
+
 func apply_damage(amount: float) -> void:
 	if amount <= 0.0 or is_wrecked():
 		return

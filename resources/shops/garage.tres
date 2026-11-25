@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ShopData" format=3]
+
+[ext_resource type="Script" path="res://scripts/shops/shop_data.gd" id="1_shop"]
+[ext_resource type="Script" path="res://scripts/shops/shop_item.gd" id="3_item"]
+
+[resource]
+script = ExtResource("1_shop")
+id = &"garage"
+title = "East Road Garage"
+kind = 2
+place = &"garage"
+unlock_mission = &""
+greeting = "New colour, new tyres, no questions."
+items = Array[ExtResource("3_item")]([])

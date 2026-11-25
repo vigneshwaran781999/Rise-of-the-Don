@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ShopData" format=3]
+
+[ext_resource type="Script" path="res://scripts/shops/shop_data.gd" id="1_shop"]
+[ext_resource type="Script" path="res://scripts/shops/shop_item.gd" id="3_item"]
+[ext_resource type="Script" path="res://scripts/shops/food_item.gd" id="2_food"]
+
+[sub_resource type="Resource" id="Food_coffee"]
+script = ExtResource("2_food")
+health = 10.0
+id = &"coffee"
+title = "Filter coffee"
+description = "Strong, sweet and frothy. Restores a little health."
+price = 20
+
+[sub_resource type="Resource" id="Food_idli"]
+script = ExtResource("2_food")
+health = 35.0
+id = &"idli"
+title = "Idli and vada"
+description = "Two idlis, a vada, sambar and chutney. Restores some health."
+price = 50
+
+[sub_resource type="Resource" id="Food_meals"]
+script = ExtResource("2_food")
+health = 100.0
+id = &"meals"
+title = "Full meals"
+description = "Rice, sambar, rasam, poriyal and curd on a banana leaf. Restores all health."
+price = 120
+
+[resource]
+script = ExtResource("1_shop")
+id = &"tiffin"
+title = "Bus Stand Tiffin Stall"
+kind = 0
+place = &"tiffin"
+unlock_mission = &""
+greeting = "Hot idli, fresh coffee! What'll it be?"
+items = Array[ExtResource("3_item")]([SubResource("Food_coffee"), SubResource("Food_idli"), SubResource("Food_meals")])

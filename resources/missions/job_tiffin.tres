@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="3_contact"]
+
+[sub_resource type="Resource" id="Resource_selvi"]
+script = ExtResource("3_contact")
+id = &"selvi"
+display_name = "Selvi"
+look = 1
+top_color = Color(0.184, 0.49, 0.31, 1)
+bottom_color = Color(0.82, 0.62, 0.17, 1)
+skin_color = Color(0.49, 0.31, 0.19, 1)
+hair_color = Color(0.09, 0.07, 0.06, 1)
+position = Vector3(97.5, 0.15, -9.4)
+yaw_degrees = 0.0
+
+[sub_resource type="Resource" id="Resource_collect"]
+script = ExtResource("2_objective")
+type = 1
+text = "Collect the tiffin carrier from Selvi."
+contact = &"selvi"
+lines = PackedStringArray("SELVI: You again? Good. My boy is off sick and the orders won't wait.", "SELVI: Hot food, so run. If it's cold when it gets there, they won't pay.")
+give_item = &"tiffin"
+
+[sub_resource type="Resource" id="Resource_deliver"]
+script = ExtResource("2_objective")
+text = "Deliver the tiffin carrier before it goes cold."
+hint = "Run, or borrow a car. The customer's door is marked."
+position = Vector3(20.8, 0.15, 83.4)
+radius = 2.5
+alternatives = PackedVector3Array(-13.8, 0.15, -83.4, 39, 0.15, -152.4, 222.2, 0.15, -43.6, 197, 0.15, 43.6, 20.8, 0.15, 83.4, 164, 0.15, 75.6)
+time_limit = 100.0
+
+[resource]
+script = ExtResource("1_mission")
+id = &"job_tiffin"
+title = "Tiffin Delivery"
+description = "Selvi at the bus stand tiffin stall needs someone fast to carry lunch to her customers."
+category = 2
+prerequisites = Array[StringName]([&"first_opportunity"])
+start_position = Vector3(96, 0.15, -8.6)
+start_yaw_degrees = 0.0
+giver = SubResource("Resource_selvi")
+repeatable = true
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_collect"), SubResource("Resource_deliver")])
+outro_lines = PackedStringArray("CUSTOMER: Still hot! Tell Selvi I'll order again tomorrow.")
+reward_cash = 250

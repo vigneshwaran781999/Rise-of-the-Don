@@ -24,6 +24,8 @@ enum Category { STORY, DRIVING, DELIVERY, RACING, EXPLORATION, RESCUE, BUSINESS 
 @export var start_yaw_degrees: float = 0.0
 ## Who offers the mission: stands by the start marker while it is on offer (optional).
 @export var giver: MissionContact
+## Offered again after it has been passed (side jobs; GDD §3, mission 5).
+@export var repeatable: bool = false
 
 @export_group("Content")
 @export var objectives: Array[MissionObjective] = []

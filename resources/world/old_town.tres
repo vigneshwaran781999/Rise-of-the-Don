@@ -11,6 +11,13 @@ chunk_count = Vector2i(4, 4)
 chunk_path_format = "res://scenes/world/chunks/old_town/chunk_%d_%d.scn"
 lane_graph = ExtResource("1_cr0yj")
 police_station = Transform3D(1, 0, 8.742277e-08, 0, 1, 0, -8.742277e-08, 0, 1, -21.8, 0.15, 119.4)
+places = {
+&"garage": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 159.66667, 0.15, -8.4),
+&"house": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 60.333332, 0.15, 144.6),
+&"police_station": Transform3D(1, 0, 8.742277e-08, 0, 1, 0, -8.742277e-08, 0, 1, -21.8, 0.15, 119.4),
+&"textiles": Transform3D(1, 0, 8.742277e-08, 0, 1, 0, -8.742277e-08, 0, 1, -58.333332, 0.15, 119.4),
+&"tiffin": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 91, 0.15, -8.4)
+}
 map_texture_path = "res://assets/world/maps/old_town_map.png"
 map_label_texts = PackedStringArray("TEMPLE", "TEMPLE TANK", "FLOWER MARKET", "PARK", "PARK", "BUS STAND", "POLICE")
 map_label_positions = PackedVector2Array(0, 0, 80, 80, -80, -80, -130, 130, 166, -130, 97, 14, -21.8, 119.4)

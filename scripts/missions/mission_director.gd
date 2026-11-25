@@ -41,6 +41,8 @@ var _carried: MeshInstance3D
 var _mission: MissionData
 var _objective: MissionObjective
 var _goal: MissionMarker
+var _goal_position := Vector3.ZERO     # where the running GO_TO goes (its position, or a pick)
+var _rng := RandomNumberGenerator.new()
 var _time_left: float = -1.0
 var _talking_to: MissionContactNPC
 var _passed: bool = false
@@ -53,6 +55,7 @@ var _waypoint: Node3D
 
 func _ready() -> void:
 	add_to_group(GpsNavigator.BLIP_GROUP)
+	_rng.randomize()
 	dialogue = DialoguePlayer.new()
 	dialogue.name = "Dialogue"
 	add_child(dialogue)
@@ -107,6 +110,17 @@ func get_objective_text() -> String:
 
 
 ## The giver standing at a mission's start marker while it is on offer (or null).
+## Where the running GO_TO objective goes (its position, or the address picked this time).
+func get_goal_position() -> Vector3:
+	return _goal_position
+
+
+## Whether a mission action has the interact key now (a talk or hand-over prompt, or dialogue
+## playing): other things the player could do with it wait.
+func has_prompt() -> bool:
+	return _prompt_action != "" or (dialogue != null and dialogue.is_playing())
+
+
 func get_offer_giver(mission: MissionData) -> MissionContactNPC:
 	var offer: Array = _offers.get(mission, [])
 	return offer[1] if offer.size() > 1 else null
@@ -165,7 +179,7 @@ func _physics_process(delta: float) -> void:
 # --------------------------------------------------------------------------- objectives
 
 func _update_go_to() -> void:
-	var goal: Vector3 = _objective.position
+	var goal: Vector3 = _goal_position
 	if _objective.mode == MissionObjective.Mode.IN_VEHICLE:
 		var car: VehicleController = get_vehicle(_objective.vehicle)
 		var in_right_car: bool = _player.is_in_vehicle() and (car == null or _player.vehicle == car)
@@ -279,11 +293,12 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 		_goal.queue_free()
 		_goal = null
 	if _objective.type == MissionObjective.Type.GO_TO:
+		_goal_position = _objective.pick_position(_rng)
 		_goal = MissionMarker.new()
 		_goal.name = "Goal"
 		_goal.setup(MissionMarker.Kind.GOAL, _objective.radius)
 		add_child(_goal)
-		_goal.global_position = _objective.position
+		_goal.global_position = _goal_position
 	_text = ""
 	_show(_objective.text, _goal)
 	if _objective.hint != "":

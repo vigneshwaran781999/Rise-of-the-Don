@@ -309,6 +309,34 @@ Dated entries: what was built, what broke, how it was fixed.
     - `veh_police_lightbar`: on white police sedans, with a synthesised siren.
     - `veh_police_heli`: rotor and tail rotor turn, with a synthesised rotor sound.
   - **New `tests/police_test.tscn`.** The smoke test checks a clean start: no stars and no police. The screenshot tool gained `--wanted` and `--police`.
+- **Step 4, the player, shops, a property and side jobs (GDD §4, §9):**
+  - **Vetri** is now drawn with the low-poly character model instead of the capsule (`PlayerFigure`). He uses the same baked mesh and swing shader as pedestrians: steps lengthen and arms swing wider as he runs, with a stride pose in the air. His clothes are an `Outfit` worn through `GameState.outfit`.
+  - **Special buildings:** the layout's `SPECIAL_BUILDINGS` now swaps in buildings and records their door spots in `DistrictData.places`:
+    - the police station;
+    - the **tiffin stall** (board "TIFFIN"), across from the bus stand;
+    - **Velanagar Textiles** (board "TEXTILES") on Ring B west;
+    - the **East Road Garage**: a drive-in bay under a "GARAGE" board, with a tube light that glows at night;
+    - a verandah **house for sale** north of Ring B.
+    - The garage clears lamps and bollards from in front of its bay.
+    - The block-letter font gained the letters for these boards.
+  - **`PlaceDirector`:**
+    - draws rings at the doors (and across the garage bay), a FOR SALE board, and map blips (F, C, G; ₹ for sale, H once owned);
+    - offers the prompt (below a mission's prompt, above "get in") and opens the **`ShopMenu`**: title, cash, rows with prices or state, a detail line, a message line and Leave. The menu pauses the game and works with keyboard, mouse and gamepad.
+  - **What each place does** (all data in `resources/shops/*.tres` and `resources/properties/*.tres`):
+    - **Food** restores health: coffee +10 (₹20), idli and vada +35 (₹50), full meals to full (₹120). Nothing is sold when you're full.
+    - **Clothes:** six outfits (₹0–3,500), each bought once and then free to change into.
+    - **Respray:** the car is repainted, repaired (`VehicleDamage.repair`) and re-tyred, and up to 3 stars are cleared for ₹500. It's refused at 4+ stars or while the police can see you, with no charge.
+    - **House:** ₹6,000. Once owned it's a save point (`PauseMenu.open_save`) and pays ₹400 rent each new day.
+  - **Ownership:** `EconomyManager` keeps what you own (`buy`, `owns`, `owned_changed`) and saves it; the worn outfit is saved with `GameState`.
+  - **Side jobs:**
+    - Missions can be `repeatable`, and GO_TO objectives can draw their spot from `alternatives`.
+    - **Tiffin Delivery** (Selvi at the stall; on foot or any vehicle; 100 s; ₹250) and **Garage Run** (Murugan's customer's car to its owner; 120 s; ₹600) open after mission 2.
+  - **Tests:**
+    - New `tests/shop_test.tscn`.
+    - The mission test plays both side jobs.
+    - The save test checks a bought house and outfit through save and load.
+    - The smoke test checks the player figure and the map blips.
+    - The screenshot tool gained `--outfit` and `--shop`.
 
 **Broke / fixed**
 - **Step 1:**
@@ -338,3 +366,7 @@ Dated entries: what was built, what broke, how it was fixed.
     - Typed arrays of police cars and officers were concatenated; there's now one untyped unit list.
     - Siren and rotor sounds were reported leaked at quit; `quit_game` now drops every 3D sound's stream.
     - New screenshot cameras logged an `unproject_position` error on their first frame. They now don't use physics interpolation.
+- **Step 4:**
+  - The roadside lamp in front of the garage would have blocked the drive-in bay (lamps are solid since step 3). Special buildings can now clear lamps, bollards and trees from their door.
+  - The shop menu's deferred focus could land on a row that a second refresh had already removed ("!is_inside_tree"). It now looks the row up by id when it runs.
+  - Shops stay quiet while mission dialogue is playing, so E skips the line instead of opening a shop.

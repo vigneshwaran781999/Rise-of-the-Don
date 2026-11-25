@@ -42,6 +42,18 @@ func apply_damage(amount: float) -> void:
 	health_changed.emit(health, tuning.max_health)
 
 
+## Restores up to `amount` health (food); returns how much was actually restored.
+func heal(amount: float) -> float:
+	var before: float = health
+	health = clampf(health + maxf(amount, 0.0), 0.0, tuning.max_health)
+	health_changed.emit(health, tuning.max_health)
+	return health - before
+
+
+func get_max_health() -> float:
+	return tuning.max_health
+
+
 ## Sets health directly (loading a save).
 func set_health(value: float) -> void:
 	health = clampf(value, 0.0, tuning.max_health)

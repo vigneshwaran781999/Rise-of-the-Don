@@ -27,6 +27,8 @@ const DISTRICT_ID: String = "old_town"
 @onready var map_screen: MapScreen = $MapScreen
 @onready var police: PoliceManager = $Police
 @onready var busted_screen: BustedScreen = $Busted
+@onready var places: PlaceDirector = $Places
+@onready var shop_menu: ShopMenu = $ShopMenu
 
 
 func _ready() -> void:
@@ -67,6 +69,10 @@ func _ready() -> void:
 	WantedSystem.busted.connect(_on_busted)
 	missions.setup(player, world)
 	hud.bind_missions(missions, player)
+	places.menu = shop_menu
+	places.pause_menu = pause_menu
+	places.setup(player, world.data, missions, police)
+	hud.bind_places(places)
 	gps.setup(world.get_lane_graph(), player, missions)
 	hud.bind_map(player, world.data, gps)
 	map_screen.setup(player, world.data, gps)

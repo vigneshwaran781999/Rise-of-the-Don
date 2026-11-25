@@ -13,6 +13,7 @@ var _settings_button: Button
 var _save: SavePanel
 var _save_button: Button
 var _map_button: Button
+var _save_only: bool = false     # opened straight on the save panel (at a property): closing it resumes
 ## The full map, opened from here (set by the game session).
 var map_screen: MapScreen
 
@@ -135,8 +136,23 @@ func _open_save() -> void:
 
 
 func _on_save_closed() -> void:
+	if _save_only:
+		_save_only = false
+		resume()
+		return
 	_menu.show()
 	_save_button.grab_focus()
+
+
+## Pauses straight onto the save slots (a property's save point); closing them resumes the game.
+func open_save() -> void:
+	open()
+	_save_only = true
+	_open_save()
+
+
+func is_saving() -> bool:
+	return _root.visible and _save.visible
 
 
 func _go_to_main_menu() -> void:

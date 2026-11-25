@@ -8,29 +8,13 @@
 [ext_resource type="Resource" path="res://resources/characters/player_camera.tres" id="6_camset"]
 [ext_resource type="Script" path="res://scripts/player/vehicle_interactor.gd" id="7_interact"]
 [ext_resource type="Script" path="res://scripts/player/player_driving_input.gd" id="8_drive"]
+[ext_resource type="Script" path="res://scripts/player/player_figure.gd" id="9_figure"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_man.glb" id="10_look"]
+[ext_resource type="Resource" path="res://resources/shops/textiles.tres" id="11_wardrobe"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
 height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
-albedo_color = Color(0.42, 0.4, 0.5, 1)
-roughness = 0.5
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
-material = SubResource("StandardMaterial3D_body")
-radius = 0.35
-height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nose"]
-albedo_color = Color(1, 0.17, 0.84, 1)
-emission_enabled = true
-emission = Color(1, 0.17, 0.84, 1)
-emission_energy_multiplier = 0.8
-
-[sub_resource type="BoxMesh" id="BoxMesh_nose"]
-material = SubResource("StandardMaterial3D_nose")
-size = Vector3(0.22, 0.12, 0.34)
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
@@ -44,13 +28,11 @@ shape = SubResource("CapsuleShape3D_body")
 
 [node name="Model" type="Node3D" parent="."]
 
-[node name="Body" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_body")
-
-[node name="Nose" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, -0.4)
-mesh = SubResource("BoxMesh_nose")
+[node name="Figure" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+script = ExtResource("9_figure")
+look = ExtResource("10_look")
+wardrobe = ExtResource("11_wardrobe")
 
 [node name="Stats" type="Node" parent="."]
 script = ExtResource("3_stats")

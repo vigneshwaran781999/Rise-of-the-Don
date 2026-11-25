@@ -26,6 +26,14 @@
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="24_map"]
 [ext_resource type="Script" path="res://scripts/police/police_manager.gd" id="25_police"]
 [ext_resource type="Script" path="res://scripts/ui/busted_screen.gd" id="26_busted"]
+[ext_resource type="Script" path="res://scripts/shops/place_director.gd" id="27_places"]
+[ext_resource type="Resource" path="res://resources/shops/tiffin.tres" id="28_tiffin"]
+[ext_resource type="Resource" path="res://resources/shops/textiles.tres" id="29_textiles"]
+[ext_resource type="Resource" path="res://resources/shops/garage.tres" id="30_garage"]
+[ext_resource type="Resource" path="res://resources/properties/verandah_house.tres" id="31_house"]
+[ext_resource type="Script" path="res://scripts/ui/shop_menu.gd" id="32_shopmenu"]
+[ext_resource type="Script" path="res://scripts/shops/shop_data.gd" id="33_shopdata"]
+[ext_resource type="Script" path="res://scripts/shops/property_data.gd" id="34_propdata"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -82,6 +90,11 @@ officer_look = ExtResource("16_man")
 script = ExtResource("19_missions")
 looks = Array[PackedScene]([ExtResource("16_man"), ExtResource("17_woman"), ExtResource("18_elder")])
 
+[node name="Places" type="Node3D" parent="."]
+script = ExtResource("27_places")
+shops = Array[ExtResource("33_shopdata")]([ExtResource("28_tiffin"), ExtResource("29_textiles"), ExtResource("30_garage")])
+properties = Array[ExtResource("34_propdata")]([ExtResource("31_house")])
+
 [node name="LaneDebug" type="MeshInstance3D" parent="."]
 script = ExtResource("9_lanedebug")
 
@@ -100,3 +113,7 @@ script = ExtResource("24_map")
 [node name="Busted" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("26_busted")
+
+[node name="ShopMenu" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("32_shopmenu")

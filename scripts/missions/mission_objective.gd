@@ -20,6 +20,9 @@ enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 @export var position: Vector3
 @export var radius: float = 3.0
 @export var mode: Mode = Mode.ANY
+## If not empty, each time the objective starts it goes to one of these, picked at random,
+## instead of `position` (side jobs to a different customer each time).
+@export var alternatives: PackedVector3Array = PackedVector3Array()
 
 @export_group("Talk to and deliver")
 @export var contact: StringName
@@ -41,3 +44,8 @@ enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 ## Where the player is put when restarting here.
 @export var checkpoint_position: Vector3
 @export var checkpoint_yaw_degrees: float = 0.0
+
+
+## Where a GO_TO goes this time: `position`, or one of `alternatives` at random.
+func pick_position(rng: RandomNumberGenerator) -> Vector3:
+	return position if alternatives.is_empty() else alternatives[rng.randi() % alternatives.size()]

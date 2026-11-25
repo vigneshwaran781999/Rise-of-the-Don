@@ -28,8 +28,20 @@ const MAX_DEPTH: float = 12.0
 const TANK_HALF: float = 15.0
 ## The bus stand where New Game begins (base centre of the shelter).
 const BUS_STAND := Vector3(97.0, LOT_TOP, 7.0)
-## The police station replaces the 10 m main-road shop nearest this point (on Ring B, south-west).
-const POLICE_SPOT := Vector3(-40.0, 0.0, 115.0)
+## Props a special building may clear from in front of its door.
+const CLEARABLE: Array[StringName] = [&"prop_streetlight", &"prop_bollard", &"prop_neem_tree", &"prop_palm_tree"]
+## Special buildings (M6): [place id, ordinary kit it replaces, near this point, its kit, door
+## distance from its centre, optionally a radius around the door kept clear of CLEARABLE props
+## (the garage: cars drive in)]. The police station is on Ring B; the tiffin stall faces the bus
+## stand across the east gopuram road; the garage is further east on that road; the clothes shop
+## is on Ring B west; the house for sale is north of Ring B east.
+const SPECIAL_BUILDINGS: Array = [
+	[&"police_station", &"bld_ot_shop_04", Vector3(-40.0, 0.0, 115.0), &"bld_ot_police_station", 7.6],
+	[&"tiffin", &"bld_ot_shop_04", Vector3(91.0, 0.0, -16.0), &"bld_ot_tiffin", 7.6],
+	[&"garage", &"bld_ot_shop_04", Vector3(160.0, 0.0, -16.0), &"bld_ot_garage", 7.6, 6.0],
+	[&"textiles", &"bld_ot_shop_02", Vector3(-58.0, 0.0, 127.0), &"bld_ot_textiles", 7.6],
+	[&"house", &"bld_ot_house_05", Vector3(60.0, 0.0, 137.0), &"bld_ot_house_05", 7.6],
+]
 const NODE_SPACING: float = 10.0
 const SEED: int = 7031
 ## Street lines, the same on both axes: [position, class].
@@ -78,6 +90,8 @@ var signals: Array[Dictionary] = []
 var sit_spots: Array[Dictionary] = []
 ## Where you are released after an arrest: on the sidewalk at the police station door, facing out.
 var police_station := Transform3D()
+## Spots at the doors of the special buildings, by id (see SPECIAL_BUILDINGS).
+var places: Dictionary = {}
 var lane_graph: LaneGraph
 var junction_count: int = 0
 
@@ -102,7 +116,7 @@ func generate() -> void:
 	_build_roads()
 	_build_blocks()
 	_bus_stand()
-	_police_station()
+	_special_buildings()
 	_build_signals()
 	_build_crossings()
 	_build_lanes()
@@ -500,26 +514,38 @@ func _benches_facing_in(r: Rect2, inset: float, kind: StringName) -> void:
 	_bench(Vector3(r.end.x - inset, LOT_TOP, c.y), -PI * 0.5, kind)
 
 
-## A stone bench facing +Z rotated by yaw, with two places to sit.
-## The police station (M6): takes the place of the 10 m main-road shop nearest POLICE_SPOT (same
-## footprint), and records the spot by its door where you are released after an arrest.
-func _police_station() -> void:
-	var best: int = -1
-	var best_d: float = INF
-	for i: int in placements.size():
-		if placements[i]["kit"] != &"bld_ot_shop_04":
+## Special buildings (M6) and the places at their doors (DistrictData.places): each one takes the
+## place of the ordinary building of kit `from` nearest `near` (same footprint; the same kit when
+## only the spot is needed), and its door spot is recorded under `id`, on the sidewalk facing out.
+func _special_buildings() -> void:
+	for special: Array in SPECIAL_BUILDINGS:
+		var id: StringName = special[0]
+		var from: StringName = special[1]
+		var near: Vector3 = special[2]
+		var best: int = -1
+		var best_d: float = INF
+		for i: int in placements.size():
+			if placements[i]["kit"] != from:
+				continue
+			var d: float = (placements[i]["xform"] as Transform3D).origin.distance_to(near)
+			if d < best_d:
+				best_d = d
+				best = i
+		if best < 0:
+			push_error("OldTownLayout: no %s near %s for %s" % [from, near, id])
 			continue
-		var d: float = (placements[i]["xform"] as Transform3D).origin.distance_to(POLICE_SPOT)
-		if d < best_d:
-			best_d = d
-			best = i
-	if best < 0:
-		return
-	placements[best]["kit"] = &"bld_ot_police_station"
-	var xform: Transform3D = placements[best]["xform"]
-	var front: Vector3 = xform.basis.z.normalized()     # buildings face their +Z (Blender -Y)
-	var door: Vector3 = xform.origin + front * 7.6
-	police_station = Transform3D(Basis.looking_at(front, Vector3.UP), Vector3(door.x, LOT_TOP, door.z))
+		placements[best]["kit"] = special[3]
+		var xform: Transform3D = placements[best]["xform"]
+		var front: Vector3 = xform.basis.z.normalized()     # buildings face their +Z (Blender -Y)
+		var door: Vector3 = xform.origin + front * special[4]
+		places[id] = Transform3D(Basis.looking_at(front, Vector3.UP), Vector3(door.x, LOT_TOP, door.z))
+		var clear: float = float(special[5]) if special.size() > 5 else 0.0
+		for i: int in range(placements.size() - 1, -1, -1):
+			var kit: StringName = placements[i]["kit"]
+			var at: Vector3 = (placements[i]["xform"] as Transform3D).origin
+			if clear > 0.0 and kit in CLEARABLE and Vector2(at.x - door.x, at.z - door.z).length() < clear:
+				placements.remove_at(i)
+	police_station = places.get(&"police_station", Transform3D())
 
 
 ## The bus stand on the south kerb of the east gopuram road, where New Game begins (M5): the
@@ -533,6 +559,7 @@ func _bus_stand() -> void:
 		sit_spots.append({"xform": Transform3D(basis, BUS_STAND + basis * Vector3(side, -0.38, -0.18)), "kind": &"prop"})
 
 
+## A stone bench facing +Z rotated by yaw, with two places to sit.
 func _bench(pos: Vector3, yaw: float, kind: StringName) -> void:
 	_place(&"prop_bench", pos, yaw, Vector3.ONE, kind)
 	var basis := Basis(Vector3.UP, yaw)

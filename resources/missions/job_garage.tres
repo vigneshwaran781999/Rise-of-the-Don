@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="3_contact"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="4_vehicle"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="5_sedan"]
+
+[sub_resource type="Resource" id="Resource_murugan"]
+script = ExtResource("3_contact")
+id = &"murugan"
+display_name = "Murugan"
+look = 0
+top_color = Color(0.29, 0.33, 0.4, 1)
+bottom_color = Color(0.2, 0.22, 0.27, 1)
+skin_color = Color(0.4, 0.25, 0.15, 1)
+hair_color = Color(0.1, 0.08, 0.07, 1)
+position = Vector3(166.5, 0.15, -9.4)
+yaw_degrees = 0.0
+
+[sub_resource type="Resource" id="Resource_car"]
+script = ExtResource("4_vehicle")
+id = &"customer_car"
+label = "the customer's car"
+scene = ExtResource("5_sedan")
+position = Vector3(152, 0, -4.75)
+yaw_degrees = 90.0
+paint = Color(0.79, 0.64, 0.15, 1)
+must_survive = true
+
+[sub_resource type="Resource" id="Resource_brief"]
+script = ExtResource("2_objective")
+type = 1
+text = "Talk to Murugan."
+contact = &"murugan"
+lines = PackedStringArray("MURUGAN: Fixed, washed, ready. And the owner wants it at his door, not here.", "MURUGAN: It's the yellow one at the kerb. Bring it back in one piece and you're paid.")
+
+[sub_resource type="Resource" id="Resource_get_in"]
+script = ExtResource("2_objective")
+type = 2
+text = "Get in the customer's car."
+vehicle = &"customer_car"
+
+[sub_resource type="Resource" id="Resource_drive"]
+script = ExtResource("2_objective")
+text = "Deliver the car to its owner. Don't wreck it."
+hint = "Stop the car in the marker."
+position = Vector3(59.8, 0.15, 107.5)
+radius = 5.0
+mode = 2
+alternatives = PackedVector3Array(59.8, 0.15, 107.5, 59.8, 0.15, -116.5, -4.5, 0.15, 161, 116.5, 0.15, 59.8)
+vehicle = &"customer_car"
+time_limit = 120.0
+
+[resource]
+script = ExtResource("1_mission")
+id = &"job_garage"
+title = "Garage Run"
+description = "Murugan at the East Road Garage pays for drivers who bring cars back to their owners."
+category = 2
+prerequisites = Array[StringName]([&"first_opportunity"])
+start_position = Vector3(165, 0.15, -8.6)
+start_yaw_degrees = 0.0
+giver = SubResource("Resource_murugan")
+repeatable = true
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_brief"), SubResource("Resource_get_in"), SubResource("Resource_drive")])
+vehicles = Array[ExtResource("4_vehicle")]([SubResource("Resource_car")])
+outro_lines = PackedStringArray("OWNER: Not a scratch. Murugan's money is on its way.")
+reward_cash = 600

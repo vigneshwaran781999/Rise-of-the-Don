@@ -417,45 +417,57 @@ def prop_neem_tree() -> None:
 H0, FH = 3.4, 3.0   # ground-floor and upper-floor heights
 
 
-# Block letters for signs: 3 x 5 pixels each, top row first ('#' = filled).
+# Block letters for signs: 5 pixels tall, top row first ('#' = filled); most are 3 wide, N 4.
 PIXEL_FONT = {
-    "P": ("###", "#.#", "###", "#..", "#.."),
-    "O": ("###", "#.#", "#.#", "#.#", "###"),
-    "L": ("#..", "#..", "#..", "#..", "###"),
-    "I": ("###", ".#.", ".#.", ".#.", "###"),
+    "A": ("###", "#.#", "###", "#.#", "#.#"),
     "C": ("###", "#..", "#..", "#..", "###"),
     "E": ("###", "#..", "###", "#..", "###"),
+    "F": ("###", "#..", "##.", "#..", "#.."),
+    "G": ("###", "#..", "#.#", "#.#", "###"),
+    "I": ("###", ".#.", ".#.", ".#.", "###"),
+    "L": ("#..", "#..", "#..", "#..", "###"),
+    "N": ("#..#", "##.#", "#.##", "#..#", "#..#"),
+    "O": ("###", "#.#", "#.#", "#.#", "###"),
+    "P": ("###", "#.#", "###", "#..", "#.."),
+    "R": ("##.", "#.#", "##.", "#.#", "#.#"),
+    "S": ("###", "#..", "###", "..#", "###"),
+    "T": ("###", ".#.", ".#.", ".#.", ".#."),
+    "X": ("#.#", "#.#", ".#.", "#.#", "#.#"),
 }
 
 
 def pixel_text(mb, text: str, x_centre: float, y_front: float, z_bottom: float, pixel: float, material) -> None:
     """Block letters (PIXEL_FONT) standing just in front of the plane y = y_front, reading left to
-    right for someone looking at it from the front (-Y side). Each run of pixels in a row is one box."""
-    width = len(text) * 4 * pixel - pixel
+    right for someone looking at it from the front (-Y side), one pixel apart. Each run of pixels
+    in a row is one box."""
+    width = sum((len(PIXEL_FONT[ch][0]) + 1) * pixel for ch in text) - pixel
     x = x_centre - width / 2
     for ch in text:
-        for r, row in enumerate(PIXEL_FONT[ch]):
+        glyph = PIXEL_FONT[ch]
+        cols = len(glyph[0])
+        for r, row in enumerate(glyph):
             z_top = z_bottom + (5 - r) * pixel
             c = 0
-            while c < 3:
+            while c < cols:
                 if row[c] != "#":
                     c += 1
                     continue
                 end = c
-                while end < 3 and row[end] == "#":
+                while end < cols and row[end] == "#":
                     end += 1
                 mb.box(x + c * pixel, y_front - 0.03, z_top - pixel, x + end * pixel, y_front, z_top, material, skip=("back",))
                 c = end
-        x += 4 * pixel
+        x += (cols + 1) * pixel
 
 
 def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: str, ground: str,
                 roof: str, balcony: bool = False, awning: str | None = None, sign: str | None = None,
                 pillars: int = 0, rooftop_sign: str | None = None, rooftop_text: str | None = None,
-                tank: bool = False) -> None:
+                tank: bool = False, sign_text: str | None = None, sign_letters: str = "#f4f1e8") -> None:
     """Old Town row building. ground: 'shop', 'house' or 'verandah' (set-back front with pillars
     and raised thinnai seats); roof: 'flat' (parapet terrace) or 'tile' (pitched clay tiles).
-    rooftop_sign: colour of a board on poles above the roof; rooftop_text: white block letters on it."""
+    rooftop_sign: colour of a board on poles above the roof; rooftop_text: white block letters on it.
+    sign: colour of the shopfront board; sign_text: block letters on it (a taller board), in sign_letters."""
     rm.clear_scene()
     wall = rm.material(name + "_wall", paint, roughness=0.9)
     trim_m = rm.material(name + "_trim", trim, roughness=0.85)
@@ -516,7 +528,12 @@ def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: st
             extrude_x(mb, [(yf, 2.95), (yf - 1.5, 2.55), (yf - 1.5, 2.5), (yf, 2.88)], x0 + 0.15, x1 - 0.15, aw)
         if sign:
             sg = rm.material(name + "_sign", sign, roughness=0.6)
-            mb.box(x0 + 0.3, yf - 0.12, 2.98, x1 - 0.3, yf, 3.32, sg, skip=("back",))
+            if sign_text:
+                mb.box(x0 + 0.3, yf - 0.12, 2.95, x1 - 0.3, yf, 3.4, sg, skip=("back",))
+                letters = rm.material(name + "_sign_letters", sign_letters, roughness=0.6)
+                pixel_text(mb, sign_text, 0.0, yf - 0.12, 3.0, 0.07, letters)
+            else:
+                mb.box(x0 + 0.3, yf - 0.12, 2.98, x1 - 0.3, yf, 3.32, sg, skip=("back",))
     else:
         mb.box(-0.5, yf - 0.06, 0.45, 0.5, yf, 2.55, wood, skip=("back",))            # door
         mb.box(-0.62, yf - 0.1, 2.55, 0.62, yf, 2.7, trim_m, skip=("back",))
@@ -607,7 +624,82 @@ OT_BUILDINGS = {
     # the police station (M6): white with blue trim; the layout puts it in place of one shop
     "bld_ot_police_station": dict(w=10, d=12, floors=2, paint="#eceae4", trim="#1f4fa0", ground="house", roof="flat", balcony=True,
                                   rooftop_sign="#1f4fa0", rooftop_text="POLICE"),
+    # shops you can use (M6): the tiffin stall (food) and the clothes shop, named on their boards
+    "bld_ot_tiffin": dict(w=10, d=12, floors=2, paint="#f3efe3", trim="#2f7d4f", ground="shop", roof="flat", awning="#2f7d4f",
+                          sign="#2f7d4f", sign_text="TIFFIN", balcony=True),
+    "bld_ot_textiles": dict(w=6, d=12, floors=3, paint="#c96f9e", trim="#fbf2ea", ground="shop", roof="flat", awning="#7a2f8c",
+                            sign="#6e1b35", sign_text="TEXTILES", sign_letters="#f2c230"),
 }
+
+
+def garage() -> None:
+    """bld_ot_garage (M6): the respray garage. A one-storey workshop, 10 x 12 m, whose front is a
+    single 8 m wide bay a car drives into (the shutter rolled up), with "GARAGE" on the board
+    above. Inside: a concrete floor, a tube light that glows at night, a workbench, oil drums and
+    a stack of tyres at the back. Collision leaves the bay open."""
+    name = "bld_ot_garage"
+    rm.clear_scene()
+    w, d, top = 10.0, 12.0, 4.6
+    x0, x1, y0, y1 = -w / 2, w / 2, -d / 2, d / 2
+    bay_x0, bay_x1, bay_top = x0 + 1.0, x1 - 1.0, 3.5
+    wall = rm.material(name + "_wall", "#e2e0d8", roughness=0.9)
+    trim = rm.material(name + "_trim", "#b8322a", roughness=0.8)
+    inside = rm.material("garage_inside", "#4b4d52", roughness=0.95)
+    floor = rm.material("garage_floor", "#6f6d68", roughness=0.95)
+    shutter = rm.material("shutter_metal", "#8f959c", roughness=0.45, metallic=0.5)
+    plinth = rm.material("ot_plinth", "#6d6257", roughness=0.92)
+    drum = rm.material("oil_drum", "#2a5d9c", roughness=0.5, metallic=0.4)
+    rubber = rm.material("tyre_rubber", "#1b1b1d", roughness=0.9)
+    wood = rm.material("ot_door_wood", "#5a3a22", roughness=0.8)
+    lens = rm.material("lamp_lens", "#ffe2b0", roughness=0.3, emission="#ffd590", emission_strength=1.5)
+    letters = rm.material("sign_letters", "#f4f1e8", roughness=0.6)
+    mb = rm.MeshBuilder()
+
+    # Outside: piers either side of the bay, the back and the fascia above the bay, a parapet.
+    for px0, px1 in ((x0, bay_x0), (bay_x1, x1)):
+        mb.box(px0, y0, 0.0, px1, y1, top, wall, skip=("bottom",))
+        mb.box(px0 - 0.03, y0 - 0.03, 0.0, px1 + 0.03, y0 + 0.4, 0.45, plinth, skip=("bottom",))
+    mb.box(bay_x0, y1 - 0.3, 0.0, bay_x1, y1, top, wall, skip=("bottom", "front"))
+    mb.box(bay_x0, y0, bay_top, bay_x1, y1 - 0.3, top, wall, skip=("bottom",))
+    for (ax0, ay0, ax1, ay1) in ((x0, y0, x1, y0 + 0.18), (x0, y1 - 0.18, x1, y1),
+                                 (x0, y0 + 0.18, x0 + 0.18, y1 - 0.18), (x1 - 0.18, y0 + 0.18, x1, y1 - 0.18)):
+        mb.box(ax0, ay0, top, ax1, ay1, top + 0.7, trim, skip=("bottom",))
+    mb.box(x0, y0, top, x1, y1, top + 0.02, plinth, skip=("bottom",))
+    # Red band round the bay, the rolled-up shutter, and the GARAGE board above.
+    mb.box(bay_x0 - 0.15, y0 - 0.06, 0.0, bay_x0, y0, bay_top + 0.15, trim, skip=("back", "bottom"))
+    mb.box(bay_x1, y0 - 0.06, 0.0, bay_x1 + 0.15, y0, bay_top + 0.15, trim, skip=("back", "bottom"))
+    mb.box(bay_x0, y0 - 0.06, bay_top, bay_x1, y0, bay_top + 0.15, trim, skip=("back",))
+    mb.box(bay_x0 + 0.05, y0 + 0.05, bay_top - 0.32, bay_x1 - 0.05, y0 + 0.45, bay_top, shutter)
+    mb.box(x0 + 1.4, y0 - 0.12, bay_top + 0.25, x1 - 1.4, y0 - 0.06, top - 0.15, trim, skip=("back",))
+    pixel_text(mb, "GARAGE", 0.0, y0 - 0.12, bay_top + 0.25 + (top - 0.4 - bay_top - 5 * 0.13) / 2, 0.13, letters)
+
+    # Inside the bay: walls, floor, the tube light, and the clutter at the back.
+    mb.box(bay_x0, y0, 0.0, bay_x1, y1 - 0.3, 0.02, floor, skip=("bottom",))
+    mb.face([(bay_x0 + 0.001, y0, 0.02), (bay_x0 + 0.001, y1 - 0.3, 0.02), (bay_x0 + 0.001, y1 - 0.3, bay_top), (bay_x0 + 0.001, y0, bay_top)],
+            inside, outward=Vector((1, 0, 0)))
+    mb.face([(bay_x1 - 0.001, y0, 0.02), (bay_x1 - 0.001, y1 - 0.3, 0.02), (bay_x1 - 0.001, y1 - 0.3, bay_top), (bay_x1 - 0.001, y0, bay_top)],
+            inside, outward=Vector((-1, 0, 0)))
+    mb.face([(bay_x0, y1 - 0.301, 0.02), (bay_x1, y1 - 0.301, 0.02), (bay_x1, y1 - 0.301, bay_top), (bay_x0, y1 - 0.301, bay_top)],
+            inside, outward=Vector((0, -1, 0)))
+    mb.face([(bay_x0, y0, bay_top - 0.001), (bay_x1, y0, bay_top - 0.001), (bay_x1, y1 - 0.3, bay_top - 0.001), (bay_x0, y1 - 0.3, bay_top - 0.001)],
+            inside, outward=Vector((0, 0, -1)))
+    mb.box(-1.2, -0.06, bay_top - 0.12, 1.2, 0.06, bay_top - 0.001, lens, skip=("top",))
+    mb.box(bay_x0 + 0.4, y1 - 1.1, 0.0, bay_x0 + 2.4, y1 - 0.3, 0.9, wood, skip=("bottom",))      # workbench
+    for cx in (bay_x1 - 0.5, bay_x1 - 1.2):                                                          # oil drums
+        mb.cylinder(cx, y1 - 0.75, 0.02, 0.3, 0.3, 0.9, 12, drum)
+    for k in range(4):                                                                               # tyre stack
+        mb.cylinder(bay_x0 + 3.2, y1 - 0.8, 0.02 + k * 0.22, 0.34, 0.34, 0.2, 14, rubber)
+    mb.build(name)
+    box_collision(name, [
+        (x0, y0, 0.0, bay_x0, y1, top + 0.7),            # piers
+        (bay_x1, y0, 0.0, x1, y1, top + 0.7),
+        (bay_x0, y1 - 0.3, 0.0, bay_x1, y1, top + 0.7),  # back wall
+        (bay_x0, y0, bay_top, bay_x1, y1 - 0.3, top + 0.7),   # roof over the bay
+        (bay_x0 + 0.4, y1 - 1.1, 0.0, bay_x0 + 2.4, y1 - 0.3, 0.9),   # workbench
+        (bay_x1 - 1.55, y1 - 1.1, 0.0, bay_x1 - 0.15, y1 - 0.4, 0.92),  # drums
+        (bay_x0 + 2.85, y1 - 1.15, 0.0, bay_x0 + 3.55, y1 - 0.45, 0.9),  # tyres
+    ])
+    rm.export_glb("buildings", name)
 
 
 def market_hall() -> None:
@@ -802,6 +894,7 @@ BUILDERS = {
     "bld_ot_mandapam": mandapam,
     "bld_ot_vimana": vimana,
     "bld_ot_tank": tank,
+    "bld_ot_garage": garage,
 }
 for _name, _params in OT_BUILDINGS.items():
     BUILDERS[_name] = (lambda n=_name, p=_params: ot_building(n, **p))

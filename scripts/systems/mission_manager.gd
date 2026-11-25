@@ -53,11 +53,12 @@ func get_completed() -> Array[StringName]:
 	return _completed.duplicate()
 
 
-## Missions the player can start now: not passed, not running, prerequisites passed.
+## Missions the player can start now: not running, not passed (unless repeatable), prerequisites
+## passed.
 func get_available() -> Array[MissionData]:
 	var result: Array[MissionData] = []
 	for mission: MissionData in story.missions:
-		if mission == _active or _completed.has(mission.id):
+		if mission == _active or (_completed.has(mission.id) and not mission.repeatable):
 			continue
 		var unlocked: bool = true
 		for needed: StringName in mission.prerequisites:
