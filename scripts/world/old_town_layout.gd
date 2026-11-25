@@ -28,6 +28,8 @@ const MAX_DEPTH: float = 12.0
 const TANK_HALF: float = 15.0
 ## The bus stand where New Game begins (base centre of the shelter).
 const BUS_STAND := Vector3(97.0, LOT_TOP, 7.0)
+## The police station replaces the 10 m main-road shop nearest this point (on Ring B, south-west).
+const POLICE_SPOT := Vector3(-40.0, 0.0, 115.0)
 const NODE_SPACING: float = 10.0
 const SEED: int = 7031
 ## Street lines, the same on both axes: [position, class].
@@ -74,6 +76,8 @@ var crossings: Array[Rect2] = []
 var signals: Array[Dictionary] = []
 ## Where a pedestrian sits on a bench: {xform: Transform3D of their feet, facing +Z, kind: &"prop" or &"landmark"}
 var sit_spots: Array[Dictionary] = []
+## Where you are released after an arrest: on the sidewalk at the police station door, facing out.
+var police_station := Transform3D()
 var lane_graph: LaneGraph
 var junction_count: int = 0
 
@@ -98,6 +102,7 @@ func generate() -> void:
 	_build_roads()
 	_build_blocks()
 	_bus_stand()
+	_police_station()
 	_build_signals()
 	_build_crossings()
 	_build_lanes()
@@ -496,6 +501,27 @@ func _benches_facing_in(r: Rect2, inset: float, kind: StringName) -> void:
 
 
 ## A stone bench facing +Z rotated by yaw, with two places to sit.
+## The police station (M6): takes the place of the 10 m main-road shop nearest POLICE_SPOT (same
+## footprint), and records the spot by its door where you are released after an arrest.
+func _police_station() -> void:
+	var best: int = -1
+	var best_d: float = INF
+	for i: int in placements.size():
+		if placements[i]["kit"] != &"bld_ot_shop_04":
+			continue
+		var d: float = (placements[i]["xform"] as Transform3D).origin.distance_to(POLICE_SPOT)
+		if d < best_d:
+			best_d = d
+			best = i
+	if best < 0:
+		return
+	placements[best]["kit"] = &"bld_ot_police_station"
+	var xform: Transform3D = placements[best]["xform"]
+	var front: Vector3 = xform.basis.z.normalized()     # buildings face their +Z (Blender -Y)
+	var door: Vector3 = xform.origin + front * 7.6
+	police_station = Transform3D(Basis.looking_at(front, Vector3.UP), Vector3(door.x, LOT_TOP, door.z))
+
+
 ## The bus stand on the south kerb of the east gopuram road, where New Game begins (M5): the
 ## shelter opens towards the road, and its bench seats two waiting pedestrians.
 func _bus_stand() -> void:

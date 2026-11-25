@@ -153,15 +153,20 @@ static func split_pieces(faces: PackedVector3Array) -> Array[PackedVector3Array]
 	for t: int in range(0, corner_ids.size(), 3):
 		_union(parent, corner_ids[t], corner_ids[t + 1])
 		_union(parent, corner_ids[t], corner_ids[t + 2])
+	# Point indices per piece in plain Arrays: those are shared by reference, whereas appending to
+	# a packed array fetched out of a Dictionary appends to a copy.
 	var groups: Dictionary = {}
 	for i: int in points.size():
 		var r: int = _find(parent, i)
 		if not groups.has(r):
-			groups[r] = PackedVector3Array()
-		(groups[r] as PackedVector3Array).append(points[i])
+			groups[r] = []
+		(groups[r] as Array).append(i)
 	var out: Array[PackedVector3Array] = []
 	for r: int in groups:
-		out.append(groups[r])
+		var piece := PackedVector3Array()
+		for i: int in groups[r]:
+			piece.append(points[i])
+		out.append(piece)
 	return out
 
 

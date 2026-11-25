@@ -28,14 +28,17 @@ const REQUIRED_ACTIONS: PackedStringArray = [
 	"map", "map_zoom_in", "map_zoom_out",
 ]
 ## Vehicle models: visuals only, no static '-colonly' body (a car is a moving rigid body).
-const VEHICLE_ASSETS: PackedStringArray = ["vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel"]
+const VEHICLE_ASSETS: PackedStringArray = [
+	"vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel", "vehicles/veh_police_lightbar", "vehicles/veh_police_heli",
+]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
 ## Old Town kit pieces that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
 	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
-	"bld_ot_tank", "bld_ot_market_hall", "prop_streetlight", "prop_neem_tree", "prop_market_stall_a", "prop_bench",
+	"bld_ot_tank", "bld_ot_market_hall", "bld_ot_police_station", "prop_streetlight", "prop_neem_tree",
+	"prop_market_stall_a", "prop_bench",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -49,7 +52,7 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_shophouse_01", "buildings/bld_shophouse_02", "buildings/bld_shophouse_03",
 	"buildings/bld_apartment_01", "buildings/bld_apartment_02",
 	"buildings/bld_office_01", "buildings/bld_office_02",
-	"buildings/bld_temple_gopuram", "buildings/bld_temple_shrine",
+	"buildings/bld_temple_gopuram", "buildings/bld_temple_shrine", "buildings/bld_ot_police_station",
 	"props/prop_streetlight", "props/prop_palm_tree", "props/prop_temple_wall", "props/prop_bench",
 ]
 
@@ -177,9 +180,17 @@ func _check_asset_collisions() -> String:
 		var node: Node = (load(path) as PackedScene).instantiate()
 		var meshes: int = node.find_children("*", "MeshInstance3D", true, false).size()
 		var bodies: int = node.find_children("*", "StaticBody3D", true, false).size()
+		# The district builder turns collision into convex hulls (trimesh split into its pieces):
+		# every hull needs real points, or the piece has no collision in the streamed chunks.
+		var hulls: Array[PackedVector3Array] = KitBaker.collect_hulls(node as Node3D)
+		var empty_hulls: int = 0
+		for hull: PackedVector3Array in hulls:
+			empty_hulls += 1 if hull.size() < 4 else 0
 		node.free()
 		if meshes < 1 or bodies < 1:
 			return "%s should have a mesh and a '-colonly' body (meshes %d, bodies %d)" % [asset, meshes, bodies]
+		if hulls.is_empty() or empty_hulls > 0:
+			return "%s: its collision bakes to %d hulls, %d of them empty" % [asset, hulls.size(), empty_hulls]
 	for asset: String in VEHICLE_ASSETS + CHARACTER_ASSETS:
 		var path: String = "res://assets/models/%s.glb" % asset
 		if not ResourceLoader.exists(path):
@@ -200,7 +211,7 @@ func _check_asset_collisions() -> String:
 		var mesh: ArrayMesh = CharacterBaker.get_mesh(look)
 		if mesh == null or mesh.get_surface_count() != 1:
 			return "%s should bake to one animated surface" % asset
-	print("  ok  %d Blender assets imported, each with visuals and collision; %d vehicle and %d pedestrian models (visuals only, pedestrians bake to one draw call); %d Old Town kit meshes baked to one draw call each" % [
+	print("  ok  %d Blender assets imported, each with visuals and collision (baking to convex hulls); %d vehicle and %d pedestrian models (visuals only, pedestrians bake to one draw call); %d Old Town kit meshes baked to one draw call each" % [
 		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size(), CHARACTER_ASSETS.size(), KIT_MESHES.size()])
 	return ""
 
@@ -700,7 +711,15 @@ func _check_hud() -> String:
 	await _process_frames(2)
 	if not shown or hud.is_fps_visible():
 		return "F3 did not toggle the FPS counter on and off"
-	print("  ok  HUD health/stamina bars follow the player; F3 toggles the FPS / chunks / cars / people readout")
+	# Wanted level (the police test covers the rest): a new game starts clean, no police about.
+	var police := game.get_node_or_null("Police") as PoliceManager
+	if police == null or WantedSystem.is_wanted() or hud.get_wanted_display().visible:
+		return "a new game should start with nobody after you and no wanted stars on the HUD"
+	if not police.get_cars().is_empty() or not police.get_officers().is_empty():
+		return "no police should be about at level 0"
+	if game.get_node("World").data.police_station.origin == Vector3.ZERO:
+		return "Old Town has no police station to release you at"
+	print("  ok  HUD health/stamina bars follow the player; F3 toggles the FPS / chunks / cars / people readout; no wanted stars or police at the start")
 	return ""
 
 

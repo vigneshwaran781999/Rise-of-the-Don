@@ -86,7 +86,9 @@ func _run() -> void:
 	var district := DistrictData.new()
 	district.display_name = "Old Town"
 	district.map_texture_path = MAP_PATH
-	for label: Array in MAP_LABELS:
+	district.police_station = _layout.police_station
+	var station: Vector3 = _layout.police_station.origin
+	for label: Array in MAP_LABELS + [["POLICE", Vector2(station.x, station.z)]]:
 		district.map_label_texts.append(label[0])
 		district.map_label_positions.append(label[1])
 	district.chunk_size = OldTownLayout.CHUNK_SIZE

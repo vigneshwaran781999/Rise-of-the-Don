@@ -41,6 +41,10 @@ var _wheels: Array[VehicleWheel3D] = []
 var _driven: Array[VehicleWheel3D] = []
 var _front: Array[VehicleWheel3D] = []
 var _rear: Array[VehicleWheel3D] = []
+var _tyres_burst: bool = false
+## Burst tyres keep this share of their grip and limit the car to this top speed.
+const BURST_GRIP: float = 0.45
+const BURST_TOP_SPEED_KMH: float = 45.0
 
 
 func _ready() -> void:
@@ -87,6 +91,28 @@ func _apply_stats() -> void:
 
 
 # --------------------------------------------------------------------------- driving API
+
+## Spike strip: the tyres lose most of their grip and the car can barely reach 45 km/h.
+func burst_tyres() -> void:
+	if _tyres_burst:
+		return
+	_tyres_burst = true
+	for wheel: VehicleWheel3D in _wheels:
+		wheel.wheel_friction_slip *= BURST_GRIP
+
+
+func are_tyres_burst() -> bool:
+	return _tyres_burst
+
+
+## New tyres (a garage).
+func repair_tyres() -> void:
+	if not _tyres_burst:
+		return
+	_tyres_burst = false
+	for wheel: VehicleWheel3D in _wheels:
+		wheel.wheel_friction_slip = stats.front_grip if wheel.position.z > 0.0 else stats.rear_grip
+
 
 ## throttle and brake 0..1, steer -1..1 (positive = left), handbrake on/off.
 func set_controls(throttle: float, brake: float, steer: float, handbrake: bool) -> void:
@@ -263,7 +289,7 @@ func _physics_process(delta: float) -> void:
 func _forward_push(forward_speed: float) -> float:
 	var speed: float = maxf(forward_speed, 0.0)
 	var push: float = minf(stats.engine_force, stats.engine_power / maxf(speed, 0.1))
-	var top: float = stats.top_speed_kmh / 3.6
+	var top: float = (minf(stats.top_speed_kmh, BURST_TOP_SPEED_KMH) if _tyres_burst else stats.top_speed_kmh) / 3.6
 	return push * clampf((top - speed) / (top * 0.04), 0.0, 1.0)
 
 

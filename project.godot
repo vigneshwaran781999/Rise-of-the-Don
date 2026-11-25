@@ -25,6 +25,7 @@ MissionManager="*res://scripts/systems/mission_manager.gd"
 EconomyManager="*res://scripts/systems/economy_manager.gd"
 GameState="*res://scripts/systems/game_state.gd"
 SaveManager="*res://scripts/systems/save_manager.gd"
+WantedSystem="*res://scripts/systems/wanted_system.gd"
 
 [display]
 

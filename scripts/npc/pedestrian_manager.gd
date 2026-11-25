@@ -6,6 +6,9 @@ extends Node3D
 ## free bench seats, who chats with whom, and alarms that make people run (crashes, horns,
 ## someone knocked down).
 
+## The player's vehicle knocked someone down (a crime the police hear about).
+signal player_hit_pedestrian(position: Vector3)
+
 const MONITOR: StringName = &"npc/pedestrians"
 const SIT_SPOTS: StringName = &"sit_spots"
 
@@ -265,3 +268,10 @@ func _prune() -> void:
 	for i: int in range(_people.size() - 1, -1, -1):
 		if not is_instance_valid(_people[i]) or _people[i].is_queued_for_deletion():
 			_people.remove_at(i)
+
+
+## A person was knocked down by `vehicle` (Pedestrian calls this); if the player was driving it,
+## the police are told.
+func report_knockdown(person: Pedestrian, vehicle: VehicleController) -> void:
+	if player != null and player.vehicle == vehicle:
+		player_hit_pedestrian.emit(person.global_position)

@@ -151,6 +151,7 @@ func hit_by_vehicle(vehicle: VehicleController, speed: float) -> void:
 	_set_state(State.KNOCKED)
 	if manager != null:
 		manager.alert(global_position, 15.0, true, self)
+		manager.report_knockdown(self, vehicle)
 
 
 # --------------------------------------------------------------------------- per frame

@@ -178,3 +178,29 @@ Headless tests already cover the logic (`tests/traffic_test.tscn`, `tests/pedest
 - [ ] Saving during mission 2 after the tailor has given you his car, then loading: you're back beside the car with the parcel and the clock not yet started. Saving before that puts you back at the fixer.
 - [ ] Health, cash, position and missions passed come back as saved. The autosave after each mission shows "Free roam, N missions passed".
 - [ ] Save files are in `%APPDATA%\Godot\app_userdata\Rise of the Don\saves\`.
+
+## M6 — Open-world systems (in progress)
+
+### Day and night
+- [ ] The clock under the cash runs: about one in-game hour per real minute. Pause → Save, quit and load: the time of day comes back.
+- [ ] Sunset to night (around 18:00–19:00): the sky goes orange, then dark blue. Lamps glow, windows light up floor by floor (not all at once, not every one), and street lights pool on the road near you.
+- [ ] At night you can still see where you're going on foot and in the car (L for headlights). Traffic drives with headlights on.
+- [ ] Dawn (around 06:00–07:00): the lights go off again. Nothing flickers or pops as the light changes.
+
+### Map and GPS
+- [ ] The minimap (bottom left) turns with you; "N" stays on north. Driving fast zooms it out.
+- [ ] **M** opens the full map centred on the district, with place names (temple, tank, flower market, parks, bus stand, police). Drag or W A S D moves it; the wheel or = / − zoom.
+- [ ] Click a road: a waypoint appears and a route is drawn on the map and the minimap, following the traffic direction. Click it again (or right-click) to clear it. **M** or Esc closes the map.
+- [ ] Driving along the route, it updates as you go and clears when you arrive.
+
+### Wanted level and police
+To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a police car a few times.
+- [ ] One star appears under the clock (stars fill from the right). Officers on foot (khaki) come running.
+- [ ] At two stars, white police cars with flashing red and blue bars arrive with sirens. They drive along the roads towards you (against the traffic if need be), and stop short of you on foot to let officers out.
+- [ ] Stand still: an officer reaches you and the screen shows BUSTED. You're fined (10% of your cash, at least ₹100), and you stand outside the police station on Ring B (white with blue trim and a blue "POLICE" board on the roof). The police have gone.
+- [ ] During a mission, getting busted fails it with "You were busted.", with Retry / Quit Mission.
+- [ ] **Escaping:** get out of sight (round corners, through lanes). The stars blink and a red circle shows on the minimap, shrinking. Leave the circle and stay out: a star goes every ~8 s until none are left. The police drive off.
+- [ ] **Three or more stars, driving fast:** a roadblock appears ahead, with police cars parked across all lanes. At four stars a yellow-and-black spike strip lies before it. Driving over it bursts your tyres: the car slides and won't go much over 45 km/h.
+- [ ] **Five stars:** a helicopter flies in and circles overhead (rotor thudding), with its searchlight on you. At night a faint beam shows. It's hard to get out of its sight.
+- [ ] Is the chase fair and fun? Can you escape two or three stars in a car? Do police cars cope with corners and narrow lanes, or get stuck? Does the siren get tiring?
+- [ ] Street lamps and palm trees are solid: you can't walk or drive through them.

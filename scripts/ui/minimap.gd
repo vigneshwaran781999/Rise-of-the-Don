@@ -115,8 +115,11 @@ func _draw_overlay() -> void:
 			var at: Vector2 = world_to_minimap(blip["position"])
 			var kind: StringName = blip["kind"]
 			if kind == &"zone":
+				# Only the part inside the map disc (the ring starts at 0.468 of the size).
 				var zone_radius: float = float(blip.get("radius", 30.0)) / _metres * SIZE
-				_overlay.draw_circle(at, zone_radius, MapIcons.colour(kind, blip), true)
+				var disc: PackedVector2Array = _circle_points(centre, SIZE * 0.468)
+				for piece: PackedVector2Array in Geometry2D.intersect_polygons(_circle_points(at, zone_radius), disc):
+					_overlay.draw_colored_polygon(piece, MapIcons.colour(kind, blip))
 				continue
 			var offset: Vector2 = at - centre
 			if offset.length() > radius:
@@ -136,3 +139,10 @@ func _draw_overlay() -> void:
 		facing = -player.model.global_basis.z
 	var tip: Vector2 = world_to_minimap(player.global_position + Vector3(facing.x, 0.0, facing.z).normalized()) - centre
 	MapIcons.draw_player(_overlay, centre, tip.angle() + PI * 0.5, 1.0)
+
+
+static func _circle_points(at: Vector2, radius: float, count: int = 48) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i: int in count:
+		points.append(at + Vector2.from_angle(TAU * i / count) * radius)
+	return points

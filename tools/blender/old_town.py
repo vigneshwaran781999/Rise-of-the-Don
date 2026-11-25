@@ -417,11 +417,45 @@ def prop_neem_tree() -> None:
 H0, FH = 3.4, 3.0   # ground-floor and upper-floor heights
 
 
+# Block letters for signs: 3 x 5 pixels each, top row first ('#' = filled).
+PIXEL_FONT = {
+    "P": ("###", "#.#", "###", "#..", "#.."),
+    "O": ("###", "#.#", "#.#", "#.#", "###"),
+    "L": ("#..", "#..", "#..", "#..", "###"),
+    "I": ("###", ".#.", ".#.", ".#.", "###"),
+    "C": ("###", "#..", "#..", "#..", "###"),
+    "E": ("###", "#..", "###", "#..", "###"),
+}
+
+
+def pixel_text(mb, text: str, x_centre: float, y_front: float, z_bottom: float, pixel: float, material) -> None:
+    """Block letters (PIXEL_FONT) standing just in front of the plane y = y_front, reading left to
+    right for someone looking at it from the front (-Y side). Each run of pixels in a row is one box."""
+    width = len(text) * 4 * pixel - pixel
+    x = x_centre - width / 2
+    for ch in text:
+        for r, row in enumerate(PIXEL_FONT[ch]):
+            z_top = z_bottom + (5 - r) * pixel
+            c = 0
+            while c < 3:
+                if row[c] != "#":
+                    c += 1
+                    continue
+                end = c
+                while end < 3 and row[end] == "#":
+                    end += 1
+                mb.box(x + c * pixel, y_front - 0.03, z_top - pixel, x + end * pixel, y_front, z_top, material, skip=("back",))
+                c = end
+        x += 4 * pixel
+
+
 def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: str, ground: str,
                 roof: str, balcony: bool = False, awning: str | None = None, sign: str | None = None,
-                pillars: int = 0, rooftop_sign: str | None = None, tank: bool = False) -> None:
+                pillars: int = 0, rooftop_sign: str | None = None, rooftop_text: str | None = None,
+                tank: bool = False) -> None:
     """Old Town row building. ground: 'shop', 'house' or 'verandah' (set-back front with pillars
-    and raised thinnai seats); roof: 'flat' (parapet terrace) or 'tile' (pitched clay tiles)."""
+    and raised thinnai seats); roof: 'flat' (parapet terrace) or 'tile' (pitched clay tiles).
+    rooftop_sign: colour of a board on poles above the roof; rooftop_text: white block letters on it."""
     rm.clear_scene()
     wall = rm.material(name + "_wall", paint, roughness=0.9)
     trim_m = rm.material(name + "_trim", trim, roughness=0.85)
@@ -544,6 +578,10 @@ def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: st
         for px in (x0 + 0.8, x1 - 0.95):
             mb.box(px, y0 + 0.4, top, px + 0.15, y0 + 0.55, top + 3.0, bars)
         mb.box(x0 + 0.5, y0 + 0.3, top + 1.6, x1 - 0.5, y0 + 0.4, top + 3.2, sg)
+        if rooftop_text:
+            letters = rm.material("sign_letters", "#f4f1e8", roughness=0.6)
+            pixel = 0.2
+            pixel_text(mb, rooftop_text, 0.0, y0 + 0.3, top + 2.4 - 2.5 * pixel, pixel, letters)
     mb.build(name)
     box_collision(name, collide)
     rm.export_glb("buildings", name)
@@ -566,6 +604,9 @@ OT_BUILDINGS = {
     "bld_ot_shop_05": dict(w=8, d=10, floors=1, paint="#9ccf8a", trim="#f4f1e6", ground="shop", roof="tile", awning="#e2762b", sign="#5b3a8c"),
     "bld_ot_shop_06": dict(w=6, d=10, floors=2, paint="#6fa8c8", trim="#f4efe4", ground="shop", roof="flat", awning="#e9c43a", sign="#b8322a"),
     "bld_ot_lodge_01": dict(w=12, d=12, floors=4, paint="#f3efe6", trim="#2c6fb0", ground="shop", roof="flat", awning="#2c6fb0", sign="#2c6fb0", balcony=True, rooftop_sign="#ffb02e", tank=True),
+    # the police station (M6): white with blue trim; the layout puts it in place of one shop
+    "bld_ot_police_station": dict(w=10, d=12, floors=2, paint="#eceae4", trim="#1f4fa0", ground="house", roof="flat", balcony=True,
+                                  rooftop_sign="#1f4fa0", rooftop_text="POLICE"),
 }
 
 

@@ -25,11 +25,14 @@ const DISTRICT_ID: String = "old_town"
 @onready var day_night: DayNightCycle = $DayNight
 @onready var gps: GpsNavigator = $Gps
 @onready var map_screen: MapScreen = $MapScreen
+@onready var police: PoliceManager = $Police
+@onready var busted_screen: BustedScreen = $Busted
 
 
 func _ready() -> void:
 	get_tree().paused = false
 	var saved: Dictionary = SaveManager.take_pending_load()
+	WantedSystem.clear()    # a new game or a loaded save starts with a clean record
 	var start := Transform3D()
 	if saved.is_empty():
 		MissionManager.start_new_game()
@@ -60,6 +63,8 @@ func _ready() -> void:
 	traffic.set_headlights(day_night.is_dark())
 	day_night.darkness_changed.connect(traffic.set_headlights)
 	pedestrians.setup(player, world.streamer)
+	police.setup(player, world.streamer, world.get_lane_graph(), pedestrians)
+	WantedSystem.busted.connect(_on_busted)
 	missions.setup(player, world)
 	hud.bind_missions(missions, player)
 	gps.setup(world.get_lane_graph(), player, missions)
@@ -91,6 +96,35 @@ func collect_player_save() -> Dictionary:
 		"yaw": player.camera_rig.get_yaw(),
 		"health": player.stats.health,
 	}
+
+
+## Arrested (GDD §7): the BUSTED card, a fine, out at the police station's door with the police
+## gone; a mission that was running fails.
+func _on_busted() -> void:
+	var tuning: WantedTuning = WantedSystem.tuning
+	var fine: int = mini(EconomyManager.cash, maxi(tuning.fine_min, int(EconomyManager.cash * tuning.fine_share)))
+	var mission_running: bool = MissionManager.is_active() and not MissionManager.is_failed()
+	await busted_screen.play(fine)
+	police.clear_all()
+	place_player(world.data.police_station)
+	EconomyManager.try_spend(fine, &"fine")
+	if mission_running and MissionManager.is_active():
+		MissionManager.fail("You were busted.")
+
+
+## Puts the player (on foot) at `xform`'s position, facing its -Z, camera behind them.
+func place_player(xform: Transform3D) -> void:
+	if player.is_in_vehicle():
+		player.exit_vehicle(xform.origin)
+	world.streamer.load_around_now(xform.origin)
+	player.global_position = xform.origin + Vector3.UP * 0.1
+	player.velocity = Vector3.ZERO
+	player.reset_physics_interpolation()
+	var facing: Vector3 = -xform.basis.z
+	var yaw: float = atan2(-facing.x, -facing.z)
+	player.model.rotation.y = yaw
+	player.camera_rig.set_view_degrees(rad_to_deg(yaw), player.camera_rig.settings.default_pitch_degrees)
+	player.camera_rig.snap_to_target()
 
 
 func _saved_transform(data: Dictionary) -> Transform3D:

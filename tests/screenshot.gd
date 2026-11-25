@@ -7,6 +7,7 @@ extends Node
 ##       [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--waypoint=x,z]
+##       [--wanted=1..5 [--police=off|car|roadblock|heli]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
@@ -36,6 +37,7 @@ func _run() -> void:
 			player.camera_rig.set_view_degrees(float(view[0]), float(view[1]))
 	if args.has("cam"):
 		var cam := Camera3D.new()
+		cam.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF     # a still camera: its view at once
 		cam.fov = float(args.get("fov", "60"))
 		cam.far = 2000.0
 		add_child(cam)
@@ -55,6 +57,8 @@ func _run() -> void:
 		(instance.get_node("LaneDebug") as LaneGraphDebug).visible = true
 	if args.has("drive"):
 		await _drive(instance, args)
+	if args.has("wanted"):
+		await _police(instance, args)
 	if args.has("crowd"):
 		var where: String = str(args["crowd"]) if str(args["crowd"]).count(",") == 2 else str(args.get("look", "0,0,0"))
 		await _crowd(instance, _vec3(where))
@@ -72,6 +76,8 @@ func _run() -> void:
 		await get_tree().process_frame
 	if args.has("chase"):
 		await _chase(instance, str(args["chase"]))
+	if str(args.get("police", "")) == "heli":
+		await _look_at_helicopter(instance)
 	await RenderingServer.frame_post_draw
 	print("RENDER STATS  fps %d | draw calls %d | objects %d | primitives %d | video memory %.0f MB" % [
 		Performance.get_monitor(Performance.TIME_FPS),
@@ -86,6 +92,73 @@ func _run() -> void:
 	get_tree().quit(0 if err == OK else 1)
 
 
+## --wanted=1..5 makes the player wanted. --police picks a scene: "off" (no units appear, so
+## out of sight the police start searching: stars blinking, search circle on the minimap),
+## "car" (a police car parked at the lane nearest the --look point, lights flashing, nobody
+## driving), "roadblock" (needs --drive: a roadblock with a spike strip ahead of the car, seen
+## from up the road), "heli" (only the helicopter, close by; the camera looks up at it at the end).
+func _police(game: Node, args: Dictionary) -> void:
+	var police := game.get_node("Police") as PoliceManager
+	var player := game.get_node("Player") as PlayerController
+	var kind: String = str(args.get("police", ""))
+	police.enabled = kind == "" or kind == "heli"
+	WantedSystem.set_level(int(args["wanted"]), player.global_position)
+	if kind == "car":
+		var router: RoadRouter = RoadRouter.for_graph((game.get_node("World") as District).get_lane_graph())
+		var car: VehicleController = police.spawn_car_at(router.nearest_node(_vec3(str(args.get("look", "0,0,0")))))
+		car.get_node("Driver").queue_free()
+		car.set_controls(0.0, 0.0, 0.0, true)
+	elif kind == "roadblock" and player.is_in_vehicle():
+		var block: Node3D = police.place_roadblock_ahead(true)
+		if block == null:
+			push_warning("screenshot: no room for a roadblock ahead")
+			return
+		# Seen from up the road: the spike strip lies 14 m before the block along it.
+		var strip := block.find_child("SpikeStrip", true, false) as Node3D
+		var back: Vector3 = strip.global_position - block.global_position
+		back.y = 0.0
+		var cam := Camera3D.new()
+		cam.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF     # a still camera: its view at once
+		cam.fov = 60.0
+		add_child(cam)
+		cam.global_position = strip.global_position + back.normalized() * 12.0 + Vector3(0.0, 4.0, 0.0)
+		cam.look_at(block.global_position + Vector3.UP * 0.5, Vector3.UP)
+		cam.make_current()
+	elif kind == "heli":
+		# Only the helicopter (officers would make an arrest first), brought in close.
+		for i: int in 3:
+			await get_tree().physics_frame
+		police.enabled = false
+		for car: VehicleController in police.get_cars():
+			car.queue_free()
+		for officer: PoliceOfficer in police.get_officers():
+			officer.queue_free()
+		var heli: PoliceHelicopter = police.get_helicopter()
+		if heli != null:
+			heli.global_position = player.global_position + Vector3(25.0, PoliceHelicopter.ALTITUDE, 25.0)
+	await get_tree().process_frame
+
+
+func _look_at_helicopter(game: Node) -> void:
+	var heli: PoliceHelicopter = (game.get_node("Police") as PoliceManager).get_helicopter()
+	if heli == null:
+		return
+	var player := game.get_node("Player") as PlayerController
+	var cam := Camera3D.new()
+	cam.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF     # a still camera: its view at once
+	cam.fov = 70.0
+	cam.far = 2000.0
+	add_child(cam)
+	var side: Vector3 = (player.global_position - heli.global_position)
+	side.y = 0.0
+	cam.global_position = player.global_position + side.normalized() * 18.0 + Vector3(0.0, 3.0, 0.0)
+	cam.look_at(heli.global_position.lerp(player.global_position, 0.45), Vector3.UP)
+	cam.make_current()
+	# A new camera's view only takes effect on the next frames (physics interpolation).
+	for i: int in 3:
+		await get_tree().process_frame
+
+
 ## Puts a camera behind and above traffic car number `which` (in the traffic manager's list;
 ## anything else = the first), looking up the road ahead of it.
 func _chase(game: Node, which: String) -> void:
@@ -95,6 +168,7 @@ func _chase(game: Node, which: String) -> void:
 	var cars: Array[VehicleController] = traffic.get_cars()
 	var car: VehicleController = cars[(int(which) if which.is_valid_int() else 0) % cars.size()]
 	var cam := Camera3D.new()
+	cam.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF     # a still camera: its view at once
 	cam.fov = 60.0
 	cam.far = 2000.0
 	add_child(cam)

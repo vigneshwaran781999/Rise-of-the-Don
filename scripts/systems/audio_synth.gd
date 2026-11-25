@@ -191,3 +191,36 @@ static func ambient_pad() -> AudioStreamWAV:
 	for i: int in count:
 		out[i] *= gain
 	return to_wav(out, PAD_RATE, true)
+
+
+## Police siren: a wail sweeping 650-1350 Hz and back every 1.6 s, looping on the sweep.
+static func siren_loop() -> AudioStreamWAV:
+	var seconds: float = 3.2
+	var count: int = int(seconds * RATE)
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var phase: float = 0.0
+	for i: int in count:
+		var t: float = float(i) / RATE
+		var sweep: float = 0.5 - 0.5 * cos(TAU * t / 1.6)
+		var freq: float = lerpf(650.0, 1350.0, sweep)
+		phase += TAU * freq / RATE
+		var tone: float = sin(phase) * 0.75 + sin(phase * 3.0) * 0.12
+		out[i] = tone * 0.28
+	return to_wav(out, RATE, true)
+
+
+## Helicopter rotor: noise chopped by the blades about 18 times a second, over a low drone.
+static func rotor_loop() -> AudioStreamWAV:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	var count: int = int(1.0 * RATE)
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	for i: int in count:
+		var t: float = float(i) / RATE
+		low += (rng.randf_range(-1.0, 1.0) - low) * 0.08
+		var chop: float = pow(0.5 + 0.5 * cos(TAU * 18.0 * t), 3.0)
+		out[i] = (low * (0.35 + 0.9 * chop) + sin(TAU * 54.0 * t) * 0.15) * 0.6
+	return to_wav(out, RATE, true)

@@ -275,3 +275,66 @@ Dated entries: what was built, what broke, how it was fixed.
   - `JSON.parse_string` logged an engine error on a damaged save; it now uses a quiet instance parse.
   - A helper in the save test named `_process` clashed with Node's.
   - Save times are stored to fractions of a second, so Continue can tell two saves made in the same second apart.
+
+## 2026-11-25 — M6: open-world systems (in progress)
+
+**Built so far**
+- **Step 1, day and night (GDD §12):**
+  - The clock lives in `GameState` (`hour`, `day`, `day_changed`; one in-game day is 24 real minutes), because CLAUDE.md doesn't allow a separate time-of-day autoload. It's saved.
+  - `DayNightCycle` blends eight lighting presets from `resources/world/day_night.tres` (sky, sun or moon, fog, exposure).
+  - City lights switch on at 18:15 and off at 06:30. Lamp lenses glow after dark, and lit windows come on floor by floor, picked by a per-building hash. Ten real street lights follow the camera.
+  - Traffic switches its headlights on. The HUD shows the clock.
+- **Step 2, map and GPS (GDD §11):**
+  - `build_old_town.gd` also renders a 2048 px map image of the district with labels.
+  - The minimap at the bottom left turns with your heading. It shows the GPS route and blips for missions, people and police.
+  - Pause → Map (or M) opens the full map: pan, zoom with the mouse wheel, `=` / `-` or the triggers, and click to set or clear a waypoint.
+  - The GPS (`GpsNavigator` over `RoadRouter`, A* on the lane graph) follows legal lane directions.
+- **Step 3, wanted level and police (GDD §7):**
+  - **`WantedSystem` autoload**, tuned in `resources/police/wanted.tres`:
+    - Crimes add heat, and heat sets the level (1–5). Knocking someone down with your car, ramming a police car, and hitting an officer are all crimes.
+    - Being seen keeps the police on you, and at levels 1–4 seen long enough raises the level by one.
+    - Out of sight, the police search a circle around where they last saw you, and the circle shrinks. Staying outside it for 8 s drops one level.
+    - The HUD shows five stars, which blink while the police are searching. The minimap shows the search circle and police units.
+  - **`PoliceManager`** brings in units out of sight:
+    - Level 1: officers on foot.
+    - Level 2: police cars. A car that pulls up next to a player on foot lets two officers out.
+    - Level 3: roadblocks about 90 m ahead of a fast car, across every lane of the road.
+    - Level 4: spike strips before the roadblocks, which burst your tyres (grip and top speed drop).
+    - Level 5: the helicopter, which circles overhead with a searchlight (with a visible beam after dark).
+    - When the level drops to 0, every unit leaves.
+  - **Police drivers** (`PoliceDriver`) take the shortest way along the roads, ignoring lane directions. They drive straight at you once close, and turn round in narrow lanes with a three-point turn.
+  - **Busted:** an officer next to you on foot, or police around your stopped car, arrests you. A BUSTED card shows, you pay a fine (10% of your cash, at least ₹100), you're released at the Old Town police station, and a running mission fails ("You were busted.").
+  - **New models:**
+    - `bld_ot_police_station`: replaces one shop on Ring B, with a blue "POLICE" rooftop board, and is labelled on the map.
+    - `veh_police_lightbar`: on white police sedans, with a synthesised siren.
+    - `veh_police_heli`: rotor and tail rotor turn, with a synthesised rotor sound.
+  - **New `tests/police_test.tscn`.** The smoke test checks a clean start: no stars and no police. The screenshot tool gained `--wanted` and `--police`.
+
+**Broke / fixed**
+- **Step 1:**
+  - Lit windows rendered pure white: window glow energy was lowered.
+  - Nights were too dark to play: night presets were brightened (ambient, exposure, moon).
+  - The kit baker wrote random glow modes, because `Color(0, 0, 0)` has alpha 1. Glow modes are now explicit.
+- **Step 2:**
+  - The full map opened centred on the player; it now opens on the whole district.
+  - The map help said "Equal Minus"; key names now show as symbols.
+- **Step 3:**
+  - **`RoadRouter` lane lookup was empty:**
+    - **Cause:** `(dict[key] as PackedInt32Array).append(i)` appends to a copy (packed arrays are values), so every grid cell stayed empty. Nearest-node lookups fell back to a slow full search, and heading-aware GPS starts never worked.
+    - **Fix:** the cells are now filled as plain Arrays and packed afterwards.
+  - **Street lights, palm trees and the temple wall had no collision in the streamed district:**
+    - **Cause:** the same mistake in `KitBaker.split_pieces`. Trimesh (`-colonly`) collision baked to empty hulls, so those pieces got no shapes.
+    - **Fix:** same pattern as above, then the district was rebuilt. The smoke test now checks that every model's collision bakes to non-empty hulls.
+  - **Police drivers:**
+    - They wandered off on one-way routes; they now route both ways.
+    - They got stuck facing away in narrow lanes; they now do a three-point turn.
+    - They cut corners; they now aim along the current road segment, looking further ahead the faster they go.
+  - **Roadblocks:** none were placed when you drove in the "wrong" lane, and two cars left gaps on four-lane roads. The search now follows the road either way, and the block is sized to the lanes there.
+  - **Spike strips** were invisible at night: they're now yellow and black, with a faint glow.
+  - **Helicopter:** the beam was first a solid grey cone; it's now faint and scaled by darkness.
+  - **Minimap:** the search circle spilled outside the minimap's ring; it's now clipped to the map disc.
+  - **Smaller fixes:**
+    - A subscript of a `const` preloaded resource failed to parse; it's now a `var`.
+    - Typed arrays of police cars and officers were concatenated; there's now one untyped unit list.
+    - Siren and rotor sounds were reported leaked at quit; `quit_game` now drops every 3D sound's stream.
+    - New screenshot cameras logged an `unproject_position` error on their first frame. They now don't use physics interpolation.

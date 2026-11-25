@@ -67,6 +67,7 @@ func quit_game(exit_code: int = 0) -> void:
 	_silence()
 	for node: Node in get_tree().root.find_children("*", "AudioStreamPlayer3D", true, false):
 		(node as AudioStreamPlayer3D).stop()
+		(node as AudioStreamPlayer3D).stream = null    # drops the playback at once
 	await get_tree().create_timer(0.1, true, false, true).timeout
 	OS.delay_msec(60)   # real time for the audio thread (game time can run faster, e.g. --fixed-fps)
 	get_tree().quit(exit_code)

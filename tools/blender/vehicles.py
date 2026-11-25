@@ -2,6 +2,8 @@
 
   veh_sedan_body    4.5 m four-door sedan body (no wheels), unbadged, crimson paint
   veh_sedan_wheel   0.33 m radius wheel: tyre plus a five-spoke rim facing Blender +X
+  veh_police_lightbar  roof light bar for police cars (police_red / police_blue lenses)
+  veh_police_heli   police helicopter; "rotor" and "tail_rotor" are separate objects to spin
 
 The car faces Blender -Y (= Godot +Z, the VehicleBody3D forward axis). Its left side is +X.
 The pivot is the chassis centre: the road is at z = -0.55 and wheel centres at z = -0.22 once
@@ -249,9 +251,67 @@ def sedan_wheel() -> None:
     rm.export_glb("vehicles", name)
 
 
+def police_lightbar() -> None:
+    """Roof light bar for police cars, 1.1 m wide, pivot at its base centre. The lenses use
+    police_red / police_blue so the game can flash them."""
+    name = "veh_police_lightbar"
+    rm.clear_scene()
+    base = rm.material("lightbar_base", "#25272c", roughness=0.5, metallic=0.4)
+    red = rm.material("police_red", "#7a0b12", roughness=0.3, emission="#ff2030", emission_strength=0.2)
+    blue = rm.material("police_blue", "#0b1f7a", roughness=0.3, emission="#2a5bff", emission_strength=0.2)
+    mb = rm.MeshBuilder()
+    for x in (-0.4, 0.4):                                    # feet on the roof
+        mb.box(x - 0.05, -0.1, 0.0, x + 0.05, 0.1, 0.04, base)
+    mb.box(-0.56, -0.13, 0.04, 0.56, 0.13, 0.09, base)
+    mb.box(-0.53, -0.11, 0.09, -0.03, 0.11, 0.2, red)
+    mb.box(0.03, -0.11, 0.09, 0.53, 0.11, 0.2, blue)
+    mb.box(-0.03, -0.11, 0.09, 0.03, 0.11, 0.2, base)
+    mb.build(name)
+    rm.export_glb("vehicles", name)
+
+
+def police_heli() -> None:
+    """Police helicopter, about 11 m rotor to tail. Faces Blender -Y, pivot on the ground between
+    the skids. The main rotor is its own object, "rotor", with its origin on the mast (the game
+    spins it); "tail_rotor" likewise."""
+    name = "veh_police_heli"
+    rm.clear_scene()
+    white = rm.material("heli_white", "#eef0f2", roughness=0.45)
+    blue = rm.material("heli_blue", "#1f4fa0", roughness=0.45)
+    glass = rm.material("heli_glass", "#1d2633", roughness=0.15, metallic=0.4)
+    dark = rm.material("heli_dark", "#2a2c31", roughness=0.6, metallic=0.4)
+    mb = rm.MeshBuilder()
+    mb.box(-0.85, -1.6, 0.5, 0.85, 1.1, 1.95, white)                        # cabin
+    mb.box(-0.86, -1.61, 0.95, 0.86, 1.11, 1.15, blue)                      # stripe
+    mb.box(-0.75, -2.15, 0.6, 0.75, -1.6, 1.75, glass)                      # nose glazing
+    mb.box(-0.6, -0.4, 1.95, 0.6, 1.0, 2.25, white)                         # engine housing
+    mb.tube((0, 1.1, 1.45), (0, 5.6, 1.75), 0.32, 0.14, 8, white, caps=True)  # tail boom
+    mb.box(-0.05, 5.2, 1.6, 0.05, 5.9, 2.7, blue)                           # fin
+    mb.box(-0.9, 5.3, 1.65, 0.9, 5.6, 1.75, white)                          # tail plane
+    for x in (-0.85, 0.85):                                                 # skids and struts
+        mb.tube((x, -1.7, 0.08), (x, 1.3, 0.08), 0.05, 0.05, 6, dark, caps=True)
+        for y in (-0.9, 0.6):
+            mb.tube((x, y, 0.08), (x * 0.8, y, 0.55), 0.04, 0.04, 6, dark)
+    mb.build(name)
+    rotor = rm.MeshBuilder()
+    rotor.cylinder(0, 0, -0.1, 0.12, 0.12, 0.25, 8, dark)
+    rotor.box(-4.6, -0.125, 0.1, 4.6, 0.125, 0.14, dark)                   # two crossed blades
+    rotor.box(-0.125, -4.6, 0.1, 0.125, 4.6, 0.14, dark)
+    rotor_obj = rotor.build("rotor")
+    rotor_obj.location = (0.0, 0.3, 2.3)
+    tail = rm.MeshBuilder()
+    tail.box(-0.04, -0.06, -0.6, 0.04, 0.06, 0.6, dark)
+    tail.box(-0.04, -0.6, -0.06, 0.04, 0.6, 0.06, dark)
+    tail_obj = tail.build("tail_rotor")
+    tail_obj.location = (0.22, 5.65, 2.1)
+    rm.export_glb("vehicles", name)
+
+
 BUILDERS = {
     "veh_sedan_body": sedan_body,
     "veh_sedan_wheel": sedan_wheel,
+    "veh_police_lightbar": police_lightbar,
+    "veh_police_heli": police_heli,
 }
 
 

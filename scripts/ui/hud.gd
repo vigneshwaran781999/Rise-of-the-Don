@@ -41,6 +41,7 @@ var _area_subtitle: Label
 var _area_tween: Tween
 var _cash: CashDisplay
 var _clock: Label
+var _wanted: WantedDisplay
 var _missions: MissionHud
 var _minimap: Minimap
 var _vehicle_target: VehicleController
@@ -85,6 +86,10 @@ func bind_missions(director: MissionDirector, player: Node3D) -> void:
 
 func get_mission_hud() -> MissionHud:
 	return _missions
+
+
+func get_wanted_display() -> WantedDisplay:
+	return _wanted
 
 
 func get_clock_shown() -> String:
@@ -289,8 +294,8 @@ func _build() -> void:
 	_fps_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	_fps_label.offset_left = -320.0
 	_fps_label.offset_right = -30.0
-	_fps_label.offset_top = 146.0
-	_fps_label.offset_bottom = 242.0
+	_fps_label.offset_top = 182.0
+	_fps_label.offset_bottom = 278.0
 
 	_cash = CashDisplay.new()
 	root.add_child(_cash)
@@ -313,6 +318,14 @@ func _build() -> void:
 	_clock.offset_right = -36.0
 	_clock.offset_top = 104.0
 	_clock.offset_bottom = 134.0
+
+	_wanted = WantedDisplay.new()
+	root.add_child(_wanted)
+	_wanted.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_wanted.offset_left = -230.0
+	_wanted.offset_right = -34.0
+	_wanted.offset_top = 138.0
+	_wanted.offset_bottom = 174.0
 
 	_minimap = Minimap.new()
 	root.add_child(_minimap)

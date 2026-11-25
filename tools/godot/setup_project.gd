@@ -20,6 +20,7 @@ const AUTOLOADS: Array = [
 	["EconomyManager", "res://scripts/systems/economy_manager.gd"],
 	["GameState", "res://scripts/systems/game_state.gd"],
 	["SaveManager", "res://scripts/systems/save_manager.gd"],
+	["WantedSystem", "res://scripts/systems/wanted_system.gd"],
 ]
 ## Buses under Master (GDD §13).
 const BUSES: Array = ["Music", "SFX", "Ambience", "UI"]
