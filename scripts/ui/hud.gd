@@ -40,6 +40,7 @@ var _area_title: Label
 var _area_subtitle: Label
 var _area_tween: Tween
 var _cash: CashDisplay
+var _clock: Label
 var _missions: MissionHud
 var _vehicle_target: VehicleController
 var _mission_prompt: Array = ["", ""]   # [action, text]
@@ -74,6 +75,10 @@ func bind_missions(director: MissionDirector, player: Node3D) -> void:
 
 func get_mission_hud() -> MissionHud:
 	return _missions
+
+
+func get_clock_shown() -> String:
+	return _clock.text
 
 
 func get_cash_shown() -> String:
@@ -174,6 +179,7 @@ func _process(_delta: float) -> void:
 			text += "\n%d cars   %d people" % [int(Performance.get_custom_monitor(TrafficManager.MONITOR)),
 				int(Performance.get_custom_monitor(PedestrianManager.MONITOR))]
 		_fps_label.text = text
+	_clock.text = GameState.get_clock_text()
 	if _vehicle != null:
 		_speedometer.set_reading(_vehicle.get_speed_kmh(), _engine.get_rpm_fraction(), _engine.get_gear_text())
 
@@ -273,8 +279,8 @@ func _build() -> void:
 	_fps_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	_fps_label.offset_left = -320.0
 	_fps_label.offset_right = -30.0
-	_fps_label.offset_top = 104.0
-	_fps_label.offset_bottom = 200.0
+	_fps_label.offset_top = 146.0
+	_fps_label.offset_bottom = 242.0
 
 	_cash = CashDisplay.new()
 	root.add_child(_cash)
@@ -283,6 +289,20 @@ func _build() -> void:
 	_cash.offset_left = -360.0
 	_cash.offset_right = -34.0
 	_cash.offset_top = 22.0
+
+	_clock = Label.new()
+	_clock.name = "Clock"
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_clock.add_theme_font_size_override("font_size", 24)
+	_clock.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
+	_clock.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+	_clock.add_theme_constant_override("shadow_offset_y", 2)
+	root.add_child(_clock)
+	_clock.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_clock.offset_left = -200.0
+	_clock.offset_right = -36.0
+	_clock.offset_top = 104.0
+	_clock.offset_bottom = 134.0
 
 	_missions = MissionHud.new()
 	root.add_child(_missions)

@@ -1,0 +1,206 @@
+[gd_resource type="Resource" script_class="DayNightSettings" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/day_night_settings.gd" id="1_settings"]
+[ext_resource type="Script" path="res://scripts/world/lighting_preset.gd" id="2_preset"]
+
+[sub_resource type="Resource" id="Resource_night"]
+script = ExtResource("2_preset")
+hour = 1.0
+sun_elevation_degrees = 45.0
+sun_azimuth_degrees = 200.0
+sun_color = Color(0.55, 0.65, 1, 1)
+sun_energy = 0.32
+shadow_max_distance = 80.0
+sky_top_color = Color(0.03, 0.05, 0.13, 1)
+sky_horizon_color = Color(0.1, 0.11, 0.22, 1)
+ground_horizon_color = Color(0.05, 0.05, 0.09, 1)
+ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
+ambient_energy = 0.6
+fog_color = Color(0.07, 0.08, 0.14, 1)
+fog_density = 0.0032
+fog_sun_scatter = 0.1
+fog_aerial_perspective = 0.4
+fog_sky_affect = 0.3
+exposure = 1.5
+saturation = 1.15
+contrast = 1.08
+glow_intensity = 0.95
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_predawn"]
+script = ExtResource("2_preset")
+hour = 5.0
+sun_elevation_degrees = 15.0
+sun_azimuth_degrees = 110.0
+sun_color = Color(0.6, 0.66, 1, 1)
+sun_energy = 0.28
+shadow_max_distance = 80.0
+sky_top_color = Color(0.03, 0.04, 0.1, 1)
+sky_horizon_color = Color(0.12, 0.1, 0.2, 1)
+ground_horizon_color = Color(0.07, 0.06, 0.1, 1)
+ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
+ambient_energy = 0.55
+fog_color = Color(0.1, 0.1, 0.17, 1)
+fog_density = 0.0036
+fog_sun_scatter = 0.15
+fog_aerial_perspective = 0.4
+fog_sky_affect = 0.35
+exposure = 1.45
+saturation = 1.12
+contrast = 1.08
+glow_intensity = 0.9
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_dawn"]
+script = ExtResource("2_preset")
+hour = 6.5
+sun_elevation_degrees = 4.0
+sun_azimuth_degrees = 92.0
+sun_color = Color(1, 0.6, 0.45, 1)
+sun_energy = 0.9
+shadow_max_distance = 110.0
+sky_top_color = Color(0.25, 0.35, 0.6, 1)
+sky_horizon_color = Color(0.98, 0.62, 0.55, 1)
+ground_horizon_color = Color(0.6, 0.5, 0.5, 1)
+ground_bottom_color = Color(0.15, 0.13, 0.13, 1)
+ambient_energy = 0.45
+fog_color = Color(0.85, 0.62, 0.6, 1)
+fog_density = 0.0045
+fog_sun_scatter = 0.5
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.45
+exposure = 1.1
+saturation = 1.1
+contrast = 1.05
+glow_intensity = 0.6
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_morning"]
+script = ExtResource("2_preset")
+hour = 9.0
+sun_elevation_degrees = 32.0
+sun_azimuth_degrees = 115.0
+sun_color = Color(1, 0.92, 0.82, 1)
+sun_energy = 1.6
+shadow_max_distance = 120.0
+sky_top_color = Color(0.2, 0.42, 0.78, 1)
+sky_horizon_color = Color(0.75, 0.82, 0.9, 1)
+ground_horizon_color = Color(0.7, 0.66, 0.6, 1)
+ground_bottom_color = Color(0.2, 0.18, 0.16, 1)
+ambient_energy = 0.7
+fog_color = Color(0.78, 0.82, 0.88, 1)
+fog_density = 0.0033
+fog_sun_scatter = 0.2
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.3
+exposure = 1.0
+saturation = 1.08
+contrast = 1.05
+glow_intensity = 0.4
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_noon"]
+script = ExtResource("2_preset")
+hour = 13.0
+sun_elevation_degrees = 68.0
+sun_azimuth_degrees = 190.0
+sun_color = Color(1, 0.97, 0.92, 1)
+sun_energy = 1.75
+shadow_max_distance = 130.0
+sky_top_color = Color(0.16, 0.4, 0.82, 1)
+sky_horizon_color = Color(0.7, 0.8, 0.92, 1)
+ground_horizon_color = Color(0.72, 0.66, 0.58, 1)
+ground_bottom_color = Color(0.22, 0.2, 0.17, 1)
+ambient_energy = 0.75
+fog_color = Color(0.8, 0.85, 0.9, 1)
+fog_density = 0.003
+fog_sun_scatter = 0.15
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.3
+exposure = 0.95
+saturation = 1.1
+contrast = 1.06
+glow_intensity = 0.35
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_afternoon"]
+script = ExtResource("2_preset")
+hour = 16.5
+sun_elevation_degrees = 21.0
+sun_azimuth_degrees = 250.0
+sun_color = Color(1, 0.78, 0.55, 1)
+sun_energy = 1.6
+shadow_max_distance = 110.0
+sky_top_color = Color(0.22, 0.42, 0.72, 1)
+sky_horizon_color = Color(0.96, 0.74, 0.55, 1)
+ground_horizon_color = Color(0.78, 0.62, 0.5, 1)
+ground_bottom_color = Color(0.2, 0.17, 0.15, 1)
+ambient_energy = 0.65
+fog_color = Color(0.9, 0.74, 0.6, 1)
+fog_density = 0.0042
+fog_sun_scatter = 0.3
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.35
+exposure = 1.0
+saturation = 1.12
+contrast = 1.06
+glow_intensity = 0.55
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_dusk"]
+script = ExtResource("2_preset")
+hour = 18.6
+sun_elevation_degrees = 1.5
+sun_azimuth_degrees = 285.0
+sun_color = Color(1, 0.45, 0.3, 1)
+sun_energy = 0.55
+shadow_max_distance = 100.0
+sky_top_color = Color(0.16, 0.16, 0.38, 1)
+sky_horizon_color = Color(0.98, 0.45, 0.35, 1)
+ground_horizon_color = Color(0.55, 0.35, 0.35, 1)
+ground_bottom_color = Color(0.1, 0.08, 0.1, 1)
+ambient_energy = 0.42
+fog_color = Color(0.75, 0.42, 0.42, 1)
+fog_density = 0.0042
+fog_sun_scatter = 0.6
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.45
+exposure = 1.15
+saturation = 1.18
+contrast = 1.08
+glow_intensity = 0.8
+ssao_enabled = true
+
+[sub_resource type="Resource" id="Resource_evening"]
+script = ExtResource("2_preset")
+hour = 20.0
+sun_elevation_degrees = 30.0
+sun_azimuth_degrees = 200.0
+sun_color = Color(0.58, 0.62, 1, 1)
+sun_energy = 0.32
+shadow_max_distance = 80.0
+sky_top_color = Color(0.04, 0.05, 0.14, 1)
+sky_horizon_color = Color(0.14, 0.1, 0.24, 1)
+ground_horizon_color = Color(0.06, 0.05, 0.1, 1)
+ground_bottom_color = Color(0.02, 0.02, 0.03, 1)
+ambient_energy = 0.6
+fog_color = Color(0.09, 0.08, 0.16, 1)
+fog_density = 0.0034
+fog_sun_scatter = 0.12
+fog_aerial_perspective = 0.4
+fog_sky_affect = 0.32
+exposure = 1.5
+saturation = 1.15
+contrast = 1.08
+glow_intensity = 0.95
+ssao_enabled = true
+
+[resource]
+script = ExtResource("1_settings")
+day_length_minutes = 24.0
+start_hour = 16.5
+keys = Array[ExtResource("2_preset")]([SubResource("Resource_night"), SubResource("Resource_predawn"), SubResource("Resource_dawn"), SubResource("Resource_morning"), SubResource("Resource_noon"), SubResource("Resource_afternoon"), SubResource("Resource_dusk"), SubResource("Resource_evening")])
+lights_on_hour = 18.25
+lights_off_hour = 6.5
+lights_fade_hours = 0.5
+real_street_lights = 10

@@ -17,6 +17,8 @@ const MONITOR: StringName = &"npc/traffic"
 
 ## Spawning and removing on or off (tests switch it off to set up situations by hand).
 var enabled: bool = true
+## Traffic drives with its headlights on (at night).
+var headlights_on: bool = false
 
 var _graph: LaneGraph
 var _focus: Node3D
@@ -76,6 +78,8 @@ func spawn_at(node: int, speed: float = 0.0, paint: Color = Color(0, 0, 0, 0)) -
 	car.linear_velocity = direction * speed
 	var colour: Color = paint if paint.a > 0.0 else tuning.paint_colours[_rng.randi() % tuning.paint_colours.size()]
 	(car.get_node("Model") as VehicleModel).set_paint(colour)
+	(car.get_node("Lights") as VehicleLights).beams_allowed = false
+	car.set_headlights(headlights_on)
 	var driver := TrafficDriver.new()
 	driver.name = "Driver"
 	driver.tuning = driver_tuning
@@ -83,6 +87,13 @@ func spawn_at(node: int, speed: float = 0.0, paint: Color = Color(0, 0, 0, 0)) -
 	driver.start(car, _graph, node, _rng.randi())
 	_cars.append(car)
 	return car
+
+
+## Headlights on or off for every traffic car, now and for cars that appear later.
+func set_headlights(on: bool) -> void:
+	headlights_on = on
+	for car: VehicleController in get_cars():
+		car.set_headlights(on)
 
 
 func clear() -> void:

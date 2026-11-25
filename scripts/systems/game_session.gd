@@ -3,9 +3,10 @@ extends Node3D
 ## Root of the game scene. Starts a new game (fresh cash, stats and missions, player at the
 ## district spawn, the opening mission begins) or carries on from a loaded save (state restored,
 ## player where they saved, a running mission resumes at its checkpoint). Streams the city in
-## around the player, starts traffic and pedestrians, hooks the HUD up to the player and the
-## missions, hands the view between the on-foot and vehicle cameras when the player gets in or
-## out, captures the mouse for camera look, and gives SaveManager the player's state.
+## around the player and runs its day and night, starts traffic and pedestrians, hooks the HUD up
+## to the player and the missions, hands the view between the on-foot and vehicle cameras when
+## the player gets in or out, captures the mouse for camera look, and gives SaveManager the
+## player's state.
 
 const ENTER_BLEND_SECONDS: float = 0.6
 const EXIT_BLEND_SECONDS: float = 0.45
@@ -21,6 +22,7 @@ const DISTRICT_ID: String = "old_town"
 @onready var traffic: TrafficManager = $Traffic
 @onready var pedestrians: PedestrianManager = $Pedestrians
 @onready var missions: MissionDirector = $Missions
+@onready var day_night: DayNightCycle = $DayNight
 
 
 func _ready() -> void:
@@ -51,7 +53,10 @@ func _ready() -> void:
 	hud.bind_interactor(player.get_node("VehicleInteractor") as VehicleInteractor)
 	hud.show_area_title(world.get_display_name().to_upper(), "VELANAGAR")
 	lane_debug.setup(world.get_lane_graph(), player, world)
+	day_night.setup(world.get_node("Lighting") as WorldLighting, world.streamer)
 	traffic.setup(world.get_lane_graph(), player, world.streamer)
+	traffic.set_headlights(day_night.is_dark())
+	day_night.darkness_changed.connect(traffic.set_headlights)
 	pedestrians.setup(player, world.streamer)
 	missions.setup(player, world)
 	hud.bind_missions(missions, player)

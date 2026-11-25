@@ -109,6 +109,8 @@ func _check_play_and_save() -> String:
 	if MissionManager.get_objective_index() != 1:
 		return "couldn't get mission 2 to its second objective (at %d)" % MissionManager.get_objective_index()
 	player.stats.set_health(61.0)
+	GameState.set_hour(21.25)
+	GameState.day = 3
 	await _ticks(2)
 	# Save to slot 2 from the pause menu; slot 1 gets a game first to see the overwrite question.
 	if SaveManager.save_game(1) != OK:
@@ -184,12 +186,14 @@ func _check_load_restores() -> String:
 	var saved_at: Vector3 = _saved_state["position"]
 	if Vector2(player.global_position.x - saved_at.x, player.global_position.z - saved_at.z).length() > 1.0:
 		return "the player should be where they saved (%s), is at %s" % [saved_at, player.global_position]
+	if GameState.day != 3 or absf(GameState.hour - 21.25) > 0.2:
+		return "the clock after loading reads day %d %.2f h, saved day 3 21.25 h" % [GameState.day, GameState.hour]
 	if GameState.play_time < float(_saved_state["play_time"]) - 0.01 or GameState.get_stat(&"missions_passed") != 1:
 		return "play time %.1f (saved %.1f) or stats %s not restored" % [GameState.play_time, _saved_state["play_time"], GameState.stats]
 	var hud := loaded.get_node("HUD") as Hud
 	if hud.get_cash_shown() != "₹500" or hud.get_mission_hud().get_objective_shown() != "Talk to the fixer.":
 		return "HUD after loading: cash '%s', objective '%s'" % [hud.get_cash_shown(), hud.get_mission_hud().get_objective_shown()]
-	_note("Main Menu -> Load Game -> slot 2: cash ₹500 (the ₹777 earned after saving is gone), health 61, position, play time, stats and mission 2 (resumed at its checkpoint) restored")
+	_note("Main Menu -> Load Game -> slot 2: cash ₹500 (the ₹777 earned after saving is gone), health 61, position, day 3 21:15, play time, stats and mission 2 (resumed at its checkpoint) restored")
 	return ""
 
 

@@ -1,7 +1,10 @@
 class_name LightingPreset
 extends Resource
-## Sun, sky, fog and post-processing for one time of day (GDD §12).
-## The M6 TimeOfDay system is meant to blend between presets like this one.
+## Sun, sky, fog and post-processing for one time of day (GDD §12). The day/night cycle
+## (DayNightCycle) blends between presets like this one by their `hour`.
+
+## Time of day this look belongs to, in hours (0-24), when used in a day/night cycle.
+@export_range(0.0, 24.0) var hour: float = 16.5
 
 @export_group("Sun")
 @export_range(-10.0, 90.0) var sun_elevation_degrees: float = 22.0
@@ -31,3 +34,30 @@ extends Resource
 @export var contrast: float = 1.06
 @export var glow_intensity: float = 0.55
 @export var ssao_enabled: bool = true
+
+
+## A preset part-way from `a` to `b` (t = 0..1); the sun takes the short way round the compass.
+static func blend(a: LightingPreset, b: LightingPreset, t: float) -> LightingPreset:
+	var p := LightingPreset.new()
+	p.hour = lerpf(a.hour, b.hour, t)
+	p.sun_elevation_degrees = lerpf(a.sun_elevation_degrees, b.sun_elevation_degrees, t)
+	p.sun_azimuth_degrees = fposmod(rad_to_deg(lerp_angle(deg_to_rad(a.sun_azimuth_degrees), deg_to_rad(b.sun_azimuth_degrees), t)), 360.0)
+	p.sun_color = a.sun_color.lerp(b.sun_color, t)
+	p.sun_energy = lerpf(a.sun_energy, b.sun_energy, t)
+	p.shadow_max_distance = lerpf(a.shadow_max_distance, b.shadow_max_distance, t)
+	p.sky_top_color = a.sky_top_color.lerp(b.sky_top_color, t)
+	p.sky_horizon_color = a.sky_horizon_color.lerp(b.sky_horizon_color, t)
+	p.ground_horizon_color = a.ground_horizon_color.lerp(b.ground_horizon_color, t)
+	p.ground_bottom_color = a.ground_bottom_color.lerp(b.ground_bottom_color, t)
+	p.ambient_energy = lerpf(a.ambient_energy, b.ambient_energy, t)
+	p.fog_color = a.fog_color.lerp(b.fog_color, t)
+	p.fog_density = lerpf(a.fog_density, b.fog_density, t)
+	p.fog_sun_scatter = lerpf(a.fog_sun_scatter, b.fog_sun_scatter, t)
+	p.fog_aerial_perspective = lerpf(a.fog_aerial_perspective, b.fog_aerial_perspective, t)
+	p.fog_sky_affect = lerpf(a.fog_sky_affect, b.fog_sky_affect, t)
+	p.exposure = lerpf(a.exposure, b.exposure, t)
+	p.saturation = lerpf(a.saturation, b.saturation, t)
+	p.contrast = lerpf(a.contrast, b.contrast, t)
+	p.glow_intensity = lerpf(a.glow_intensity, b.glow_intensity, t)
+	p.ssao_enabled = a.ssao_enabled if t < 0.5 else b.ssao_enabled
+	return p

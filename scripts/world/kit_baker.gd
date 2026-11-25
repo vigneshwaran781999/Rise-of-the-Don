@@ -8,6 +8,13 @@ extends RefCounted
 
 ## 1 mm grid used to weld trimesh vertices when splitting a '-colonly' mesh into pieces.
 const WELD_SCALE: float = 1000.0
+## Materials that only glow at night (scaled by the city_lights shader global; GDD §12), stored
+## in the glow's alpha: 1 = glows at night (streetlight lenses, brighter than their daytime
+## material), 2 = lit window (some buildings and floors stay dark, chosen in the shader).
+const NIGHT_GLOW: Dictionary = {
+	"lamp_lens": {"mode": 1.0, "boost": 1.8},
+	"window_glass": {"mode": 2.0, "emission": Color(1.0, 0.6, 0.28), "energy": 0.75},
+}
 
 
 static func bake(scene: PackedScene, material: Material) -> KitPiece:
@@ -40,6 +47,7 @@ static func bake_mesh(root: Node3D, material: Material, exclude: PackedStringArr
 			var roughness: float = 0.9
 			var metallic: float = 0.0
 			var emission := Color(0, 0, 0)
+			var glow_mode: float = 0.0
 			var double_sided: bool = false
 			if mat != null:
 				albedo = mat.albedo_color.srgb_to_linear()
@@ -48,6 +56,14 @@ static func bake_mesh(root: Node3D, material: Material, exclude: PackedStringArr
 				if mat.emission_enabled:
 					emission = mat.emission.srgb_to_linear() * mat.emission_energy_multiplier
 				double_sided = mat.cull_mode == BaseMaterial3D.CULL_DISABLED
+				var night: Dictionary = NIGHT_GLOW.get(mat.resource_name, {})
+				if not night.is_empty():
+					if night.has("emission"):
+						emission = (night["emission"] as Color) * float(night["energy"])
+					else:
+						emission = emission * float(night.get("boost", 1.0))
+					glow_mode = float(night["mode"])
+			emission.a = glow_mode      # 0 = always glows (if it has a glow at all)
 			albedo.a = 0.0 if mat != null and tint.has(mat.resource_name) else 1.0
 			var arrays: Array = mesh.surface_get_arrays(surface)
 			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]

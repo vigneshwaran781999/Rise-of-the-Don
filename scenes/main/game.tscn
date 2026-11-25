@@ -20,6 +20,8 @@
 [ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_elder.glb" id="18_elder"]
 [ext_resource type="Script" path="res://scripts/missions/mission_director.gd" id="19_missions"]
 [ext_resource type="Script" path="res://scripts/ui/mission_failed_screen.gd" id="20_failed"]
+[ext_resource type="Script" path="res://scripts/world/day_night_cycle.gd" id="21_daynight"]
+[ext_resource type="Resource" path="res://resources/world/day_night.tres" id="22_daynight_settings"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -47,6 +49,10 @@ fov = 72.0
 
 [node name="CameraTransition" type="Camera3D" parent="."]
 script = ExtResource("8_transition")
+
+[node name="DayNight" type="Node" parent="."]
+script = ExtResource("21_daynight")
+settings = ExtResource("22_daynight_settings")
 
 [node name="Traffic" type="Node3D" parent="."]
 script = ExtResource("10_traffic")

@@ -14,6 +14,9 @@ const REVERSE_MATERIAL: String = "veh_reverselight"
 @export var tail_glow_running: float = 1.4
 @export var tail_glow_braking: float = 5.0
 @export var reverse_glow: float = 3.0
+## Real headlight beams (spotlights); traffic cars switch them off and only light their lenses,
+## as dozens of spotlights at night would cost too much.
+@export var beams_allowed: bool = true
 
 var _vehicle: VehicleController
 var _head: Array[StandardMaterial3D] = []
@@ -58,7 +61,7 @@ func _physics_process(_delta: float) -> void:
 
 func _on_headlights_changed(on: bool) -> void:
 	for beam: SpotLight3D in _beams:
-		beam.visible = on
+		beam.visible = on and beams_allowed
 	_set_glow(_head, headlight_glow if on else 0.0)
 
 
