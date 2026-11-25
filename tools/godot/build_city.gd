@@ -24,6 +24,7 @@ const SIGNAL_TIMING_PATH: String = "res://resources/world/signal_timing.tres"
 const LOT_COLOURS: Dictionary = {
 	&"lot_paved": Color("8e897f"), &"lot_warm": Color("a08a70"), &"lot_stone": Color("a39581"), &"lot_grass": Color("5f7d3c"),
 	&"lot_plaza": Color("aba79f"), &"lot_sand": Color("c4a878"), &"lot_concrete": Color("8f8d87"),
+	&"lot_paddy": Color("6a873a"),
 }
 ## The city map (GDD §11): drawn from the layout, 4 pixels per metre, flat game-map colours,
 ## saved as a small lossless PNG. Its import settings (MAP_IMPORT, written if missing) have Godot
@@ -33,7 +34,7 @@ const MAP_IMPORT: String = "[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTe
 const MAP_PIXELS_PER_METRE: int = 4
 const MAP_COLOURS: Dictionary = {
 	"empty": Color("10131c"), "lot_paved": Color("1d2230"), "lot_stone": Color("2c2a33"),
-	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "lot_plaza": Color("252a38"), "lot_sand": Color("4a4232"), "lot_concrete": Color("26282c"), "walk": Color("2a3142"),
+	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "lot_plaza": Color("252a38"), "lot_sand": Color("4a4232"), "lot_concrete": Color("26282c"), "lot_paddy": Color("22391f"), "walk": Color("2a3142"),
 	"road_main": Color("566079"), "road_lane": Color("414960"), "building": Color("353d53"),
 	"building_edge": Color("4d5877"), "tower": Color("3c4a66"), "tower_edge": Color("6a7fa6"),
 	"temple": Color("6e4c36"), "temple_edge": Color("9a6a46"),
@@ -63,6 +64,8 @@ const EDGE_WALL_HEIGHT: float = 12.0
 ## on this far past the edge of the city.
 const SEA_LEVEL: float = 0.32
 const SEA_MARGIN: float = 1500.0
+## Lakes use the sea shader with no shore (so no foam) and their own green-brown water.
+const LAKE_COLOUR := Color(0.13, 0.31, 0.27)
 const SEA_SHADER_PATH: String = "res://shaders/sea.gdshader"
 const BEAM_SHADER_PATH: String = "res://shaders/lighthouse_beam.gdshader"
 ## Lighthouse beam: how far each of its two cones reaches and how wide it gets.
@@ -173,6 +176,8 @@ func _write_map() -> bool:
 			layers[4].append(p)
 	for p: Dictionary in layers[0]:
 		_map_fill(image, bounds, _map_rect(p), MAP_COLOURS.get(str(p["kit"]), MAP_COLOURS["lot_paved"]))
+	for r: Rect2 in _layout.lakes:
+		_map_fill(image, bounds, r, MAP_COLOURS["water"])
 	for p: Dictionary in layers[1]:
 		_map_fill(image, bounds, _map_rect(p), MAP_COLOURS["walk"])
 	for p: Dictionary in layers[2]:
@@ -342,9 +347,9 @@ func _nav_source(area: Rect2) -> NavigationMeshSourceGeometryData3D:
 			var box := BoxShape3D.new()
 			box.size = Vector3(r.size.x, 0.2, r.size.y)
 			_add_shape(body, box, Transform3D(Basis.IDENTITY, Vector3(r.get_center().x, -0.1, r.get_center().y)))
-	# The sea is never walkable (people stay on the sand).
+	# The sea and lakes are never walkable (people stay on the sand and the banks).
 	var wet: Array[Rect2] = []
-	for r: Rect2 in _layout.water:
+	for r: Rect2 in _layout.water + _layout.lakes:
 		if r.intersects(area):
 			wet.append(r.intersection(area.grow(2.0)))
 	var solids: Array[ConvexPolygonShape3D] = []
@@ -411,6 +416,7 @@ func _build_chunk(coord: Vector2i, timing: SignalTiming, pole: PackedScene) -> b
 			_own_shape(root, body, _block_hull(part, b["walk"], b["rect"]))
 
 	var multimesh: Dictionary = {}   # kit -> Array[Transform3D]
+	var ground_kits: Dictionary = {}   # kits laid as ground (road tiles, lots, paddy): no shadows, always drawn
 	var index: int = 0
 	for p: Dictionary in _layout.placements:
 		var xform: Transform3D = p["xform"]
@@ -433,13 +439,15 @@ func _build_chunk(coord: Vector2i, timing: SignalTiming, pole: PackedScene) -> b
 			if not multimesh.has(p["kit"]):
 				multimesh[p["kit"]] = []
 			(multimesh[p["kit"]] as Array).append(xform)
+			if p["kind"] == &"ground":
+				ground_kits[p["kit"]] = true
 			_stats["ground" if p["kind"] == &"ground" else "props"] += 1
 		for hull: PackedVector3Array in piece.hulls:
 			var shape: ConvexPolygonShape3D = _hull_shape(hull, xform)
 			if shape != null:
 				_own_shape(root, body, shape)
 	for kit_name: StringName in multimesh:
-		var is_ground: bool = str(kit_name).begins_with("road_") or str(kit_name).begins_with("lot_")
+		var is_ground: bool = ground_kits.has(kit_name)
 		var mmi: InstanceBatch = _multimesh(_kit[kit_name], multimesh[kit_name])
 		if is_ground:
 			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -540,6 +548,7 @@ func _build_landmarks() -> bool:
 		_child(root, root, mi, "Skyline")
 	_build_edge(root)
 	_build_sea(root)
+	_build_lakes(root)
 	_build_beams(root)
 	var packed := PackedScene.new()
 	var err: Error = packed.pack(root)
@@ -652,6 +661,32 @@ func _build_sea(root: Node3D) -> void:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_child(root, root, mi, "Sea")
+
+
+## The lakes: flat water like the sea, at the same level, without its shoreline foam.
+func _build_lakes(root: Node3D) -> void:
+	if _layout.lakes.is_empty():
+		return
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for r: Rect2 in _layout.lakes:
+		var corners: Array[Vector3] = [Vector3(r.position.x, SEA_LEVEL, r.position.y), Vector3(r.end.x, SEA_LEVEL, r.position.y),
+			Vector3(r.end.x, SEA_LEVEL, r.end.y), Vector3(r.position.x, SEA_LEVEL, r.end.y)]
+		for i: int in [0, 1, 2, 0, 2, 3]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(corners[i])
+	var material := ShaderMaterial.new()
+	material.shader = load(SEA_SHADER_PATH) as Shader
+	material.set_shader_parameter(&"shore_x", -100000.0)       # every point "far from the shore": no foam
+	material.set_shader_parameter(&"deep_colour", LAKE_COLOUR)
+	material.set_shader_parameter(&"wave_strength", 0.03)
+	var mesh: ArrayMesh = st.commit()
+	mesh.surface_set_material(0, material)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_child(root, root, mi, "Lakes")
 
 
 ## A turning beam at each lighthouse lamp (shaders/lighthouse_beam.gdshader turns it): two cones,

@@ -473,6 +473,17 @@ Dated entries: what was built, what broke, how it was fixed.
     - The estate's gate is recorded as a place (`estate`) for the story to use.
   - **Luxury kit** (`tools/blender/luxury.py`, 6 models).
   - **Tests:** the smoke test checks the Luxury District: its square, a road route from the bus stand to the estate's gate, the gate shut (a ray just inside hits it), and walled villa plots around it.
+- **Step 5, the Countryside (GDD §2 district 6):**
+  - **`CountrysideLayout`**, two cells (north: west of Old Town; south: south of that), both named Countryside:
+    - North: a country lane along Old Town's border collects twelve of its thirteen streets (the corner lane ends at the border); the highway and the two ring roads go on west. The Luxury District's two main roads run south through both halves.
+    - Big blocks between the roads: paddy fields (tiles laid as ground, a farmstead in one corner, palms along the edges), coconut groves, the lake and the reservoir (benches on the banks), and two villages (huts, farmhouses, a tea stall, a shrine, a well, huts and trees over the green; the northern one has the police post).
+    - No streetlights (`_streetlight_kit()` returns none).
+  - **Countryside kit** (`tools/blender/countryside.py`, 6 models).
+  - **Lakes:** `DistrictLayout.lakes` are drawn with the sea shader without a shore (no foam) in a green-brown, kept off the navmesh, and shown on the map.
+  - **Laid as ground:** placements of kind ground are batched in a chunk's Ground node (no shadows, no draw-distance cut-off) by their kind, not their name, so paddy tiles go there.
+  - **District titles:** `RegionWatcher` announces a district only when its name changes, so the Countryside's two cells count as one.
+  - **The whole city:** seven cells, six districts, 112 chunks, 60 roads crossing between districts, one lane graph of about 22,000 nodes with none disconnected, five police stations. The build takes about 23 s.
+  - **Tests:** the smoke test checks the Countryside: both cells, routes to the village police post and from the estate down the south road, the lakes, paddy laid as ground, and one title for both halves. The performance baseline has Luxury and Countryside views.
 
 **Broke and fixed**
 - **Step 1:**
@@ -485,3 +496,6 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Midday sand** was close to white; it's a darker tan now. The beam was turned down for full night.
 - **Step 3:** no failures. The step 2 street-generator fix meant the Industrial Zone's dropped lanes built cleanly the first time (0 disconnected lane nodes).
 - **Step 4:** the traffic test came up short at High density (17 cars, expected 22). Traffic picked spawn points at random from the whole city's lane graph and kept only those in the ring around the player; with five districts most picks missed, so cars came too slowly. `RoadRouter.random_node_near()` now picks from the grid cells around the player, which costs the same however big the city gets.
+- **Step 5:**
+  - **The new smoke check didn't find the paddy fields that were there:** it kept a reference to the paddy batch, then moved the player to the southern half; that unloaded the chunk and freed the node, and a freed node compares equal to null. It now reads the batch before moving on.
+  - **One smoke run failed** in the streaming check with an engine-internal error ("Initializing already initialized RID"), while chunks were loading on the background thread. It didn't happen in the next four runs. Noted as an intermittent engine-side race to watch.

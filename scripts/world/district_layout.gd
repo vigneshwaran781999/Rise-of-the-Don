@@ -64,6 +64,8 @@ var has_police_station: bool = false
 var map_labels: Array = []
 ## Sea inside the district (world x/z): drawn as water, never walked on by pedestrians.
 var water: Array[Rect2] = []
+## Lakes (world x/z): fresh water, shallow enough to wade, never walked on by pedestrians.
+var lakes: Array[Rect2] = []
 ## Invisible walls (world x/z footprints, full height), e.g. how far out into the sea you can wade.
 var barriers: Array[Rect2] = []
 ## Lighthouse lamps (world positions): the city builder adds a turning beam at each.
@@ -219,7 +221,7 @@ func _after_blocks() -> void:
 	pass
 
 
-## Props along the sidewalks, which streetlight model and how far apart.
+## Which streetlight model lines the sidewalks (&"" for none).
 func _streetlight_kit() -> StringName:
 	return &"prop_streetlight"
 
@@ -494,6 +496,8 @@ func _streetlights(r: Rect2, walk: Array[float], cls: Array[int]) -> void:
 		[cls[3], Vector3(0, 0, 1), r.position.x + walk[0], r.end.x - walk[1], r.end.y],
 	]
 	var kit: StringName = _streetlight_kit()
+	if kit == &"":
+		return       # a district without streetlights (the Countryside)
 	for s: Array in sides:
 		var c: int = int(s[0])
 		var n: Vector3 = s[1]

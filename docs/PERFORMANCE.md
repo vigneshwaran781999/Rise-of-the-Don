@@ -171,3 +171,23 @@ Same machine and settings; four districts (64 chunks).
 
 - **The container yard** (about 250 containers in stacks) is drawn as three instanced batches: the whole quay view is 38 draw calls.
 - **City life at the spawn street:** 33–36 FPS. Physics time read higher than the last run (9.7–14.1 ms against 5.2–8.7 ms) with the same number of cars and people and no change to their code; the frame rate barely moved. To watch in the next runs.
+
+## M7 steps 4-5: the Luxury District and the Countryside, the whole city (2026-11-25)
+
+Same machine and settings. The whole city: seven 512 m cells, six districts, 112 chunks.
+
+| Viewpoint | FPS | avg ms | 1% worst ms | draw calls | primitives |
+|---|---:|---:|---:|---:|---:|
+| Spawn street, 13:00 | 35 | 28.81 | 35.61 | 302 | 391,324 |
+| Spawn street, night 21:30 | 28 | 35.10 | 38.97 | 281 | 357,098 |
+| Downtown: north road | 33 | 30.59 | 33.99 | 256 | 268,130 |
+| Beach District: Coast Road | 37 | 26.83 | 31.86 | 250 | 282,404 |
+| Industrial Zone: the quay | 35 | 28.29 | 32.83 | 38 | 274,117 |
+| Luxury District: villa avenue | 41 | 24.65 | 28.24 | 158 | 182,588 |
+| Countryside: paddy fields from the road | 41 | 24.47 | 28.04 | 125 | 226,598 |
+| Countryside: the village | 38 | 26.55 | 29.83 | 95 | 101,638 |
+
+- **Every district runs at 33-44 FPS** on this integrated GPU; the open districts (Luxury, Countryside, the beach) are the lightest.
+- **Streaming drive along Ring B:** 36 FPS average, worst frame 35.3 ms; it now streams the Countryside's chunks in at the west end.
+- **City life:** 35-36 FPS at every density (physics 7-12 ms, as in step 3).
+- **Video memory rose to 330 MB** (272 MB in step 3). 19 MB of that is the city map, now 6144 px square (block-compressed). The rest is not yet accounted for; to look into in M8's optimisation pass.

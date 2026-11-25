@@ -22,6 +22,7 @@ var places: Dictionary = {}
 var police_stations: Array[Transform3D] = []
 var map_labels: Array = []
 var water: Array[Rect2] = []
+var lakes: Array[Rect2] = []
 var barriers: Array[Rect2] = []
 var beams: Array[Vector3] = []
 var lane_graph: LaneGraph
@@ -41,7 +42,11 @@ static func make_districts() -> Array[DistrictLayout]:
 	industrial.centre = Vector2(CELL, -CELL)
 	var luxury := LuxuryLayout.new()
 	luxury.centre = Vector2(-CELL, -CELL)
-	return [old_town, downtown, beach, industrial, luxury]
+	var country_north := CountrysideLayout.new(true)
+	country_north.centre = Vector2(-CELL, 0.0)
+	var country_south := CountrysideLayout.new(false)
+	country_south.centre = Vector2(-CELL, CELL)
+	return [old_town, downtown, beach, industrial, luxury, country_north, country_south]
 
 
 ## The sea (GDD §2: a coastal city): everything east of the coast, out past the edge of the
@@ -100,6 +105,7 @@ func generate() -> void:
 		sit_spots.append_array(d.sit_spots)
 		map_labels.append_array(d.map_labels)
 		water.append_array(d.water)
+		lakes.append_array(d.lakes)
 		barriers.append_array(d.barriers)
 		beams.append_array(d.beams)
 		for place_id: StringName in d.places:

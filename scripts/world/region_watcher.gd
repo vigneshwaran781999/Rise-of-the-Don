@@ -41,6 +41,10 @@ func _process(delta: float) -> void:
 		return
 	_timer = INTERVAL
 	var now: int = _city.region_at(_player.global_position)
-	if now != _current and now >= 0:
-		_current = now
+	if now == _current or now < 0:
+		return
+	# A district can span several cells (the Countryside): only a new name counts as arriving.
+	var same_name: bool = _current >= 0 and _city.get_region_name(now) == _city.get_region_name(_current)
+	_current = now
+	if not same_name:
 		region_changed.emit(now)

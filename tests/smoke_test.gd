@@ -45,6 +45,7 @@ const KIT_MESHES: PackedStringArray = [
 	"lot_concrete", "bld_in_warehouse_a", "bld_in_warehouse_b", "bld_in_factory", "bld_in_office", "bld_in_police", "bld_in_tanks",
 	"bld_in_crane", "bld_in_ship", "bld_in_fish_shed", "prop_in_container_a", "prop_streetlight_sodium",
 	"bld_lx_villa_a", "bld_lx_villa_b", "bld_lx_villa_c", "bld_lx_mansion", "prop_lx_guard_booth", "prop_lx_hedge",
+	"lot_paddy", "bld_cs_hut", "bld_cs_farmhouse", "bld_cs_teastall", "prop_cs_well", "prop_cs_haystack", "prop_cs_paddy",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -72,6 +73,7 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"props/prop_streetlight_sodium",
 	"buildings/bld_lx_villa_a", "buildings/bld_lx_villa_b", "buildings/bld_lx_villa_c", "buildings/bld_lx_mansion",
 	"props/prop_lx_guard_booth", "props/prop_lx_hedge",
+	"buildings/bld_cs_hut", "buildings/bld_cs_farmhouse", "buildings/bld_cs_teastall", "props/prop_cs_well", "props/prop_cs_haystack",
 ]
 
 var _catcher: ErrorCatcher
@@ -106,7 +108,7 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
-		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury,
+		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury, _check_countryside,
 		_check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
@@ -728,6 +730,65 @@ func _check_luxury() -> String:
 		length += route[i].distance_to(route[i + 1])
 	print("  ok  Luxury District: west of Downtown, a road route to the estate's gate (%.0f m from the bus stand), the gate is shut, %d walled villa plots around it" % [
 		length, villas])
+	return ""
+
+
+## M7: the Countryside, two cells on the west side (west of Old Town and south of it). Old Town's
+## and the Luxury District's roads carry on into it, its paddy fields are laid as ground, the lakes
+## are always loaded, and driving from one half to the other doesn't announce it twice.
+func _check_countryside() -> String:
+	var game := get_tree().current_scene as GameSession
+	var world: CityWorld = _world()
+	var data: CityData = world.data
+	var north: int = data.region_at(Vector3(-512.0, 0.0, 0.0))
+	var south: int = data.region_at(Vector3(-512.0, 0.0, 512.0))
+	if north < 0 or south < 0 or data.get_region_name(north) != "Countryside" or data.get_region_name(south) != "Countryside":
+		return "the Countryside should cover the cells west and south-west of Old Town (%s)" % data.region_names
+	if not data.places.has(&"police_countryside") or data.police_stations.size() < 5:
+		return "the Countryside village should have a police post (%d stations)" % data.police_stations.size()
+	var router := RoadRouter.for_graph(world.get_lane_graph())
+	var post: Vector3 = (data.places[&"police_countryside"] as Transform3D).origin
+	var estate: Vector3 = (data.places[&"estate"] as Transform3D).origin
+	var south_road := Vector3(-512.0 - 112.0 + 3.0, 0.0, 700.0)
+	for pair: Array in [[Vector3(97.0, 0.0, 4.75), post], [estate, south_road]]:
+		var route: PackedVector3Array = router.route(pair[0], pair[1])
+		var end: Vector3 = pair[1]
+		if route.size() < 2 or Vector2(route[route.size() - 1].x - end.x, route[route.size() - 1].z - end.z).length() > 30.0:
+			return "no road route from %s to %s" % [pair[0], end]
+	var lakes := world.get_node_or_null("Landmarks/Lakes") as MeshInstance3D
+	if lakes == null or lakes.mesh == null:
+		return "the lakes should be on the always-loaded landmarks"
+	var regions := game.get_node("Regions") as RegionWatcher
+	var arrivals: Array[int] = [0]
+	var count := func(_index: int) -> void: arrivals[0] += 1
+	regions.region_changed.connect(count)
+	var player: PlayerController = _player()
+	var back := Transform3D(Basis(Vector3.UP, player.model.rotation.y), player.global_position)
+	game.place_player(Transform3D(Basis.IDENTITY, Vector3(-500.0, 0.3, 60.0)))
+	await _physics_frames(45)
+	# Read the paddy batch now: its chunk is freed when the player moves south below.
+	var paddy_tiles: int = 0
+	var paddy_as_ground: bool = true
+	for c: Vector2i in world.streamer.get_loaded_coords():
+		var batch := world.streamer.get_chunk(c).get_node_or_null("Ground/prop_cs_paddy") as InstanceBatch
+		if batch != null:
+			paddy_tiles += batch.get_instance_count()
+			paddy_as_ground = paddy_as_ground and batch.visibility_range_end <= 0.0 \
+				and batch.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var title: String = _hud().get_area_title()
+	game.place_player(Transform3D(Basis.IDENTITY, Vector3(-500.0, 0.3, 320.0)))     # the southern half
+	await _physics_frames(45)
+	var announced: int = arrivals[0]
+	regions.region_changed.disconnect(count)
+	game.place_player(back)
+	await _physics_frames(45)
+	if title != "COUNTRYSIDE":
+		return "the COUNTRYSIDE title card should show on arrival (got '%s')" % title
+	if announced != 1:
+		return "crossing into the Countryside's southern half shouldn't announce it again (%d arrivals)" % announced
+	if paddy_tiles == 0 or not paddy_as_ground:
+		return "paddy fields should be laid as ground: in Ground, no shadows, always drawn (%d tiles)" % paddy_tiles
+	print("  ok  Countryside: two cells west and south-west of Old Town, road routes to the village police post and from the estate down the south road, lakes always loaded, paddy laid as ground (%d tiles near the lake), one COUNTRYSIDE title for both halves" % paddy_tiles)
 	return ""
 
 

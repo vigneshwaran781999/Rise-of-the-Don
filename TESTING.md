@@ -273,5 +273,14 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Looks:** avenues lined with walled villa plots: white modern villas, sand-coloured ones with tiled roofs and porticos, grey-and-timber ones; lawns, pools, closed black gates with lamps on the gate pillars. Green verges and trees between plots. Does it feel quiet and wealthy? Any villa poking through its own wall, or a wall across a sidewalk?
 - [ ] **The estate** (in the middle, gate on the central east-west road): the mansion with its columns and pediment, the fountain court, the gatehouse, two garages, palms round the grounds. The gate is shut: you can't drive in (yet).
 - [ ] **Sandalwood Park** next to it: trees, hedges, benches.
-- [ ] **Guard booths** stand where the two main roads leave south for the Countryside (the Countryside comes in the next step; for now the roads end at the city's edge).
+- [ ] **Guard booths** stand where the two main roads leave south for the Countryside.
 - [ ] **At night:** gate lamps and ground-floor glass glow; streets are darker than Downtown.
+
+### The Countryside (step 5)
+- [ ] **Getting there:** drive west out of Old Town on any street: they meet a country lane along the edge, and the middle road (the highway) carries straight on west. Or drive south out of the Luxury District on either main road. "COUNTRYSIDE" fades in once; driving on into the southern half doesn't show it again.
+- [ ] **Looks:** paddy fields in rows behind earth bunds, farmhouses and haystacks, coconut groves, the lake (north) and the reservoir (south) with benches on their banks, two villages: round thatched huts, farmhouses with verandahs, a tea stall with a TEA board, a small shrine, a well. Does it feel calm and open after the city?
+- [ ] **The roads** are the city's four-lane roads with sidewalks (narrow country roads aren't in the road kit yet). Do they look too urban out here?
+- [ ] **At night** there are no streetlights in the Countryside: is it too dark on foot? (Headlights work.)
+- [ ] **People** walk the villages and the lake banks, never into the water. You can wade into the lakes.
+- [ ] **Police:** busted out here, you're released at the village police post.
+- [ ] **The whole city** (full map, M): six districts, Countryside twice the size of the others; two empty cells south of Old Town and the Beach where roads end at the city's edge.

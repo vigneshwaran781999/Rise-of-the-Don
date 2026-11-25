@@ -1,5 +1,5 @@
 extends Node
-## Performance baseline for the streamed city (Old Town; Downtown, Beach, Industrial from M7).
+## Performance baseline for the streamed city (Old Town; the other districts from M7).
 ## Runs the real game scene in a 1920x1080 window with VSync off and measures several fixed
 ## viewpoints and a streaming drive across Old Town with traffic and pedestrians switched off
 ## (M3, comparable across builds), then the spawn street with city life at each density (M4).
@@ -27,6 +27,9 @@ const VIEWS: Array = [
 	["Beach District: Coast Road", Vector3(523.0, 1.8, -100.0), Vector3(523.0, 3.0, -20.0)],
 	["Industrial Zone: the quay, container yard and cranes", Vector3(560.0, 1.8, -560.0), Vector3(640.0, 15.0, -620.0)],
 	["Industrial Zone: warehouse street", Vector3(442.0, 1.8, -470.0), Vector3(430.0, 6.0, -560.0)],
+	["Luxury District: villa avenue", Vector3(-617.0, 1.8, -590.0), Vector3(-622.0, 3.0, -520.0)],
+	["Countryside: paddy fields from the road", Vector3(-520.0, 1.8, 4.0), Vector3(-470.0, 0.0, 60.0)],
+	["Countryside: the village", Vector3(-470.0, 1.8, -30.0), Vector3(-505.0, 2.0, -75.0)],
 ]
 const DRIVE_SPEED: float = 20.0   # m/s (72 km/h) along Ring B for the streaming run
 
@@ -234,7 +237,7 @@ func _frame_stats(times: PackedFloat32Array) -> Dictionary:
 
 func _print_report(results: Array, drive: Dictionary, life: Array) -> void:
 	print("")
-	print("PERFORMANCE BASELINE (Old Town, Downtown, Beach District, Industrial Zone)")
+	print("PERFORMANCE BASELINE (the whole city: seven cells, six districts)")
 	print("- GPU: %s (%s)" % [RenderingServer.get_video_adapter_name(), RenderingServer.get_video_adapter_vendor()])
 	print("- CPU: %s, %d threads" % [OS.get_processor_name(), OS.get_processor_count()])
 	print("- Renderer: %s %s, %s, window %s, VSync off" % [ProjectSettings.get_setting("rendering/renderer/rendering_method"),
