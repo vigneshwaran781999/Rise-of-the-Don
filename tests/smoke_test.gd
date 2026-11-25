@@ -25,6 +25,7 @@ const REQUIRED_ACTIONS: PackedStringArray = [
 	"vehicle_enter_exit", "interact", "pause", "toggle_fps",
 	"vehicle_accelerate", "vehicle_brake", "vehicle_steer_left", "vehicle_steer_right",
 	"vehicle_handbrake", "vehicle_horn", "vehicle_headlights", "vehicle_camera", "toggle_lane_debug",
+	"map", "map_zoom_in", "map_zoom_out",
 ]
 ## Vehicle models: visuals only, no static '-colonly' body (a car is a moving rigid body).
 const VEHICLE_ASSETS: PackedStringArray = ["vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel"]

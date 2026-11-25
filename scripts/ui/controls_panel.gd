@@ -25,6 +25,8 @@ const ROWS: Array = [
 	["Chase / hood camera", ["vehicle_camera"], "", ""],
 	["GENERAL"],
 	["Pause", ["pause"], "", ""],
+	["Map", ["map"], "", ""],
+	["Zoom the map in / out", ["map_zoom_in", "map_zoom_out"], "Mouse wheel", ""],
 	["FPS counter", ["toggle_fps"], "", ""],
 	["Lane and navmesh debug view", ["toggle_lane_debug"], "", ""],
 ]
@@ -33,6 +35,8 @@ const JOY_BUTTON_NAMES: Dictionary = {
 	7: "Left stick click", 8: "Right stick click", 9: "LB", 10: "RB",
 	11: "D-pad up", 12: "D-pad down", 13: "D-pad left", 14: "D-pad right",
 }
+## Short labels for keys whose names read badly in a prompt ("Equal" is the =/+ key).
+const KEY_SYMBOLS: Dictionary = {"Equal": "+", "Minus": "-", "Kp Add": "+", "Kp Subtract": "-"}
 const JOY_AXIS_NAMES: Dictionary = {0: "Left stick", 1: "Left stick", 2: "Right stick", 3: "Right stick", 4: "LT", 5: "RT"}
 
 var _back: Button
@@ -68,6 +72,7 @@ static func describe_keyboard(actions: Array) -> String:
 ## button when a gamepad is connected ("E", or "E / X").
 static func key_text(action: String) -> String:
 	var keys: String = describe_keyboard([action]).get_slice(" ", 0)
+	keys = KEY_SYMBOLS.get(keys, keys)
 	if Input.get_connected_joypads().is_empty():
 		return keys
 	var pad: String = describe_gamepad([action]).get_slice(",", 0)

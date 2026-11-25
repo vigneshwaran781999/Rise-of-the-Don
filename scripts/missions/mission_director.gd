@@ -52,6 +52,7 @@ var _waypoint: Node3D
 
 
 func _ready() -> void:
+	add_to_group(GpsNavigator.BLIP_GROUP)
 	dialogue = DialoguePlayer.new()
 	dialogue.name = "Dialogue"
 	add_child(dialogue)
@@ -113,6 +114,16 @@ func get_offer_giver(mission: MissionData) -> MissionContactNPC:
 
 func has_offer(mission: MissionData) -> bool:
 	return _offers.has(mission)
+
+
+## Map blips (minimap and full map): missions on offer, and where the current objective is.
+func get_map_blips() -> Array[Dictionary]:
+	var blips: Array[Dictionary] = []
+	for mission: MissionData in _offers:
+		blips.append({"position": mission.start_position, "kind": &"mission", "label": mission.title})
+	if _mission != null and _waypoint != null and is_instance_valid(_waypoint) and _waypoint.is_inside_tree():
+		blips.append({"position": _waypoint.global_position, "kind": &"objective", "label": _mission.title})
+	return blips
 
 
 func _unhandled_input(event: InputEvent) -> void:

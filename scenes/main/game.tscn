@@ -22,6 +22,8 @@
 [ext_resource type="Script" path="res://scripts/ui/mission_failed_screen.gd" id="20_failed"]
 [ext_resource type="Script" path="res://scripts/world/day_night_cycle.gd" id="21_daynight"]
 [ext_resource type="Resource" path="res://resources/world/day_night.tres" id="22_daynight_settings"]
+[ext_resource type="Script" path="res://scripts/world/gps_navigator.gd" id="23_gps"]
+[ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="24_map"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -54,6 +56,9 @@ script = ExtResource("8_transition")
 script = ExtResource("21_daynight")
 settings = ExtResource("22_daynight_settings")
 
+[node name="Gps" type="Node" parent="."]
+script = ExtResource("23_gps")
+
 [node name="Traffic" type="Node3D" parent="."]
 script = ExtResource("10_traffic")
 tuning = ExtResource("12_population")
@@ -80,3 +85,7 @@ script = ExtResource("9_lanedebug")
 [node name="MissionFailed" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("20_failed")
+
+[node name="MapScreen" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("24_map")

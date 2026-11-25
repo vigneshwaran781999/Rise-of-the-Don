@@ -23,6 +23,8 @@ const DISTRICT_ID: String = "old_town"
 @onready var pedestrians: PedestrianManager = $Pedestrians
 @onready var missions: MissionDirector = $Missions
 @onready var day_night: DayNightCycle = $DayNight
+@onready var gps: GpsNavigator = $Gps
+@onready var map_screen: MapScreen = $MapScreen
 
 
 func _ready() -> void:
@@ -60,6 +62,10 @@ func _ready() -> void:
 	pedestrians.setup(player, world.streamer)
 	missions.setup(player, world)
 	hud.bind_missions(missions, player)
+	gps.setup(world.get_lane_graph(), player, missions)
+	hud.bind_map(player, world.data, gps)
+	map_screen.setup(player, world.data, gps)
+	pause_menu.map_screen = map_screen
 	player.vehicle_entered.connect(_on_vehicle_entered)
 	player.vehicle_exited.connect(_on_vehicle_exited)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

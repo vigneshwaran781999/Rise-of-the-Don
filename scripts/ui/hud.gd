@@ -1,6 +1,6 @@
 class_name Hud
 extends CanvasLayer
-## In-game HUD (GDD §10): health and stamina bars, cash, an FPS counter (F3, also showing
+## In-game HUD (GDD §10): health and stamina bars, cash and the clock, the minimap, an FPS counter (F3, also showing
 ## loaded chunks and how many traffic cars and pedestrians are about), the interaction prompt
 ## ("get in" near a vehicle, or a mission action such as "talk"), the mission read-outs
 ## (MissionHud), and while driving a speedometer with gear, revs and the car's health, plus a
@@ -42,6 +42,7 @@ var _area_tween: Tween
 var _cash: CashDisplay
 var _clock: Label
 var _missions: MissionHud
+var _minimap: Minimap
 var _vehicle_target: VehicleController
 var _mission_prompt: Array = ["", ""]   # [action, text]
 
@@ -68,6 +69,15 @@ func bind_interactor(interactor: VehicleInteractor) -> void:
 
 
 ## Shows the running mission's objective, hints, dialogue, waypoint and prompts.
+## Shows the minimap of `district` around the player, with the GPS route.
+func bind_map(player: PlayerController, district: DistrictData, navigator: GpsNavigator) -> void:
+	_minimap.bind(player, district, navigator)
+
+
+func get_minimap() -> Minimap:
+	return _minimap
+
+
 func bind_missions(director: MissionDirector, player: Node3D) -> void:
 	_missions.bind(director, player)
 	director.prompt_changed.connect(_on_mission_prompt_changed)
@@ -303,6 +313,15 @@ func _build() -> void:
 	_clock.offset_right = -36.0
 	_clock.offset_top = 104.0
 	_clock.offset_bottom = 134.0
+
+	_minimap = Minimap.new()
+	root.add_child(_minimap)
+	_minimap.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_minimap.offset_left = 30.0
+	_minimap.offset_top = -280.0
+	_minimap.offset_right = 280.0
+	_minimap.offset_bottom = -30.0
+	_minimap.hide()
 
 	_missions = MissionHud.new()
 	root.add_child(_missions)

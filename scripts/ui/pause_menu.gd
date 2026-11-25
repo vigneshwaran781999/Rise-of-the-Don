@@ -1,6 +1,6 @@
 class_name PauseMenu
 extends CanvasLayer
-## Esc / Start pauses the game: Resume, Save Game, Settings, Main Menu, Quit (subset of GDD §10).
+## Esc / Start pauses the game: Resume, Map, Save Game, Settings, Main Menu, Quit (subset of GDD §10).
 ## Pausing stops gameplay through SceneTree.paused and frees the mouse.
 
 const MAIN_MENU_SCENE: String = "res://scenes/main/main_menu.tscn"
@@ -12,6 +12,9 @@ var _resume: Button
 var _settings_button: Button
 var _save: SavePanel
 var _save_button: Button
+var _map_button: Button
+## The full map, opened from here (set by the game session).
+var map_screen: MapScreen
 
 
 func _ready() -> void:
@@ -91,6 +94,8 @@ func _build() -> void:
 	box.add_child(HSeparator.new())
 	_resume = _add_button(box, "Resume", "ResumeButton")
 	_resume.pressed.connect(resume)
+	_map_button = _add_button(box, "Map", "MapButton")
+	_map_button.pressed.connect(_open_map)
 	_save_button = _add_button(box, "Save Game", "SaveGameButton")
 	_save_button.pressed.connect(_open_save)
 	_settings_button = _add_button(box, "Settings", "SettingsButton")
@@ -137,3 +142,19 @@ func _on_save_closed() -> void:
 func _go_to_main_menu() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+
+func _open_map() -> void:
+	if map_screen == null:
+		return
+	_root.hide()
+	if not map_screen.closed.is_connected(_on_map_closed):
+		map_screen.closed.connect(_on_map_closed)
+	map_screen.open(true)
+
+
+func _on_map_closed() -> void:
+	if not get_tree().paused:
+		return
+	_root.show()
+	_map_button.grab_focus()

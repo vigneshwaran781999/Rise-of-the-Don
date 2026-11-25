@@ -99,6 +99,11 @@ func _setup_input_map() -> void:
 	_action("toggle_fps", MOVE_DEADZONE, [_key(KEY_F3)])
 	_action("toggle_lane_debug", MOVE_DEADZONE, [_key(KEY_F4)])
 
+	# Map (GDD §11): open the full map; zoom it
+	_action("map", MOVE_DEADZONE, [_key(KEY_M), _button(JOY_BUTTON_DPAD_DOWN)])
+	_action("map_zoom_in", TRIGGER_DEADZONE, [_key(KEY_EQUAL), _key(KEY_KP_ADD), _axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
+	_action("map_zoom_out", TRIGGER_DEADZONE, [_key(KEY_MINUS), _key(KEY_KP_SUBTRACT), _axis(JOY_AXIS_TRIGGER_LEFT, 1.0)])
+
 
 func _action(action_name: String, deadzone: float, events: Array[InputEvent]) -> void:
 	ProjectSettings.set_setting("input/" + action_name, {"deadzone": deadzone, "events": events})

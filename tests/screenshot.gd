@@ -6,7 +6,7 @@ extends Node
 ##       --out=C:/path/shot.png [--frames=90] [--view=yaw,pitch] [--cam=x,y,z --look=x,y,z]
 ##       [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
-##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24]
+##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--waypoint=x,z]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
@@ -15,7 +15,7 @@ extends Node
 ## (below 0.35 it smokes), --headlights switches them on. --lanes shows the F4 lane/navmesh view.
 ## --crowd puts pedestrians at the --look point, or at x,y,z (chatting, walking, one going to sit down).
 ## --chase looks over traffic car n (default the first) once the frames have passed.
-## --hour sets the in-game clock (day/night) before the frames run.
+## --hour sets the in-game clock (day/night) before the frames run; --waypoint=x,z sets a GPS waypoint.
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -43,6 +43,9 @@ func _run() -> void:
 		cam.look_at(_vec3(str(args.get("look", "0,0,0"))), Vector3.UP)
 		cam.make_current()
 	await get_tree().process_frame
+	if args.has("waypoint") and instance.has_node("Gps"):
+		var at: PackedStringArray = str(args["waypoint"]).split(",")
+		(instance.get_node("Gps") as GpsNavigator).set_waypoint(Vector3(float(at[0]), 0.0, float(at[1])))
 	if args.has("hour"):
 		GameState.set_hour(float(args["hour"]))
 		var cycle := instance.get_node_or_null("DayNight") as DayNightCycle

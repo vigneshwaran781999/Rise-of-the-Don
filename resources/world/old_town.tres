@@ -10,3 +10,6 @@ origin = Vector2(-256, -256)
 chunk_count = Vector2i(4, 4)
 chunk_path_format = "res://scenes/world/chunks/old_town/chunk_%d_%d.scn"
 lane_graph = ExtResource("1_cr0yj")
+map_texture_path = "res://assets/world/maps/old_town_map.png"
+map_label_texts = PackedStringArray("TEMPLE", "TEMPLE TANK", "FLOWER MARKET", "PARK", "PARK", "BUS STAND")
+map_label_positions = PackedVector2Array(0, 0, 80, 80, -80, -80, -130, 130, 166, -130, 97, 14)

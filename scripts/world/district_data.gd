@@ -12,6 +12,17 @@ extends Resource
 @export var chunk_path_format: String = ""
 @export var lane_graph: LaneGraph
 
+@export_group("Map")
+## The district drawn from above (minimap and full map, GDD §11); it covers get_bounds().
+@export var map_texture_path: String = ""
+## Place names on the full map and where they go (world X/Z).
+@export var map_label_texts: PackedStringArray = PackedStringArray()
+@export var map_label_positions: PackedVector2Array = PackedVector2Array()
+
+
+func get_map_texture() -> Texture2D:
+	return load(map_texture_path) as Texture2D if map_texture_path != "" and ResourceLoader.exists(map_texture_path) else null
+
 
 func chunk_path(coord: Vector2i) -> String:
 	return chunk_path_format % [coord.x, coord.y]

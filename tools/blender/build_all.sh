@@ -26,4 +26,7 @@ echo "== Godot import"
 
 echo "== Old Town district"
 "$GODOT" --headless --path . --script res://tools/godot/build_old_town.gd 2>&1 | grep -E "build_old_town|ERROR" || true
+
+echo "== Godot import (the district map image the build just drew)"
+"$GODOT" --headless --path . --import 2>&1 | grep -E "ERROR|SCRIPT ERROR" | grep -v "NET Sdk not found" || true
 echo "done"

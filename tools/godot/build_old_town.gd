@@ -21,6 +21,21 @@ const SIGNAL_TIMING_PATH: String = "res://resources/world/signal_timing.tres"
 const LOT_COLOURS: Dictionary = {
 	&"lot_paved": Color("8e897f"), &"lot_warm": Color("a08a70"), &"lot_stone": Color("a39581"), &"lot_grass": Color("5f7d3c"),
 }
+## The district map (GDD §11): drawn from the layout, 4 pixels per metre, flat game-map colours.
+const MAP_PATH: String = "res://assets/world/maps/old_town_map.png"
+const MAP_PIXELS_PER_METRE: int = 4
+const MAP_COLOURS: Dictionary = {
+	"empty": Color("10131c"), "lot_paved": Color("1d2230"), "lot_stone": Color("2c2a33"),
+	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "walk": Color("2a3142"),
+	"road_main": Color("566079"), "road_lane": Color("414960"), "building": Color("353d53"),
+	"building_edge": Color("4d5877"), "temple": Color("6e4c36"), "temple_edge": Color("9a6a46"),
+	"market": Color("5b4433"), "water": Color("1f5b8c"), "tree": Color("2f6b45"),
+}
+const MAP_LABELS: Array = [
+	["TEMPLE", Vector2(0.0, 0.0)], ["TEMPLE TANK", Vector2(80.0, 80.0)],
+	["FLOWER MARKET", Vector2(-80.0, -80.0)], ["PARK", Vector2(-130.0, 130.0)],
+	["PARK", Vector2(166.0, -130.0)], ["BUS STAND", Vector2(97.0, 14.0)],
+]
 ## Static world collision layer, and a private layer for the navmesh source shapes.
 const WORLD_LAYER: int = 1
 const NAV_SOURCE_LAYER: int = 1 << 30
@@ -65,8 +80,15 @@ func _run() -> void:
 		push_error("build_old_town: could not save the lane graph (%d)" % err)
 		quit(1)
 		return
+	if not _write_map():
+		quit(1)
+		return
 	var district := DistrictData.new()
 	district.display_name = "Old Town"
+	district.map_texture_path = MAP_PATH
+	for label: Array in MAP_LABELS:
+		district.map_label_texts.append(label[0])
+		district.map_label_positions.append(label[1])
 	district.chunk_size = OldTownLayout.CHUNK_SIZE
 	district.origin = Vector2(-OldTownLayout.HALF, -OldTownLayout.HALF)
 	district.chunk_count = Vector2i(count, count)
@@ -84,6 +106,82 @@ func _run() -> void:
 		_layout.junction_count, _stats["signals"], _layout.crossings.size(), lanes.size(), lanes.count_disconnected(), _kit.size()])
 	print("build_old_town: done in %.1f s" % ((Time.get_ticks_msec() - started) / 1000.0))
 	quit(0)
+
+
+# --------------------------------------------------------------------------- map
+
+## Draws the district from above into MAP_PATH: lots, sidewalks, roads (main roads brighter),
+## buildings (temple buildings warm), the tank's water and trees.
+func _write_map() -> bool:
+	var size: int = int(2.0 * OldTownLayout.HALF) * MAP_PIXELS_PER_METRE
+	var image := Image.create(size, size, false, Image.FORMAT_RGB8)
+	image.fill(MAP_COLOURS["empty"])
+	var layers: Array[Array] = [[], [], [], [], []]      # lots, walks, roads, buildings, trees
+	for p: Dictionary in _layout.placements:
+		var kit: String = str(p["kit"])
+		if kit.begins_with("lot_"):
+			layers[0].append(p)
+		elif kit.begins_with("road_walk"):
+			layers[1].append(p)
+		elif kit.begins_with("road_"):
+			layers[2].append(p)
+		elif p["kind"] == &"building" or p["kind"] == &"landmark" and kit.begins_with("bld_"):
+			layers[3].append(p)
+		elif kit == "prop_neem_tree" or kit == "prop_palm_tree":
+			layers[4].append(p)
+	for p: Dictionary in layers[0]:
+		_map_fill(image, _map_rect(p), MAP_COLOURS.get(str(p["kit"]), MAP_COLOURS["lot_paved"]))
+	for p: Dictionary in layers[1]:
+		_map_fill(image, _map_rect(p), MAP_COLOURS["walk"])
+	for p: Dictionary in layers[2]:
+		var kit: String = str(p["kit"])
+		var main: bool = kit.contains("main") or kit.ends_with("_mm") or kit.ends_with("_ml")
+		_map_fill(image, _map_rect(p), MAP_COLOURS["road_main" if main else "road_lane"])
+	for p: Dictionary in layers[3]:
+		var kit: String = str(p["kit"])
+		var rect: Rect2 = _map_rect(p)
+		if kit == "bld_ot_tank":
+			_map_fill(image, rect, MAP_COLOURS["lot_stone"])
+			_map_fill(image, rect.grow(-6.0), MAP_COLOURS["water"])
+			continue
+		var temple: bool = kit.contains("temple") or kit.contains("vimana") or kit.contains("mandapam")
+		var market: bool = kit.contains("market")
+		var edge: Color = MAP_COLOURS["temple_edge"] if temple else MAP_COLOURS["building_edge"]
+		var fill: Color = MAP_COLOURS["temple"] if temple else (MAP_COLOURS["market"] if market else MAP_COLOURS["building"])
+		_map_fill(image, rect, edge)
+		_map_fill(image, rect.grow(-0.4), fill)
+	for p: Dictionary in layers[4]:
+		var o: Vector3 = (p["xform"] as Transform3D).origin
+		_map_fill(image, Rect2(o.x - 1.5, o.z - 1.5, 3.0, 3.0), MAP_COLOURS["tree"])
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(MAP_PATH.get_base_dir()))
+	var err: Error = image.save_png(ProjectSettings.globalize_path(MAP_PATH))
+	if err != OK:
+		push_error("build_old_town: could not save the map (%d)" % err)
+		return false
+	return true
+
+
+## A placement's footprint (its piece's bounds, transformed) as a world X/Z rectangle.
+func _map_rect(p: Dictionary) -> Rect2:
+	var b: AABB = (_kit[p["kit"]] as KitPiece).bounds
+	var xform: Transform3D = p["xform"]
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for k: int in 8:
+		var corner: Vector3 = xform * b.get_endpoint(k)
+		lo = Vector2(minf(lo.x, corner.x), minf(lo.y, corner.z))
+		hi = Vector2(maxf(hi.x, corner.x), maxf(hi.y, corner.z))
+	return Rect2(lo, hi - lo)
+
+
+func _map_fill(image: Image, world: Rect2, colour: Color) -> void:
+	var scale: float = MAP_PIXELS_PER_METRE
+	var x0: int = clampi(roundi((world.position.x + OldTownLayout.HALF) * scale), 0, image.get_width())
+	var y0: int = clampi(roundi((world.position.y + OldTownLayout.HALF) * scale), 0, image.get_height())
+	var x1: int = clampi(roundi((world.end.x + OldTownLayout.HALF) * scale), 0, image.get_width())
+	var y1: int = clampi(roundi((world.end.y + OldTownLayout.HALF) * scale), 0, image.get_height())
+	if x1 > x0 and y1 > y0:
+		image.fill_rect(Rect2i(x0, y0, x1 - x0, y1 - y0), colour)
 
 
 # --------------------------------------------------------------------------- kit
