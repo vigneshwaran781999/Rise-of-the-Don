@@ -8,6 +8,7 @@
   veh_suv_body      (M7) tall five-door SUV, roof rails, spare wheel; veh_wheel_suv (r 0.40)
   veh_bus_body      (M7) 11 m city bus, doors on the left (kerb) side, CITY board; veh_wheel_heavy (r 0.5)
   veh_truck_body    (M7) 7.6 m cargo truck, cab and box body; veh_wheel_heavy
+  veh_bike_body     (M7) 150 cc street motorcycle; veh_bike_wheel (r 0.3, narrow)
 
 The car faces Blender -Y (= Godot +Z, the VehicleBody3D forward axis). Its left side is +X.
 The pivot is the chassis centre: the road is at z = -0.55 and wheel centres at z = -0.22 once
@@ -546,6 +547,48 @@ def fleet_wheel(name: str, radius: float, width: float, rim_hex: str, spokes: in
     mb.build(name)
     rm.export_glb("vehicles", name)
 
+
+def bike_body() -> None:
+    """veh_bike_body (M7): a 150 cc street motorcycle, 2.1 m. Faces Blender -Y like the cars, pivot
+    at the chassis centre: road at z -0.55, wheels (r 0.3) centred at z -0.25 on axles at y -0.68
+    and 0.67. Painted tank and tail, black seat, chrome fork and exhaust, a round headlight."""
+    name = "veh_bike_body"
+    rm.clear_scene()
+    m = fleet_materials("#1f4fa0")
+    seat = rm.material("veh_bike_seat", "#141416", roughness=0.7)
+    engine = rm.material("veh_bike_engine", "#55595f", roughness=0.4, metallic=0.7)
+    mb = rm.MeshBuilder()
+    # frame: steering head down to the swing-arm pivot, and back under the seat
+    strut(mb, (0.0, -0.52, 0.3), (0.0, 0.12, -0.12), 0.035, m["trim"])
+    strut(mb, (0.0, -0.45, 0.28), (0.0, 0.5, 0.18), 0.03, m["trim"])
+    for sx in (-1, 1):                                          # swing arm to the rear axle
+        strut(mb, (sx * 0.1, 0.12, -0.14), (sx * 0.1, 0.67, -0.25), 0.025, m["trim"])
+        strut(mb, (sx * 0.08, -0.52, 0.32), (sx * 0.08, -0.68, -0.25), 0.025, m["chrome"])   # fork legs
+    mb.box(-0.15, -0.28, -0.32, 0.15, 0.14, 0.02, engine)        # engine block
+    for k in range(4):
+        z = -0.26 + k * 0.07
+        mb.box(-0.17, -0.24, z, 0.17, 0.08, z + 0.025, engine)    # cooling fins
+    mb.convex_hull([(sx * w, y, z) for sx in (-1, 1) for (y, z, w) in
+                    ((-0.46, 0.12, 0.1), (-0.42, 0.36, 0.13), (0.02, 0.36, 0.15), (0.06, 0.12, 0.13))], m["paint"])  # tank
+    mb.box(-0.13, 0.02, 0.2, 0.13, 0.52, 0.29, seat)              # seat
+    mb.convex_hull([(sx * w, y, z) for sx in (-1, 1) for (y, z, w) in
+                    ((0.48, 0.18, 0.12), (0.5, 0.3, 0.12), (0.8, 0.33, 0.07), (0.82, 0.24, 0.07))], m["paint"])   # tail
+    mb.box(-0.06, 0.8, 0.24, 0.06, 0.84, 0.3, m["tail"])
+    mb.box(-0.09, 0.78, 0.05, 0.09, 0.8, 0.17, m["plate"])
+    # front: mudguard over the wheel, handlebar, round headlight, small mirrors
+    mb.convex_hull([(sx * 0.07, y, z) for sx in (-1, 1) for (y, z) in ((-0.95, -0.02), (-0.68, 0.08), (-0.45, -0.02), (-0.68, 0.11))], m["paint"])
+    strut(mb, (-0.36, -0.48, 0.46), (0.36, -0.48, 0.46), 0.018, m["chrome"])
+    strut(mb, (0.0, -0.52, 0.32), (0.0, -0.48, 0.46), 0.03, m["trim"])
+    for sx in (-1, 1):
+        strut(mb, (sx * 0.3, -0.48, 0.46), (sx * 0.38, -0.48, 0.46), 0.025, seat)   # grips
+        strut(mb, (sx * 0.24, -0.48, 0.46), (sx * 0.27, -0.46, 0.62), 0.008, m["chrome"])
+        mb.box(sx * 0.27 - 0.04, -0.47, 0.6, sx * 0.27 + 0.04, -0.45, 0.66, m["glass"])
+    mb.tube((0.0, -0.58, 0.32), (0.0, -0.66, 0.32), 0.09, 0.09, 10, m["chrome"])
+    mb.tube((0.0, -0.66, 0.32), (0.0, -0.67, 0.32), 0.08, 0.08, 10, m["head"])
+    mb.tube((0.14, -0.05, -0.27), (0.17, 0.82, -0.08), 0.04, 0.05, 8, m["chrome"])      # exhaust
+    mb.build(name)
+    rm.export_glb("vehicles", name)
+
 BUILDERS = {
     "veh_sedan_body": sedan_body,
     "veh_sedan_wheel": sedan_wheel,
@@ -558,6 +601,8 @@ BUILDERS = {
     "veh_wheel_sport": lambda: fleet_wheel("veh_wheel_sport", 0.34, 0.27, "#2b2d31", 5),
     "veh_wheel_suv": lambda: fleet_wheel("veh_wheel_suv", 0.40, 0.26, "#9aa0a8", 6),
     "veh_wheel_heavy": lambda: fleet_wheel("veh_wheel_heavy", 0.50, 0.30, "#c9ccd0", 8),
+    "veh_bike_body": bike_body,
+    "veh_bike_wheel": lambda: fleet_wheel("veh_bike_wheel", 0.30, 0.11, "#2b2d31", 6),
 }
 
 

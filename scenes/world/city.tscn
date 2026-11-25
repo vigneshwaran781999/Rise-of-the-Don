@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/vehicles/truck.tscn" id="9_truck"]
 [ext_resource type="PackedScene" path="res://scenes/vehicles/sports.tscn" id="10_sports"]
 [ext_resource type="PackedScene" path="res://scenes/vehicles/suv.tscn" id="11_suv"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/motorbike.tscn" id="12_bike"]
 
 [node name="City" type="Node3D"]
 script = ExtResource("1_city")
@@ -58,4 +59,8 @@ rotation = Vector3(0, 1.5708, 0)
 
 [node name="SuvPlaza" parent="Vehicles" instance=ExtResource("11_suv")]
 position = Vector3(-80, 0.65, -516.75)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="BikeAtTiffin" parent="Vehicles" instance=ExtResource("12_bike")]
+position = Vector3(84, 0.65, -4.75)
 rotation = Vector3(0, 1.5708, 0)

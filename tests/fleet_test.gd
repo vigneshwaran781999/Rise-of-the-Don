@@ -14,6 +14,7 @@ const FLEET: Array = [
 	["SUV", "res://scenes/vehicles/suv.tscn", 0.50, 100.0, [6.0, 14.0], 100.0, [26.0, 62.0], [9.0, 16.0], 50.0],
 	["bus", "res://scenes/vehicles/bus.tscn", 1.35, 50.0, [6.0, 18.0], 50.0, [10.0, 36.0], [16.0, 30.0], 30.0],
 	["truck", "res://scenes/vehicles/truck.tscn", 1.25, 50.0, [5.0, 15.0], 50.0, [10.0, 36.0], [13.0, 26.0], 35.0],
+	["motorcycle", "res://scenes/vehicles/motorbike.tscn", 0.55, 100.0, [5.0, 14.0], 80.0, [18.0, 45.0], [5.0, 12.0], 40.0],
 ]
 
 var _catcher: ErrorCatcher
@@ -70,8 +71,8 @@ func _check_settle(spec: Array) -> String:
 	var ride: float = _car.global_position.y
 	var tilt: float = rad_to_deg(acos(clampf(_car.global_basis.y.y, -1.0, 1.0)))
 	_note("at rest: ride height %.3f m (model %.2f m), tilt %.2f deg, %d wheels down" % [ride, spec[2], tilt, contacts])
-	if contacts != 4:
-		return "only %d wheels touch the ground at rest" % contacts
+	if contacts != _car.get_wheels().size():
+		return "only %d of %d wheels touch the ground at rest" % [contacts, _car.get_wheels().size()]
 	if absf(ride - float(spec[2])) > 0.06:
 		return "settled ride height %.3f m, the model expects %.2f m" % [ride, spec[2]]
 	if tilt > 1.5 or _car.linear_velocity.length() > 0.05:

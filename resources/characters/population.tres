@@ -3,8 +3,9 @@
 [ext_resource type="Script" path="res://scripts/npc/population_tuning.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/vehicles/sports.tscn" id="2_sports"]
 [ext_resource type="PackedScene" path="res://scenes/vehicles/suv.tscn" id="3_suv"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/motorbike.tscn" id="4_bike"]
 
 [resource]
 script = ExtResource("1_script")
-traffic_models = Array[PackedScene]([ExtResource("2_sports"), ExtResource("3_suv")])
-traffic_model_shares = PackedFloat32Array(0.12, 0.2)
+traffic_models = Array[PackedScene]([ExtResource("2_sports"), ExtResource("3_suv"), ExtResource("4_bike")])
+traffic_model_shares = PackedFloat32Array(0.1, 0.18, 0.2)

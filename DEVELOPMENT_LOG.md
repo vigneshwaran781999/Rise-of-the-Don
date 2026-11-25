@@ -493,6 +493,13 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Tests:**
     - New `tests/fleet_test.tscn` drives each vehicle on a test pad: ride height matches its model, acceleration, top speed, braking, turning circle and a full-lock turn at speed, each in a range for its kind.
     - The smoke test boards the bus at its door and checks the camera.
+- **Step 7, the motorcycle (GDD §5: "a separate controller (lean, simplified physics)"):**
+  - **Simplified physics:** a 150 cc street bike on the same vehicle system. Two visible wheels, plus a hidden pair of stabiliser wheels on each axle that keep the physics body upright, so it can't fall over.
+  - **Lean:** `BikeLean` tilts its looks into turns, by the steering and more with speed, up to `VehicleStats.lean_degrees` (28).
+  - **Rider:** `BikeRider` is the player's character model in the sit pose, in their outfit, shown while the bike has a driver. Traffic riders wear a random outfit.
+  - **Model:** `veh_bike_body` and `veh_bike_wheel` in `tools/blender/vehicles.py`. `VehicleModel` puts no tyre on the stabiliser wheels.
+  - **In the city:** parked outside the tiffin stall across from the bus stand, and in the traffic mix (about one in five new vehicles).
+  - **Tests:** in the fleet test (0–100 km/h 7.8 s, 113 km/h, a 6 m turning circle, upright at full lock at 40 km/h). The smoke test rides it: the rider shows, it leans into a left turn, the rider goes when you get off.
 
 **Broke and fixed**
 - **Step 1:**
@@ -512,3 +519,7 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Fleet test, turning check:** it failed the first turning check: five seconds at full lock turned the sports car past 180 degrees, so the heading difference wrapped round. The test now adds up the yaw rate.
   - **Sports car ride height:** I first moved its wheel mounts the wrong way (lowering them raises the body); it now sits at its model's ride height.
   - **Scene format:** `Color("hex")` isn't valid in a text scene file; the paint colours are written as floats.
+- **Step 7:**
+  - **First tuning:** 0–100 km/h in 3.2 s (a 230 kg bike with a car-like engine force), so the engine force and power came down.
+  - **Body roll:** at full lock the physics body rolled 20 degrees outward, against the visual lean. Wider stabilisers, stiffer springs and almost no roll influence brought it to 6.
+  - **Stabilisers:** first one pair, in the middle. That acted as a third axle and scrubbed through turns (a 12 m turning circle). Moved to the rear axle, they left the bike resting 3 degrees nose-down (three springs at the back, one at the front), so now there is a pair on each axle: level, a 6 m turning circle, and braking spread over six wheels (the brake force came down to match).

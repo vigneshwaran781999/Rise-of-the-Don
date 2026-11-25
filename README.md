@@ -24,7 +24,7 @@ The streets around you are alive:
 - **Traffic** keeps left, stops at red lights and give-way lines, and keeps its distance. It changes lanes to pass parked cars and honks when held up.
 - **Pedestrians** walk the sidewalks, cross at zebras, chat in pairs and sit on benches. They run from crashes and step aside for horns, and a car can knock them down.
 
-You can walk, run, sprint and jump, or get into a parked vehicle and drive (chase and hood cameras, speedometer, horn, headlights, crash damage). Besides the sedans there are five more: a sports car outside the estate (Luxury District), an SUV by Central Plaza (Downtown), the city bus at the Old Town bus stand, a truck on the harbour road (Industrial Zone); sports cars and SUVs also turn up in traffic. See [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) for the full design and milestone plan, and [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for performance figures.
+You can walk, run, sprint and jump, or get into a parked vehicle and drive (chase and hood cameras, speedometer, horn, headlights, crash damage). Besides the sedans there are five more: a sports car outside the estate (Luxury District), an SUV by Central Plaza (Downtown), the city bus at the Old Town bus stand, a truck on the harbour road (Industrial Zone), and a motorcycle outside the tiffin stall opposite the bus stand. Sports cars, SUVs and motorcycles also turn up in traffic. See [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) for the full design and milestone plan, and [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for performance figures.
 
 ## Requirements
 

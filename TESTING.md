@@ -293,3 +293,5 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Truck** (blue cab, on the harbour road in the Industrial Zone): get in at the cab door. Heavy and slow to stop when loaded with speed.
 - [ ] **Traffic:** sports cars and SUVs now mix with the sedans in traffic, in random colours.
 - [ ] Crash each one: damage, smoke, a wreck; they right themselves when flipped.
+- [ ] **Motorcycle** (blue, outside the tiffin stall across from the bus stand): F from either side. You're seen riding it (in your outfit), and it leans into turns, more the faster you go. Nimble (a 6 m turning circle), 0–100 in about 8 s, 113 km/h. It rides on hidden stabiliser wheels, so it can't fall over: does it still feel like a bike? Does the lean look right, or too much or too little?
+- [ ] **Motorcycles in traffic** with their riders; they stop at lights and give way like cars.

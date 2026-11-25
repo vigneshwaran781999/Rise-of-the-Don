@@ -27,8 +27,8 @@ func _ready() -> void:
 	set_paint(paint_color)
 	for child: Node in get_parent().get_children():
 		var wheel := child as VehicleWheel3D
-		if wheel == null:
-			continue
+		if wheel == null or str(wheel.name).begins_with("Stabiliser"):
+			continue      # no tyre on the motorcycle's hidden stabiliser wheels
 		var tyre: MeshInstance3D = _add_mesh(wheel, "Mesh", _baked(wheel_scene, false))
 		if wheel.position.x < 0.0:
 			tyre.rotation.y = PI   # rims face outwards on the right-hand side too

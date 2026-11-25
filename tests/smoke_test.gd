@@ -32,6 +32,7 @@ const VEHICLE_ASSETS: PackedStringArray = [
 	"vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel", "vehicles/veh_police_lightbar", "vehicles/veh_police_heli",
 	"vehicles/veh_sports_body", "vehicles/veh_suv_body", "vehicles/veh_bus_body", "vehicles/veh_truck_body",
 	"vehicles/veh_wheel_sport", "vehicles/veh_wheel_suv", "vehicles/veh_wheel_heavy",
+	"vehicles/veh_bike_body", "vehicles/veh_bike_wheel",
 ]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
@@ -829,8 +830,35 @@ func _check_fleet() -> String:
 		return "the chase camera should pull back for the bus (arm %.1f m, a sedan's %.1f m)" % [arm_length, sedan_distance]
 	if not out:
 		return "F in the stopped bus should get the player out"
-	print("  ok  fleet: bus, truck, sports car and SUV parked round the city; got into the bus at its front door (%.1f m from its centre), chase camera %.1f m back (sedan %.1f m), got out" % [
-		_flat(door).distance_to(_flat(bus.global_position)), arm_length, sedan_distance])
+	# The motorcycle: the rider shows (the player is hidden as in a car) and the bike leans into a turn.
+	var bike := world.get_node_or_null("Vehicles/BikeAtTiffin") as VehicleController
+	if bike == null:
+		return "the motorcycle by the tiffin stall is missing"
+	await _teleport(player, _flat((bike.get_node("ExitPoints/DriverDoor") as Node3D).global_position) + Vector3.UP * 0.2)
+	_tap(KEY_F)
+	await _physics_frames(90)
+	var riding: bool = player.is_in_vehicle() and player.vehicle == bike
+	var rider_shown: bool = (bike.get_node("Model/Rider") as Node3D).visible
+	_key(KEY_W, true)
+	await _physics_frames(90)
+	_key(KEY_A, true)
+	await _physics_frames(40)
+	var lean: float = rad_to_deg((bike.get_node("Lean") as BikeLean).get_lean())
+	_key(KEY_A, false)
+	_key(KEY_W, false)
+	await _physics_frames(120)
+	_tap(KEY_F)
+	await _physics_frames(90)
+	var rider_after: bool = (bike.get_node("Model/Rider") as Node3D).visible
+	await _teleport(player, back)
+	bike.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(84.0, 0.65, -4.75)))
+	await _physics_frames(30)
+	if not riding or not rider_shown or rider_after:
+		return "the motorcycle's rider should show while it's ridden and go when you get off (riding %s, shown %s, after %s)" % [riding, rider_shown, rider_after]
+	if lean > -8.0:
+		return "the motorcycle should lean into a left turn (lean %.0f deg)" % lean
+	print("  ok  fleet: bus, truck, sports car, SUV and motorcycle parked round the city; got into the bus at its front door (%.1f m from its centre), chase camera %.1f m back (sedan %.1f m), got out; rode the motorcycle: rider shown, leaned %.0f deg into a left turn" % [
+		_flat(door).distance_to(_flat(bus.global_position)), arm_length, sedan_distance, -lean])
 	return ""
 
 

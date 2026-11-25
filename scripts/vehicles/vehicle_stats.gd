@@ -82,6 +82,8 @@ enum Drive { FRONT, REAR, ALL }
 @export var extra_half_length: float = 0.0
 ## Scales the chase camera's distance and pivot height (a bus needs the camera further back).
 @export var camera_scale: float = 1.0
+## How far the body leans into a turn at speed (degrees; 0 for cars). The motorcycle leans.
+@export var lean_degrees: float = 0.0
 
 @export_group("Damage")
 ## A sudden change of speed (a crash) smaller than this does no damage.
