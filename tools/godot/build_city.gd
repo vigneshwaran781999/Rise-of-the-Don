@@ -23,7 +23,7 @@ const SIGNAL_POLE_PATH: String = "res://assets/models/props/prop_signal_pole.glb
 const SIGNAL_TIMING_PATH: String = "res://resources/world/signal_timing.tres"
 const LOT_COLOURS: Dictionary = {
 	&"lot_paved": Color("8e897f"), &"lot_warm": Color("a08a70"), &"lot_stone": Color("a39581"), &"lot_grass": Color("5f7d3c"),
-	&"lot_plaza": Color("aba79f"), &"lot_sand": Color("c4a878"),
+	&"lot_plaza": Color("aba79f"), &"lot_sand": Color("c4a878"), &"lot_concrete": Color("8f8d87"),
 }
 ## The city map (GDD §11): drawn from the layout, 4 pixels per metre, flat game-map colours,
 ## saved as a small lossless PNG. Its import settings (MAP_IMPORT, written if missing) have Godot
@@ -33,7 +33,7 @@ const MAP_IMPORT: String = "[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTe
 const MAP_PIXELS_PER_METRE: int = 4
 const MAP_COLOURS: Dictionary = {
 	"empty": Color("10131c"), "lot_paved": Color("1d2230"), "lot_stone": Color("2c2a33"),
-	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "lot_plaza": Color("252a38"), "lot_sand": Color("4a4232"), "walk": Color("2a3142"),
+	"lot_warm": Color("302820"), "lot_grass": Color("1d3b2a"), "lot_plaza": Color("252a38"), "lot_sand": Color("4a4232"), "lot_concrete": Color("26282c"), "walk": Color("2a3142"),
 	"road_main": Color("566079"), "road_lane": Color("414960"), "building": Color("353d53"),
 	"building_edge": Color("4d5877"), "tower": Color("3c4a66"), "tower_edge": Color("6a7fa6"),
 	"temple": Color("6e4c36"), "temple_edge": Color("9a6a46"),

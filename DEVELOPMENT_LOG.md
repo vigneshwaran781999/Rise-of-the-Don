@@ -456,6 +456,15 @@ Dated entries: what was built, what broke, how it was fixed.
   - **The lighthouse beam:** two long faint cones turned by `shaders/lighthouse_beam.gdshader` (no script), showing from dusk with the city lights.
   - **Street generator fix:** a street that runs straight past a point where its cross street has been dropped is now one segment. It used to become two segments ending in U-turns, which left stubs at the Beach's edges cut off from the network. Old Town's fingerprint is unchanged.
   - **Tests:** the smoke test checks the Beach District: its square, a road route to the Coast Road, the sea and beam on the landmarks, the title card, the navmesh stopping at the water, and wading out to the barrier and no further. The performance baseline has two Beach views.
+- **Step 3, the Industrial Zone (GDD §2 district 4):**
+  - **`IndustrialLayout`** (the cell north of the Beach and east of Downtown):
+    - Downtown's seven east-west streets and the Beach's four north-south roads carry on into it (37 roads now cross between districts). East of the first road the side lanes stop, leaving big yards.
+    - Warehouses, the factory, tank farms and site offices (one is the police post); a few container stacks in the yards.
+    - East of the harbour road (the Coast Road carrying on): the quay with the container yard, three gantry cranes at the berth with a cargo ship alongside, and the fishing harbour (fish-market shed, boats, benches). The sea and the wading barrier are as on the Beach.
+  - **Industrial kit** (`tools/blender/industrial.py`, 13 models). The containers have only a few ribs, because the yard holds about 250 of them.
+  - **Sodium street lamps:** `DistrictLayout._streetlight_kit()` lets a district choose its streetlight; the Industrial Zone's is `prop_streetlight_sodium` (the same shape, an orange lens). `StreetLightPool` reads both kinds of lamp and lights sodium lamps orange.
+  - **Cranes** are landmarks (always loaded), so they stay on the skyline.
+  - **Tests:** the smoke test checks the Industrial Zone: routes in from Downtown and from the Beach, the cranes, sodium lamps in the street-light pool, and the nearest police post. The performance baseline has two Industrial views.
 
 **Broke and fixed**
 - **Step 1:**
@@ -466,3 +475,4 @@ Dated entries: what was built, what broke, how it was fixed.
 - **Step 2:**
   - **100 lane nodes disconnected:** the first build had them at the Beach's north and south edges. There, the side lanes are dropped east of Beach Road, so a north-south street passed the dropped lane's crossing point with no junction there. It became two segments ending in U-turns, and the stub at the edge was cut off from the network. Fixed in `DistrictLayout._find_segments` (see Built).
   - **Midday sand** was close to white; it's a darker tan now. The beam was turned down for full night.
+- **Step 3:** no failures. The step 2 street-generator fix meant the Industrial Zone's dropped lanes built cleanly the first time (0 disconnected lane nodes).

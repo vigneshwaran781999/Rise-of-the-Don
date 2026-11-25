@@ -157,3 +157,17 @@ Same machine and settings; three districts (48 chunks), with the sea and the lig
 - **City life at the spawn street:** 35–37 FPS at every density.
 - **Video memory:** 272 MB (+13 MB for the Beach kit and the sea).
 - The sea is one flat mesh with a cheap shader; the open view along the beach is one of the lightest in the city.
+
+## M7 step 3: the Industrial Zone (2026-11-25)
+
+Same machine and settings; four districts (64 chunks).
+
+| Viewpoint | FPS | avg ms | 1% worst ms | draw calls | primitives |
+|---|---:|---:|---:|---:|---:|
+| Spawn street, 13:00 | 36 | 28.09 | 32.22 | 297 | 391,312 |
+| Spawn street, night 21:30 | 29 | 34.93 | 39.06 | 276 | 357,086 |
+| Industrial Zone: the quay, container yard and cranes | 36 | 28.10 | 32.00 | 38 | 274,117 |
+| Industrial Zone: warehouse street | 40 | 24.73 | 28.77 | 168 | 206,680 |
+
+- **The container yard** (about 250 containers in stacks) is drawn as three instanced batches: the whole quay view is 38 draw calls.
+- **City life at the spawn street:** 33–36 FPS. Physics time read higher than the last run (9.7–14.1 ms against 5.2–8.7 ms) with the same number of cars and people and no change to their code; the frame rate barely moved. To watch in the next runs.

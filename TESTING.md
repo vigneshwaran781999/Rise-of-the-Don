@@ -258,3 +258,12 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **People** walk the promenade and the sand but never into the sea.
 - [ ] **Map:** VELA BEACH, PIER, LIGHTHOUSE and the two SEA BREEZE resorts are labelled; the sea is blue.
 - [ ] **Police:** busted on the beach, you're released at the Beach District police post (white with a blue POLICE board, on the main road just north-west of the northern resort).
+
+### The Industrial Zone (step 3)
+- [ ] **Getting there:** from Downtown, drive east along any east-west road; or from the Beach, north up the Coast Road (it becomes the harbour road). "INDUSTRIAL ZONE" fades in.
+- [ ] **Looks:** corrugated warehouses with roll-up doors and loading docks, a brick factory with a sawtooth roof and a tall chimney (red light on top at night), white tank farms, site offices. Big concrete yards with some container stacks. Does it feel like an industrial area, or too empty?
+- [ ] **The harbour:** a container yard of red, blue and teal stacks; three red-and-white gantry cranes with their booms over a moored cargo ship; the fishing harbour at the south end (fish-market shed, boats along the quay, benches). Walk between the container stacks: are any floating or overlapping?
+- [ ] **At night** the street lamps are sodium orange (their light too, near you), the cranes and the chimney show red warning lights.
+- [ ] **Driving:** the big yards and wide roads make for good chases. Do traffic and the police cope with the long straight roads and the T-junctions at the harbour road?
+- [ ] **Police:** busted here, you're released at the Industrial Zone's police post (a small white office with a blue POLICE board).
+- [ ] **Map:** HARBOUR, CONTAINER YARD, FISHING HARBOUR and FACTORY are labelled.

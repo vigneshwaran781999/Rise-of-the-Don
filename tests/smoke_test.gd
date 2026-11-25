@@ -33,7 +33,7 @@ const VEHICLE_ASSETS: PackedStringArray = [
 ]
 ## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
 const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
-## City kit pieces (Old Town, Downtown, Beach District) that must exist as baked meshes (one surface each).
+## City kit pieces (Old Town, Downtown, Beach District, Industrial Zone) that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
 	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
@@ -42,6 +42,8 @@ const KIT_MESHES: PackedStringArray = [
 	"bld_dt_office_b", "bld_dt_retail_a", "bld_dt_retail_b", "bld_dt_hotel", "bld_dt_mall", "bld_dt_police", "prop_dt_fountain",
 	"lot_sand", "bld_bh_resort", "bld_bh_hotel", "bld_bh_seafood", "bld_bh_police", "bld_bh_cottage", "bld_bh_lighthouse", "bld_bh_pier",
 	"prop_bh_umbrella", "prop_bh_boat", "prop_bh_lifeguard", "prop_bh_kiosk",
+	"lot_concrete", "bld_in_warehouse_a", "bld_in_warehouse_b", "bld_in_factory", "bld_in_office", "bld_in_police", "bld_in_tanks",
+	"bld_in_crane", "bld_in_ship", "bld_in_fish_shed", "prop_in_container_a", "prop_streetlight_sodium",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -63,6 +65,10 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_bh_resort", "buildings/bld_bh_hotel", "buildings/bld_bh_seafood", "buildings/bld_bh_police",
 	"buildings/bld_bh_shop_a", "buildings/bld_bh_shop_b", "buildings/bld_bh_cottage", "buildings/bld_bh_lighthouse",
 	"buildings/bld_bh_pier", "props/prop_bh_umbrella", "props/prop_bh_boat", "props/prop_bh_lifeguard", "props/prop_bh_kiosk",
+	"buildings/bld_in_warehouse_a", "buildings/bld_in_warehouse_b", "buildings/bld_in_factory", "buildings/bld_in_office",
+	"buildings/bld_in_police", "buildings/bld_in_tanks", "buildings/bld_in_crane", "buildings/bld_in_ship",
+	"buildings/bld_in_fish_shed", "props/prop_in_container_a", "props/prop_in_container_b", "props/prop_in_container_c",
+	"props/prop_streetlight_sodium",
 ]
 
 var _catcher: ErrorCatcher
@@ -97,7 +103,8 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
-		_check_streaming, _check_downtown, _check_beach, _check_traffic_signals, _check_lane_graph, _check_navmesh,
+		_check_streaming, _check_downtown, _check_beach, _check_industrial,
+		_check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
 		_check_vehicle_parked, _check_enter_vehicle, _check_drive_brake_reverse, _check_steering,
@@ -633,6 +640,49 @@ func _check_beach() -> String:
 		return "the player should be standing in the shallows when stopped by the barrier"
 	print("  ok  Beach District: east of Old Town, a road route to the Coast Road, the sea and the lighthouse beam always loaded, BEACH DISTRICT title card; pedestrians stay on the sand; you can wade %.0f m out, no further" % [
 		furthest - shore])
+	return ""
+
+
+## M7: the Industrial Zone north of the Beach, east of Downtown: streets from both carry on into
+## it, the harbour cranes are always in view, its streets have sodium lamps (lit by the
+## street-light pool too), and an arrest there ends at its own police post.
+func _check_industrial() -> String:
+	var game := get_tree().current_scene as GameSession
+	var world: CityWorld = _world()
+	var data: CityData = world.data
+	var zone: int = data.region_names.find("Industrial Zone")
+	if zone < 0 or not data.region_rects[zone].has_point(Vector2(512.0, -512.0)):
+		return "the Industrial Zone should be the 512 m square north of the Beach District (%s)" % data.region_names
+	var router := RoadRouter.for_graph(world.get_lane_graph())
+	var berth := Vector3(512.0 + IndustrialLayout.HARBOUR_ROAD - 3.0, 0.0, -600.0)
+	var from_downtown: PackedVector3Array = router.route(Vector3(200.0, 0.0, -514.75), berth)
+	var from_beach: PackedVector3Array = router.route(Vector3(525.0, 0.0, -150.0), berth)
+	for route: PackedVector3Array in [from_downtown, from_beach]:
+		if route.size() < 2 or Vector2(route[route.size() - 1].x - berth.x, route[route.size() - 1].z - berth.z).length() > 30.0:
+			return "no road route to the harbour from Downtown and from the Beach"
+	var cranes := world.get_node_or_null("Landmarks/Temple/bld_in_crane") as InstanceBatch
+	if cranes == null or cranes.get_instance_count() != 3:
+		return "the three harbour cranes should be on the always-loaded landmarks"
+	if data.police_stations.size() < 4:
+		return "every district so far should have a police station (%d)" % data.police_stations.size()
+	var player: PlayerController = _player()
+	var back := Transform3D(Basis(Vector3.UP, player.model.rotation.y), player.global_position)
+	game.place_player(Transform3D(Basis.IDENTITY, Vector3(442.0, 0.3, -470.0)))
+	await _physics_frames(10)
+	var sodium: int = 0
+	for c: Vector2i in world.streamer.get_loaded_coords():
+		var batch := world.streamer.get_chunk(c).get_node_or_null("Props/prop_streetlight_sodium") as InstanceBatch
+		sodium += batch.get_instance_count() if batch != null else 0
+	var pool: StreetLightPool = (game.get_node("DayNight") as DayNightCycle).street_lights
+	var lamps: int = pool.get_lamp_count()
+	var station: Vector3 = data.nearest_police_station(player.global_position).origin
+	game.place_player(back)
+	await _physics_frames(30)
+	if sodium < 10 or lamps < sodium:
+		return "the Industrial Zone's streets should have sodium lamps that the street-light pool knows (%d lamps, pool %d)" % [sodium, lamps]
+	if not data.region_rects[zone].has_point(Vector2(station.x, station.z)):
+		return "an arrest in the Industrial Zone should end at its own police post (nearest is at %s)" % station
+	print("  ok  Industrial Zone: routes in from Downtown and from the Beach, three harbour cranes on the skyline, %d sodium lamps around its west side (in the street-light pool), its own police post" % sodium)
 	return ""
 
 
