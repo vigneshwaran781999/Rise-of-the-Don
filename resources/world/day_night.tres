@@ -203,4 +203,6 @@ keys = Array[ExtResource("2_preset")]([SubResource("Resource_night"), SubResourc
 lights_on_hour = 18.25
 lights_off_hour = 6.5
 lights_fade_hours = 0.5
-real_street_lights = 10
+real_street_lights = 4
+street_light_range = 16.0
+street_light_energy = 4.5

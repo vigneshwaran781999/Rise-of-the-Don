@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="3_contact"]
+
+[sub_resource type="Resource" id="Resource_durai"]
+script = ExtResource("3_contact")
+id = &"durai"
+display_name = "Durai"
+look = 0
+top_color = Color(0.165, 0.184, 0.227, 1)
+bottom_color = Color(0.231, 0.231, 0.247, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(70, 0.15, 55)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_kamalam"]
+script = ExtResource("3_contact")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 0.0
+
+[sub_resource type="Resource" id="Resource_talk_durai"]
+script = ExtResource("2_objective")
+type = 1
+text = "Talk to Durai."
+contact = &"durai"
+lines = PackedStringArray("DURAI: Vetri! Good. Word gets around in this town, and the right person heard it.", "DURAI: Kamalam wants to see you. She runs the flower market... and half of what moves through it.", "DURAI: Market hall, north-west of the temple. Walk there, and don't keep her waiting.")
+
+[sub_resource type="Resource" id="Resource_meet_kamalam"]
+script = ExtResource("2_objective")
+type = 1
+text = "Meet Kamalam at the market hall."
+hint = "The diamond marks her. Press {map} for the map."
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: So you're the boy who carried Durai's parcel without opening it.", "VETRI: It wasn't mine to open.", "KAMALAM: Good answer. Every flower in Velanagar passes through my hands before sunrise. So does a lot of other business.", "KAMALAM: I need people the police don't know yet. Quick people. Quiet people.", "VETRI: I'm quick. And I don't talk much.", "KAMALAM: We'll see. First, stop dressing like you just got off the bus. Tell Rafiq at Velanagar Textiles that I sent you.", "KAMALAM: Need money meanwhile? Selvi at the tiffin stall and Murugan at the East Road Garage pay for honest work.", "KAMALAM: When I have something real, I'll send for you. Go.")
+scene = true
+
+[resource]
+script = ExtResource("1_mission")
+id = &"new_connection"
+title = "The New Connection"
+description = "Durai says someone important wants to meet you."
+category = 0
+prerequisites = Array[StringName]([&"first_opportunity"])
+start_position = Vector3(67.5, 0.15, 55.5)
+start_yaw_degrees = -90.0
+giver = SubResource("Resource_durai")
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_talk_durai"), SubResource("Resource_meet_kamalam")])
+contacts = Array[ExtResource("3_contact")]([SubResource("Resource_kamalam")])
+reward_cash = 1500

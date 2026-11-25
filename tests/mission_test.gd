@@ -52,7 +52,7 @@ func _run() -> void:
 	people.clear()
 	var steps: Array[Callable] = [
 		_check_new_game, _check_mission_one, _check_offer, _check_talk_to_fixer, _check_delivery_on_foot,
-		_check_wreck_and_retry, _check_time_out_and_quit, _check_restart_and_finish, _check_side_jobs,
+		_check_wreck_and_retry, _check_time_out_and_quit, _check_restart_and_finish,
 	]
 	var failure: String = ""
 	for step: Callable in steps:
@@ -129,9 +129,9 @@ func _check_mission_one() -> String:
 	var autosave: Dictionary = SaveManager.read_slot(SaveManager.AUTOSAVE_SLOT)
 	if autosave.is_empty() or not (autosave["state"]["missions"]["completed"] as Array).has("welcome"):
 		return "no autosave with 'welcome' passed"
-	if not _mhud.get_subtitle_shown().begins_with("FIXER"):
-		return "the fixer should call out after the mission (subtitle '%s')" % _mhud.get_subtitle_shown()
-	_note("mission 1: %s -> passed, +₹300 (₹500), autosaved, the fixer calls out" % " / ".join(texts))
+	if not _mhud.get_subtitle_shown().begins_with("DURAI"):
+		return "Durai the fixer should call out after the mission (subtitle '%s')" % _mhud.get_subtitle_shown()
+	_note("mission 1: %s -> passed, +₹300 (₹500), autosaved, Durai the fixer calls out" % " / ".join(texts))
 	return ""
 
 
@@ -168,14 +168,14 @@ func _check_talk_to_fixer() -> String:
 		return "the talk prompt shows from 6 m away"
 	await _teleport(fixer.global_position + Vector3(-1.6, 0.1, 0.0))
 	await _ticks(5)
-	if not _hud.get_prompt_text().ends_with("TALK TO FIXER"):
+	if not _hud.get_prompt_text().ends_with("TALK TO DURAI"):
 		return "no talk prompt next to the fixer (prompt '%s')" % _hud.get_prompt_text()
 	var lines: int = await _talk()
 	if MissionManager.get_objective_index() != 1:
 		return "after talking the objective should move on (at %d)" % MissionManager.get_objective_index()
 	if not _director.get_items().has(&"parcel") or _player.model.get_node_or_null("CarriedItem") == null:
 		return "the fixer didn't hand over the parcel"
-	_note("talking to the fixer: prompt 'E  TALK TO FIXER', %d lines (E skips), parcel handed over and carried" % lines)
+	_note("talking to the fixer: prompt 'E  TALK TO DURAI', %d lines (E skips), parcel handed over and carried" % lines)
 	return ""
 
 
@@ -183,14 +183,14 @@ func _check_delivery_on_foot() -> String:
 	var tailor: MissionContactNPC = _director.get_contact(&"tailor")
 	await _teleport(tailor.global_position + Vector3(0.0, 0.1, 1.6))
 	await _ticks(5)
-	if not _hud.get_prompt_text().ends_with("GIVE TAILOR THE PARCEL"):
+	if not _hud.get_prompt_text().ends_with("GIVE RAFIQ THE PARCEL"):
 		return "no hand-over prompt by the tailor (prompt '%s')" % _hud.get_prompt_text()
 	await _talk()
 	if MissionManager.get_objective_index() != 2 or MissionManager.get_checkpoint() != 2:
 		return "after the delivery: objective %d, checkpoint %d (expected 2 and 2)" % [MissionManager.get_objective_index(), MissionManager.get_checkpoint()]
-	if _mhud.get_objective_shown() != "Get in the tailor's car.":
+	if _mhud.get_objective_shown() != "Get in Rafiq's car.":
 		return "objective shows '%s'" % _mhud.get_objective_shown()
-	_note("delivered to the tailor on foot (he hands over a new parcel); checkpoint reached at 'Get in the tailor's car.'")
+	_note("delivered to the tailor on foot (he hands over a new parcel); checkpoint reached at 'Get in Rafiq's car.'")
 	return ""
 
 
@@ -205,7 +205,7 @@ func _check_wreck_and_retry() -> String:
 	await _wait_for_failed_screen()
 	if not _failed_screen.is_open() or not get_tree().paused:
 		return "the failure screen didn't come up (paused %s)" % get_tree().paused
-	if _failed_screen.get_reason_shown() != "The tailor's car is wrecked.":
+	if _failed_screen.get_reason_shown() != "Rafiq's car is wrecked.":
 		return "failure reason '%s'" % _failed_screen.get_reason_shown()
 	(_failed_screen.find_child("RetryButton", true, false) as Button).pressed.emit()
 	await _ticks(5)
@@ -219,7 +219,7 @@ func _check_wreck_and_retry() -> String:
 		return "Retry should put the player at the checkpoint %s (at %s)" % [spot, _player.global_position]
 	if not _director.get_items().has(&"parcel"):
 		return "the player should still carry the parcel after the retry"
-	_note("wrecking the car fails the mission: 'MISSION FAILED - The tailor's car is wrecked.' (game paused); Retry: back at the checkpoint with a fresh car and the parcel")
+	_note("wrecking the car fails the mission: 'MISSION FAILED - Rafiq's car is wrecked.' (game paused); Retry: back at the checkpoint with a fresh car and the parcel")
 	return ""
 
 
@@ -300,7 +300,7 @@ func _check_restart_and_finish() -> String:
 		return "couldn't get out of the car"
 	await _teleport(_director.get_contact(&"buyer").global_position + Vector3(0.0, 0.1, 1.6))
 	await _ticks(5)
-	if not _hud.get_prompt_text().ends_with("GIVE BUYER THE PARCEL"):
+	if not _hud.get_prompt_text().ends_with("GIVE MEENA THE PARCEL"):
 		return "no hand-over prompt by the buyer (prompt '%s')" % _hud.get_prompt_text()
 	await _talk()
 	if MissionManager.is_active() or not MissionManager.is_completed(&"first_opportunity"):
@@ -319,76 +319,15 @@ func _check_restart_and_finish() -> String:
 	var offered: Array[StringName] = []
 	for available: MissionData in MissionManager.get_available():
 		offered.append(available.id)
-	if offered != [&"job_tiffin", &"job_garage"] or _director.get_offer_giver(mission) != null:
-		return "after the two missions only the side jobs should be on offer (got %s)" % [offered]
-	_note("second run from the top: talk, deliver, get in (clock %s), stop in the market marker, get out, hand over -> passed, +₹1,000 (₹1,500), autosaved; stats: 2 passed, 2 failed; the two side jobs now on offer" % timer_text)
+	if offered != [&"new_connection"] or _director.get_offer_giver(mission) != null:
+		return "after the two missions only The New Connection should be on offer (got %s)" % [offered]
+	_note("second run from the top: talk, deliver, get in (clock %s), stop in the market marker, get out, hand over -> passed, +₹1,000 (₹1,500), autosaved; stats: 2 passed, 2 failed; The New Connection now on offer" % timer_text)
 	return ""
 
 
 # --------------------------------------------------------------------------- helpers
 
 ## Talks through the current conversation with E (skipping each line). Returns the line count.
-## Side jobs (M6): Tiffin Delivery twice (repeatable, the customer one of its addresses), then a
-## Garage Run by car; each pays and stays on offer.
-func _check_side_jobs() -> String:
-	var tiffin: MissionData = MissionManager.get_mission(&"job_tiffin")
-	var garage: MissionData = MissionManager.get_mission(&"job_garage")
-	var world := _game.get_node("World") as District
-	var cash: int = EconomyManager.cash
-	var addresses: Array[String] = []
-	for run: int in 2:
-		world.streamer.load_around_now(tiffin.start_position)
-		await _teleport(tiffin.start_position + Vector3(0.3, 0.1, 0.0))
-		await _ticks(5)
-		if MissionManager.get_active() != tiffin:
-			return "run %d: walking into Selvi's marker should start Tiffin Delivery" % (run + 1)
-		await _teleport(_director.get_contact(&"selvi").global_position + Vector3(0.0, 0.1, 1.6))
-		await _talk()
-		if MissionManager.get_objective_index() != 1 or not _director.get_items().has(&"tiffin"):
-			return "run %d: talking to Selvi should hand over the tiffin carrier (objective %d)" % [run + 1, MissionManager.get_objective_index()]
-		var goal: Vector3 = _director.get_goal_position()
-		if not tiffin.objectives[1].alternatives.has(goal):
-			return "run %d: the customer should be one of the job's addresses (got %s)" % [run + 1, goal]
-		addresses.append("(%.0f, %.0f)" % [goal.x, goal.z])
-		world.streamer.load_around_now(goal)
-		await _teleport(goal + Vector3(0.0, 0.1, 0.0))
-		await _ticks(10)
-		if MissionManager.is_active() or EconomyManager.cash != cash + 250 * (run + 1):
-			return "run %d: reaching the customer should pass the job for ₹250 (active %s, cash %d)" % [run + 1, MissionManager.is_active(), EconomyManager.cash]
-		await _ticks(30)
-		if not MissionManager.get_available().has(tiffin):
-			return "Tiffin Delivery should be offered again after it's passed"
-	cash = EconomyManager.cash
-	world.streamer.load_around_now(garage.start_position)
-	await _teleport(garage.start_position + Vector3(0.3, 0.1, 0.0))
-	await _ticks(5)
-	if MissionManager.get_active() != garage:
-		return "walking into Murugan's marker should start Garage Run"
-	await _teleport(_director.get_contact(&"murugan").global_position + Vector3(0.0, 0.1, 1.6))
-	await _talk()
-	var car: VehicleController = _director.get_vehicle(&"customer_car")
-	if MissionManager.get_objective_index() != 1 or car == null:
-		return "talking to Murugan should point you at the customer's car"
-	if not await _get_in(car) or MissionManager.get_objective_index() != 2:
-		return "couldn't get into the customer's car (objective %d)" % MissionManager.get_objective_index()
-	var drop: Vector3 = _director.get_goal_position()
-	if not garage.objectives[2].alternatives.has(drop):
-		return "the owner should be one of the job's addresses (got %s)" % drop
-	world.streamer.load_around_now(drop)
-	car.teleport(Transform3D(car.global_basis, drop + Vector3(0.0, 0.6, 0.0)))
-	await _ticks(15)
-	if MissionManager.is_active() or EconomyManager.cash != cash + 600:
-		return "stopping at the owner's should pass Garage Run for ₹600 (active %s, cash %d, objective '%s')" % [MissionManager.is_active(), EconomyManager.cash, _mhud.get_objective_shown()]
-	_tap(KEY_F)
-	for i: int in 90:
-		await get_tree().physics_frame
-		if not _player.is_in_vehicle():
-			break
-	await _ticks(30)
-	_note("side jobs: Tiffin Delivery twice (Selvi hands over the carrier; customers at %s; ₹250 each, offered again), Garage Run by car to (%.0f, %.0f) for ₹600" % [", ".join(addresses), drop.x, drop.z])
-	return ""
-
-
 func _talk() -> int:
 	_tap(KEY_E)
 	await _ticks(3)

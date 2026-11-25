@@ -16,7 +16,7 @@ Every third-party asset, font, sound or library must be listed here with its lic
 | Menu background, palette material for district meshes and car paint (with night glow for lamps and windows), animated pedestrian material, minimap | `shaders/menu_background.gdshader`, `shaders/palette_lit.gdshader`, `shaders/character.gdshader`, `shaders/minimap.gdshader` | Original shaders |
 | Game icon | `icon.svg` | Original vector drawing |
 | Code, UI layout and theme | `scripts/`, `scenes/` | Original |
-| Story missions 1-2 and the side jobs (Tiffin Delivery, Garage Run), their characters (the fixer, the tailor, the buyer, Selvi, Murugan), shop stock, outfits and the house, and dialogue | `resources/missions/` | Original writing for this project, following the opening missions outlined in GAME_DESIGN.md |
+| Story missions 1-5 and the side jobs (Tiffin Delivery, Garage Run), their characters (Vetri, Durai, Rafiq, Meena, Kamalam, Selvi, Murugan), shop stock, outfits and the house, and dialogue | `resources/missions/` | Original writing for this project, following the opening missions outlined in GAME_DESIGN.md |
 
 ## Fonts
 

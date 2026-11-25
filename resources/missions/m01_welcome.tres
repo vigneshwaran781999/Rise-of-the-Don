@@ -40,5 +40,5 @@ start_position = Vector3(86.5, 0.15, 8)
 start_yaw_degrees = 90.0
 objectives = Array[ExtResource("2_objective")]([SubResource("Resource_gate"), SubResource("Resource_courtyard"), SubResource("Resource_tank")])
 intro_lines = PackedStringArray("CONDUCTOR: Old Town bus stand! Everybody off, mind the step.", "Two hundred rupees, one bag, and a city that doesn't know your name yet.")
-outro_lines = PackedStringArray("FIXER: Hey! You, with the bag. New in town?", "FIXER: Come over here. I might have some work for you.")
+outro_lines = PackedStringArray("DURAI: Hey! You, with the bag. New in town?", "DURAI: Come over here. I might have some work for you.")
 reward_cash = 300

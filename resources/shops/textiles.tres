@@ -64,6 +64,6 @@ id = &"textiles"
 title = "Velanagar Textiles"
 kind = 1
 place = &"textiles"
-unlock_mission = &""
+unlock_mission = &"new_connection"
 greeting = "Come, come! Cotton, silk, everything in your size."
 items = Array[ExtResource("3_item")]([SubResource("Outfit_arrival"), SubResource("Outfit_veshti"), SubResource("Outfit_black"), SubResource("Outfit_kurta"), SubResource("Outfit_maroon"), SubResource("Outfit_sandal")])

@@ -34,7 +34,7 @@ func get_target() -> VehicleController:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("vehicle_enter_exit"):
+	if event.is_action_pressed("vehicle_enter_exit") and not _player.input_locked:
 		_pressed = true
 
 

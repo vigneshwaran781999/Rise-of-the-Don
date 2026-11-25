@@ -10,4 +10,4 @@ description = "Two floors north of Ring B, the upstairs let to a tenant. Save he
 place = &"house"
 price = 6000
 daily_income = 400
-unlock_mission = &""
+unlock_mission = &"city_chase"

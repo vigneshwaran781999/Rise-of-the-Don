@@ -24,6 +24,8 @@ func setup(lighting: WorldLighting, streamer: WorldStreamer) -> void:
 	_lighting = lighting
 	street_lights = StreetLightPool.new()
 	street_lights.name = "StreetLights"
+	street_lights.light_range = settings.street_light_range
+	street_lights.light_energy = settings.street_light_energy
 	add_child(street_lights)
 	street_lights.setup(streamer, settings.real_street_lights)
 	refresh()

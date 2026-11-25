@@ -6,8 +6,11 @@
 [ext_resource type="Resource" path="res://resources/missions/m02_first_opportunity.tres" id="4_first"]
 [ext_resource type="Resource" path="res://resources/missions/job_tiffin.tres" id="5_job_tiffin"]
 [ext_resource type="Resource" path="res://resources/missions/job_garage.tres" id="6_job_garage"]
+[ext_resource type="Resource" path="res://resources/missions/m03_new_connection.tres" id="7_m03"]
+[ext_resource type="Resource" path="res://resources/missions/m04_city_chase.tres" id="8_m04"]
+[ext_resource type="Resource" path="res://resources/missions/m05_building_an_empire.tres" id="9_m05"]
 
 [resource]
 script = ExtResource("1_story")
-missions = Array[ExtResource("2_mission")]([ExtResource("3_welcome"), ExtResource("4_first"), ExtResource("5_job_tiffin"), ExtResource("6_job_garage")])
+missions = Array[ExtResource("2_mission")]([ExtResource("3_welcome"), ExtResource("4_first"), ExtResource("7_m03"), ExtResource("8_m04"), ExtResource("9_m05"), ExtResource("5_job_tiffin"), ExtResource("6_job_garage")])
 starting_cash = 200

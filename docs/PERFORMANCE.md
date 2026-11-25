@@ -81,3 +81,36 @@ City life at the spawn street, with the traffic and pedestrian densities set tog
 - **Cheaper distant traffic:** GDD §16's kinematic cars beyond about 60 m, with full physics only up close. This only matters once traffic counts rise well above 22.
 - **Spreading the work:** stagger pedestrian path requests and spawns across frames to flatten the spikes.
 - **LODs:** a lower-detail pedestrian mesh and car body for distant NPCs, when draw calls start to matter on a discrete GPU.
+
+## M6: open-world systems (2026-11-25)
+
+Same machine (Intel UHD Graphics 730, i5-12400) and settings.
+
+**A fixed clock.** The baseline now holds the clock at 13:00, so every row is measured in the same light, and measures night as a row of its own. Before this change the run's three minutes moved the clock from 16:30 into the evening. As a result, the city-life rows were measured after dark and looked about 13 ms slower than M4. The baseline also now pauses the day/night cycle while it switches SSAO and glow off; otherwise the cycle's presets switched them back on within half a second.
+
+| Viewpoint | FPS | avg ms | 1% worst ms | draw calls |
+|---|---:|---:|---:|---:|
+| Spawn street, 13:00 | 35 | 28.53 | 38.27 | 295 |
+| Spawn street, night 21:30 (lamps, lit windows, 4 street lights) | 27 | 36.37 | 41.08 | 272 |
+| Market square | 35 | 28.73 | 34.37 | 252 |
+| Aerial, whole district (worst case) | 32 | 31.25 | 35.68 | 238 |
+| Sky only | 62 | 16.09 | 21.36 | 7 |
+| Spawn street, SSAO off | 44 | 22.59 | 26.47 | 292 |
+| Spawn street, SSAO and glow off | 61 | 16.53 | 21.46 | 292 |
+
+- **Streaming drive along Ring B:** 35 FPS average, worst frame 39.9 ms.
+- **City life at the spawn street:** 33–35 FPS at every density, 28.7–30.4 ms (M4: 26.5–26.7 ms).
+
+### What it shows
+
+- **Daytime is 1.5–2 ms a frame slower than in M4.** About 1.7 ms of that is the day/night cycle re-applying its blended preset every half second (the sky's light is recomputed incrementally after each change). About 1.2 ms is the HUD (minimap, mission HUD, stars). Shops, police and missions cost nothing measurable when idle, and neither does the player's character model.
+- **Night costs more, and almost all of it is the real street lights.** Lit windows and lamp lenses (the `city_lights` shader global) cost nothing measurable.
+  - On this integrated GPU a single OmniLight3D costs 2.5–4 ms, depending mostly on its reach, and the cost isn't linear in the number of lights. With M6's first setting (10 lights, 24 m reach) night ran at 26 FPS against 37 FPS without the lights.
+  - The pool is now 4 lights with a 16 m reach (`resources/world/day_night.tres`), and night costs about 8 ms over day.
+- **Sun shadows cost 4–5 ms** by day or night; SSAO about 6 ms; glow about 6 ms.
+
+### Levers for later (M8 graphics settings)
+
+- **The number and reach of real street lights** belong in the graphics quality preset (0 on Low; more on a discrete GPU, where they are far cheaper).
+- **Day/night updates:** update the cycle less often (or only the sky every few seconds) on Low.
+- **The usual levers** from M3: SSAO, glow, shadow distance and 3D resolution.

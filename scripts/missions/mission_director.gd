@@ -42,6 +42,8 @@ var _mission: MissionData
 var _objective: MissionObjective
 var _goal: MissionMarker
 var _goal_position := Vector3.ZERO     # where the running GO_TO goes (its position, or a pick)
+var _checkpoint_index: int = 0         # CHECKPOINTS: the next one to pass
+var _scene: DialogueScene
 var _rng := RandomNumberGenerator.new()
 var _time_left: float = -1.0
 var _talking_to: MissionContactNPC
@@ -61,6 +63,9 @@ func _ready() -> void:
 	add_child(dialogue)
 	dialogue.line_started.connect(_on_line_started)
 	dialogue.finished.connect(_on_dialogue_finished)
+	_scene = DialogueScene.new()
+	_scene.name = "DialogueScene"
+	add_child(_scene)
 
 
 func setup(player: PlayerController, world: District) -> void:
@@ -110,6 +115,11 @@ func get_objective_text() -> String:
 
 
 ## The giver standing at a mission's start marker while it is on offer (or null).
+## The dialogue scene (camera and letterbox) used by TALK_TO objectives marked `scene`.
+func get_scene() -> DialogueScene:
+	return _scene
+
+
 ## Where the running GO_TO objective goes (its position, or the address picked this time).
 func get_goal_position() -> Vector3:
 	return _goal_position
@@ -174,6 +184,12 @@ func _physics_process(delta: float) -> void:
 			_update_talk_to()
 		MissionObjective.Type.ENTER_VEHICLE:
 			_update_enter_vehicle()
+		MissionObjective.Type.CHECKPOINTS:
+			_update_checkpoints()
+		MissionObjective.Type.LOSE_WANTED:
+			_update_lose_wanted()
+		MissionObjective.Type.BUY_PROPERTY:
+			_update_buy_property()
 
 
 # --------------------------------------------------------------------------- objectives
@@ -202,12 +218,63 @@ func _update_go_to() -> void:
 		_complete()
 
 
+## CHECKPOINTS: through each in order; the goal marker moves on to the next.
+func _update_checkpoints() -> void:
+	if not _in_required_vehicle():
+		return
+	var here: Vector3 = _player.vehicle.global_position if _player.is_in_vehicle() else _player.global_position
+	var point: Vector3 = _objective.checkpoints[_checkpoint_index]
+	if _flat(here).distance_to(_flat(point)) > _objective.radius:
+		_show(_checkpoint_text(), _goal)
+		return
+	_checkpoint_index += 1
+	if _checkpoint_index >= _objective.checkpoints.size():
+		_complete()
+		return
+	AudioManager.play_ui(&"objective")
+	_goal_position = _objective.checkpoints[_checkpoint_index]
+	_goal.global_position = _goal_position
+	_show(_checkpoint_text(), _goal)
+
+
+func _checkpoint_text() -> String:
+	return "%s (%d/%d)" % [_objective.text, _checkpoint_index + 1, _objective.checkpoints.size()]
+
+
+## In the vehicle an IN_VEHICLE objective needs; otherwise says what to get back into.
+func _in_required_vehicle() -> bool:
+	if _objective.mode != MissionObjective.Mode.IN_VEHICLE:
+		return true
+	var car: VehicleController = get_vehicle(_objective.vehicle)
+	if _player.is_in_vehicle() and (car == null or _player.vehicle == car):
+		return true
+	if car != null:
+		_show("Get back in %s." % _mission.get_vehicle(_objective.vehicle).label, _car_marker(car))
+	else:
+		_show("Get in a vehicle.", _goal)
+	return false
+
+
+func _update_lose_wanted() -> void:
+	if not WantedSystem.is_wanted():
+		_complete()
+
+
+func _update_buy_property() -> void:
+	if EconomyManager.owns(_objective.property):
+		_complete()
+	else:
+		_show(_objective.text, _goal)
+
+
 func _update_talk_to() -> void:
 	var npc: MissionContactNPC = get_contact(_objective.contact)
 	if npc == null:
 		return
 	if dialogue.is_playing() and _talking_to == npc:
 		_set_prompt("", "")
+		if _scene.is_playing():
+			_show(_text, null)      # no diamond or screen arrow in a dialogue scene
 		return
 	var near: bool = _flat(npc.global_position).distance_to(_flat(_player.global_position)) <= TALK_REACH
 	if near and not _player.is_in_vehicle() and _player.can_enter_vehicle():
@@ -234,6 +301,8 @@ func _start_talk(npc: MissionContactNPC) -> void:
 		return
 	_talking_to = npc
 	_set_prompt("", "")
+	if _objective.scene and not _objective.lines.is_empty():
+		_scene.play(_player, npc)
 	if _objective.lines.is_empty():
 		_on_dialogue_finished()
 	else:
@@ -241,6 +310,7 @@ func _start_talk(npc: MissionContactNPC) -> void:
 
 
 func _on_dialogue_finished() -> void:
+	_scene.stop()
 	if _talking_to == null or _objective == null or _objective.type != MissionObjective.Type.TALK_TO:
 		return
 	_talking_to = null
@@ -270,6 +340,9 @@ func _on_mission_started(mission: MissionData, checkpoint: int) -> void:
 	_mission = mission
 	_passed = false
 	_clear_offers()
+	# A mission with the police in it starts (or restarts) with a clean record.
+	if mission.uses_police():
+		WantedSystem.clear()
 	var spot: Array = mission.checkpoint_spot(checkpoint)
 	var pos: Vector3 = spot[0]
 	if checkpoint > 0 or _player.is_in_vehicle() or _flat(_player.global_position).distance_to(_flat(pos)) > 6.0:
@@ -292,15 +365,27 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 	if _goal != null:
 		_goal.queue_free()
 		_goal = null
-	if _objective.type == MissionObjective.Type.GO_TO:
-		_goal_position = _objective.pick_position(_rng)
+	_checkpoint_index = 0
+	var marked: bool = true
+	match _objective.type:
+		MissionObjective.Type.GO_TO:
+			_goal_position = _objective.pick_position(_rng)
+		MissionObjective.Type.CHECKPOINTS:
+			_goal_position = _objective.checkpoints[0]
+		MissionObjective.Type.BUY_PROPERTY:
+			_goal_position = _objective.position
+		_:
+			marked = false
+	if marked:
 		_goal = MissionMarker.new()
 		_goal.name = "Goal"
 		_goal.setup(MissionMarker.Kind.GOAL, _objective.radius)
 		add_child(_goal)
 		_goal.global_position = _goal_position
+	if _objective.wanted_level > WantedSystem.level:
+		WantedSystem.set_level(_objective.wanted_level, _player.global_position)
 	_text = ""
-	_show(_objective.text, _goal)
+	_show(_checkpoint_text() if _objective.type == MissionObjective.Type.CHECKPOINTS else _objective.text, _goal)
 	if _objective.hint != "":
 		hint_requested.emit(ControlsPanel.fill_keys(_objective.hint))
 	if index > 0:
@@ -309,6 +394,7 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 
 func _on_mission_failed(_mission_data: MissionData, _reason: String) -> void:
 	dialogue.stop()
+	_scene.stop()
 	_talking_to = null
 	_set_prompt("", "")
 	timer_changed.emit(-1.0)
@@ -322,6 +408,7 @@ func _on_mission_passed(mission: MissionData) -> void:
 
 
 func _on_mission_ended(_mission_data: MissionData) -> void:
+	_scene.stop()
 	if not _passed:
 		dialogue.stop()
 	_clear_running(not _passed, true)
@@ -411,6 +498,10 @@ func _check_offers() -> void:
 		var distance: float = here.distance_to(_flat(mission.start_position))
 		nearest = minf(nearest, distance)
 		if _start_armed and distance <= START_RADIUS:
+			_start_armed = false
+			if EconomyManager.cash < mission.min_cash:
+				hint_requested.emit("%s needs %s. Side jobs pay: Selvi at the tiffin stall, Murugan at the garage." % [mission.title, EconomyManager.format(mission.min_cash)])
+				return
 			MissionManager.start(mission.id)
 			return
 	if nearest > START_RADIUS + 2.0:

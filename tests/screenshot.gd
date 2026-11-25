@@ -7,7 +7,7 @@ extends Node
 ##       [--pause] [--press=ButtonName,OtherButton]
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--waypoint=x,z]
-##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id]
+##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id] [--mission=id[:n] [--talk]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
@@ -65,6 +65,8 @@ func _run() -> void:
 		GameState.set_outfit(StringName(str(args["outfit"])))
 	if args.has("shop"):
 		await _shop(instance, StringName(str(args["shop"])))
+	if args.has("mission"):
+		await _mission(instance, str(args["mission"]), args.has("talk"))
 	if args.has("crowd"):
 		var where: String = str(args["crowd"]) if str(args["crowd"]).count(",") == 2 else str(args.get("look", "0,0,0"))
 		await _crowd(instance, _vec3(where))
@@ -287,3 +289,43 @@ func _shop(game: Node, place_id: StringName) -> void:
 		if places.get_prompt()[0] != "":
 			break
 	places.interact()
+
+
+## --mission=id[:n]: story mission `id` starts (the missions listed before it count as passed) and
+## skips to its objective n; with --talk the player then walks up to that objective's contact and
+## presses interact (a dialogue scene shows its camera and letterbox).
+func _mission(game: Node, spec: String, talk: bool) -> void:
+	var id := StringName(spec.get_slice(":", 0))
+	var skip: int = int(spec.get_slice(":", 1)) if spec.contains(":") else 0
+	MissionManager.quit_mission()
+	var done: Array[String] = []
+	for mission: MissionData in MissionManager.story.missions:
+		if mission.id == id:
+			break
+		done.append(String(mission.id))
+	MissionManager.from_save({"completed": done})
+	await get_tree().physics_frame
+	MissionManager.start(id)
+	for i: int in skip:
+		MissionManager.complete_objective()
+	for i: int in 10:
+		await get_tree().physics_frame
+	if not talk:
+		return
+	var director := game.get_node("Missions") as MissionDirector
+	var npc: MissionContactNPC = director.get_contact(MissionManager.get_objective().contact)
+	if npc == null:
+		push_warning("screenshot: the objective has no contact to talk to")
+		return
+	var player := game.get_node("Player") as PlayerController
+	(game.get_node("World") as District).streamer.load_around_now(npc.global_position)
+	player.global_position = npc.global_position + npc.global_basis.z * 1.7 + Vector3.UP * 0.1
+	player.reset_physics_interpolation()
+	for i: int in 20:
+		await get_tree().physics_frame
+	for pressed: bool in [true, false]:
+		var event := InputEventAction.new()
+		event.action = &"interact"
+		event.pressed = pressed
+		Input.parse_input_event(event)
+		await get_tree().process_frame

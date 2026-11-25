@@ -276,9 +276,9 @@ Dated entries: what was built, what broke, how it was fixed.
   - A helper in the save test named `_process` clashed with Node's.
   - Save times are stored to fractions of a second, so Continue can tell two saves made in the same second apart.
 
-## 2026-11-25 — M6: open-world systems (in progress)
+## 2026-11-25 — M6: open-world systems
 
-**Built so far**
+**Built**
 - **Step 1, day and night (GDD §12):**
   - The clock lives in `GameState` (`hour`, `day`, `day_changed`; one in-game day is 24 real minutes), because CLAUDE.md doesn't allow a separate time-of-day autoload. It's saved.
   - `DayNightCycle` blends eight lighting presets from `resources/world/day_night.tres` (sky, sun or moon, fog, exposure).
@@ -337,6 +337,27 @@ Dated entries: what was built, what broke, how it was fixed.
     - The save test checks a bought house and outfit through save and load.
     - The smoke test checks the player figure and the map blips.
     - The screenshot tool gained `--outfit` and `--shop`.
+- **Step 5, missions 3 to 5 (GDD §3, §8):**
+  - **Characters (original):**
+    - Vetri, the player.
+    - Durai, the fixer (renamed from "Fixer" in missions 1 and 2).
+    - Rafiq the tailor and Meena (likewise renamed).
+    - Kamalam, who runs the flower market wholesale.
+    - Selvi at the tiffin stall and Murugan the mechanic.
+  - **New mission features:**
+    - Objective types CHECKPOINTS (in order, a running count on the HUD), LOSE_WANTED and BUY_PROPERTY.
+    - Any objective can raise the wanted level when it starts (`wanted_level`), and missions with police in them start and restart with a clean record.
+    - `MissionData.min_cash`: the start marker reminds you instead of starting.
+  - **`DialogueScene`:** a TALK_TO marked `scene` plays with a side-on two-shot camera (stepped in from walls), letterbox bars, the player held still (`PlayerController.input_locked`) and no waypoint clutter.
+  - **3 The New Connection:** Durai sends Vetri to Kamalam; their conversation is the scene. It pays ₹1,500, and Velanagar Textiles and the side jobs open (the shop announces itself).
+  - **4 City Chase:** the watched car brings two stars and a 150 s run through five checkpoints round Ring B (past the police station), then lose the police (or respray), then leave the car in Murugan's garage. It pays ₹2,000 and the house goes on sale.
+  - **5 Building an Empire:** needs ₹6,000 to start; Durai, then buy the house. It pays ₹1,000.
+  - **Tests:**
+    - New `tests/story_test.tscn` covers missions 3 to 5 and the side jobs.
+    - The mission test now expects The New Connection after mission 2.
+    - The shop test marks the story far enough on for the clothes shop and the house.
+    - The screenshot tool gained `--mission=id[:n] --talk`.
+  - **Version** 0.6.0; the title footer says Milestone 6.
 
 **Broke / fixed**
 - **Step 1:**
@@ -370,3 +391,12 @@ Dated entries: what was built, what broke, how it was fixed.
   - The roadside lamp in front of the garage would have blocked the drive-in bay (lamps are solid since step 3). Special buildings can now clear lamps, bollards and trees from their door.
   - The shop menu's deferred focus could land on a row that a second refresh had already removed ("!is_inside_tree"). It now looks the row up by id when it runs.
   - Shops stay quiet while mission dialogue is playing, so E skips the line instead of opening a shop.
+- **Step 5:**
+  - **Story test stuck at a start marker:** after a mission ends, start markers only re-arm once you've stepped away. That is deliberate, since mission 3 ends beside mission 4's marker. The test now walks in from a few metres off, as a player would.
+  - **Mission 1 left running:** loading progress directly (`MissionManager.from_save`) dropped the auto-started mission 1 without telling the director. The tests quit it first. (Real loads go through the session and are unaffected.)
+  - **Scene clutter:** the dialogue scene showed the waypoint diamond and screen arrow over Kamalam; they're hidden while a scene plays.
+  - **Performance re-check** (see `docs/PERFORMANCE.md`):
+    - **Night was the regression:** the baseline first showed city life about 13 ms slower than in M4. That was because the run's clock reached the evening, and the 10 real street lights (24 m reach) cost about 10 ms a frame on the Intel UHD 730.
+    - **Street lights:** the pool is now 4 lights with a 16 m reach; their count, reach and brightness moved into `day_night.tres`. Night is 36 ms against 28 ms by day.
+    - **Baseline fixes:** the baseline now holds the clock at 13:00 with a separate night row. It also pauses the cycle while switching SSAO and glow off, because its presets had been switching them back on.
+    - **Rename:** the mission test's checks follow the M2 character rename.

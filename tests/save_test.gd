@@ -199,7 +199,7 @@ func _check_load_restores() -> String:
 	if GameState.play_time < float(_saved_state["play_time"]) - 0.01 or GameState.get_stat(&"missions_passed") != 1:
 		return "play time %.1f (saved %.1f) or stats %s not restored" % [GameState.play_time, _saved_state["play_time"], GameState.stats]
 	var hud := loaded.get_node("HUD") as Hud
-	if hud.get_cash_shown() != "₹500" or hud.get_mission_hud().get_objective_shown() != "Talk to the fixer.":
+	if hud.get_cash_shown() != "₹500" or hud.get_mission_hud().get_objective_shown() != "Talk to Durai.":
 		return "HUD after loading: cash '%s', objective '%s'" % [hud.get_cash_shown(), hud.get_mission_hud().get_objective_shown()]
 	_note("Main Menu -> Load Game -> slot 2: cash ₹500 (the ₹777 earned after saving is gone), health 61, position, day 3 21:15, the house and the kurta (worn), play time, stats and mission 2 (resumed at its checkpoint) restored")
 	return ""

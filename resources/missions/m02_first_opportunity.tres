@@ -9,7 +9,7 @@
 [sub_resource type="Resource" id="Resource_fixer"]
 script = ExtResource("3_contact")
 id = &"fixer"
-display_name = "Fixer"
+display_name = "Durai"
 look = 0
 top_color = Color(0.165, 0.184, 0.227, 1)
 bottom_color = Color(0.231, 0.231, 0.247, 1)
@@ -21,7 +21,7 @@ yaw_degrees = 90.0
 [sub_resource type="Resource" id="Resource_tailor"]
 script = ExtResource("3_contact")
 id = &"tailor"
-display_name = "Tailor"
+display_name = "Rafiq"
 look = 2
 top_color = Color(0.957, 0.945, 0.91, 1)
 bottom_color = Color(0.925, 0.89, 0.812, 1)
@@ -33,7 +33,7 @@ yaw_degrees = 0.0
 [sub_resource type="Resource" id="Resource_buyer"]
 script = ExtResource("3_contact")
 id = &"buyer"
-display_name = "Buyer"
+display_name = "Meena"
 look = 1
 top_color = Color(0.761, 0.094, 0.357, 1)
 bottom_color = Color(0.122, 0.435, 0.69, 1)
@@ -45,7 +45,7 @@ yaw_degrees = 180.0
 [sub_resource type="Resource" id="Resource_car"]
 script = ExtResource("4_vehicle")
 id = &"tailor_car"
-label = "the tailor's car"
+label = "Rafiq's car"
 scene = ExtResource("5_sedan")
 position = Vector3(128, 0, 4.75)
 yaw_degrees = 90.0
@@ -55,26 +55,26 @@ must_survive = true
 [sub_resource type="Resource" id="Resource_talk_fixer"]
 script = ExtResource("2_objective")
 type = 1
-text = "Talk to the fixer."
+text = "Talk to Durai."
 hint = "Walk up to him and press {interact} to talk. {interact} also skips a line."
 contact = &"fixer"
-lines = PackedStringArray("FIXER: New faces are useful. Nobody knows them yet.", "FIXER: This parcel goes to the tailor on the main road, east of the big junction.", "FIXER: Walk it over. Don't open it, don't drop it, don't be slow.")
+lines = PackedStringArray("DURAI: New faces are useful. Nobody knows them yet.", "DURAI: This parcel goes to Rafiq the tailor, on the main road, east of the big junction.", "DURAI: Walk it over. Don't open it, don't drop it, don't be slow.")
 give_item = &"parcel"
 
 [sub_resource type="Resource" id="Resource_tailor_delivery"]
 script = ExtResource("2_objective")
 type = 1
-text = "Take the parcel to the tailor on the east main road."
+text = "Take the parcel to Rafiq, the tailor on the east main road."
 hint = "Follow the arrow. Hold {sprint} to run."
 contact = &"tailor"
-lines = PackedStringArray("TAILOR: From the fixer? Good. You're quicker than the last boy he sent.", "TAILOR: Now this one goes to a buyer at the flower market, by the temple. They're waiting already.", "TAILOR: Take my car, it's out front. Bring it back in one piece... or at least bring it back.")
+lines = PackedStringArray("RAFIQ: From Durai? Good. You're quicker than the last boy he sent.", "RAFIQ: Now this one goes to Meena at the flower market, by the temple. She's waiting already.", "RAFIQ: Take my car, it's out front. Bring it back in one piece... or at least bring it back.")
 take_item = &"parcel"
 give_item = &"parcel"
 
 [sub_resource type="Resource" id="Resource_get_in"]
 script = ExtResource("2_objective")
 type = 2
-text = "Get in the tailor's car."
+text = "Get in Rafiq's car."
 hint = "Press {vehicle_enter_exit} to get in."
 vehicle = &"tailor_car"
 checkpoint = true
@@ -95,17 +95,17 @@ time_limit = 120.0
 [sub_resource type="Resource" id="Resource_hand_over"]
 script = ExtResource("2_objective")
 type = 1
-text = "Give the parcel to the buyer."
+text = "Give the parcel to Meena."
 hint = "Press {vehicle_enter_exit} to get out, then {interact} to hand it over."
 contact = &"buyer"
-lines = PackedStringArray("BUYER: About time. The fixer said you'd be quick.", "BUYER: Tell him we're square. And you... I'll remember your face.")
+lines = PackedStringArray("MEENA: About time. Durai said you'd be quick.", "MEENA: Tell him we're square. And you... I'll remember your face.")
 take_item = &"parcel"
 
 [resource]
 script = ExtResource("1_mission")
 id = &"first_opportunity"
 title = "First Opportunity"
-description = "A fixer at the temple tank has a parcel that needs carrying."
+description = "Durai, a fixer at the temple tank, has a parcel that needs carrying."
 category = 2
 prerequisites = Array[StringName]([&"welcome"])
 start_position = Vector3(67.5, 0.15, 55.5)

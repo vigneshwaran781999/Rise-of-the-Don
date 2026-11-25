@@ -22,6 +22,8 @@ const ON_FOOT_STATES: Array[State] = [State.IDLE, State.WALK, State.RUN, State.S
 @export var tuning: PlayerTuning
 
 var state: State = State.IDLE
+## While true (a dialogue scene), movement, jumping and getting into vehicles are ignored.
+var input_locked: bool = false
 ## The vehicle the player is getting into or sitting in (null on foot).
 var vehicle: VehicleController
 
@@ -144,7 +146,9 @@ func _physics_process(delta: float) -> void:
 	if stepping_out:
 		_jump_buffer_left = 0.0
 
-	var input: Vector2 = Vector2.ZERO if stepping_out else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if input_locked:
+		_jump_buffer_left = 0.0
+	var input: Vector2 = Vector2.ZERO if stepping_out or input_locked else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var strength: float = minf(input.length(), 1.0)
 	var gait: State = _choose_gait(strength)
 	_apply_horizontal(_camera_relative(input) * _gait_speed(gait), on_floor, delta)

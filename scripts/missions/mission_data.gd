@@ -24,6 +24,8 @@ enum Category { STORY, DRIVING, DELIVERY, RACING, EXPLORATION, RESCUE, BUSINESS 
 @export var start_yaw_degrees: float = 0.0
 ## Who offers the mission: stands by the start marker while it is on offer (optional).
 @export var giver: MissionContact
+## The start marker only starts the mission with at least this much cash (it reminds you).
+@export var min_cash: int = 0
 ## Offered again after it has been passed (side jobs; GDD §3, mission 5).
 @export var repeatable: bool = false
 
@@ -83,3 +85,12 @@ func checkpoint_spot(index: int) -> Array:
 	if index <= 0 or index >= objectives.size():
 		return [start_position, start_yaw_degrees]
 	return [objectives[index].checkpoint_position, objectives[index].checkpoint_yaw_degrees]
+
+
+## Whether the police are part of it (an objective raises the wanted level or asks you to lose
+## it): such a mission starts and restarts with a clean record.
+func uses_police() -> bool:
+	for objective: MissionObjective in objectives:
+		if objective.wanted_level > 0 or objective.type == MissionObjective.Type.LOSE_WANTED:
+			return true
+	return false

@@ -18,8 +18,12 @@ extends Resource
 @export_range(0.0, 24.0) var lights_off_hour: float = 6.5
 ## fading over this many hours.
 @export var lights_fade_hours: float = 0.5
-## How many streetlights near the camera cast real light (the rest only glow).
-@export var real_street_lights: int = 10
+## How many streetlights near the camera cast real light (the rest only glow), how far that
+## light reaches (m) and how bright it is. Each real light is costly on integrated graphics
+## (about 2-4 ms a frame each on an Intel UHD 730, mostly set by the reach), so keep these modest.
+@export var real_street_lights: int = 4
+@export var street_light_range: float = 16.0
+@export var street_light_energy: float = 4.5
 
 
 ## The look at `hour`, blended from the two keys either side of it.

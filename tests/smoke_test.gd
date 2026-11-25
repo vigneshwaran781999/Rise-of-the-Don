@@ -721,11 +721,11 @@ func _check_hud() -> String:
 	if figure == null or figure.mesh == null or figure.get_outfit() == null or figure.get_outfit().id != &"arrival":
 		return "the player should be the character model in their travelling clothes"
 	var places := game.get_node_or_null("Places") as PlaceDirector
-	if places == null or places.get_map_blips().size() != 4:
-		return "the shops and the house for sale should be on the map"
+	if places == null or places.get_map_blips().size() != 2:
+		return "at the start the tiffin stall and the garage should be on the map (the clothes shop and the house come later)"
 	if game.get_node("World").data.police_station.origin == Vector3.ZERO:
 		return "Old Town has no police station to release you at"
-	print("  ok  HUD health/stamina bars follow the player; F3 toggles the FPS / chunks / cars / people readout; no wanted stars or police at the start; the player is the character model in travelling clothes; three shops and a house for sale on the map")
+	print("  ok  HUD health/stamina bars follow the player; F3 toggles the FPS / chunks / cars / people readout; no wanted stars or police at the start; the player is the character model in travelling clothes; the tiffin stall and garage on the map")
 	return ""
 
 

@@ -71,6 +71,7 @@ func setup(player: PlayerController, district: DistrictData, missions: MissionDi
 	MissionManager.availability_changed.connect(_refresh_markers)
 	EconomyManager.owned_changed.connect(func(_id: StringName) -> void: _refresh_markers())
 	GameState.day_changed.connect(_pay_income)
+	MissionManager.mission_passed.connect(_on_mission_passed)
 	_refresh_markers()
 
 
@@ -317,6 +318,16 @@ func _pay_income(_day: int) -> void:
 		if EconomyManager.owns(property.id) and property.daily_income > 0:
 			EconomyManager.add(property.daily_income, &"rent")
 			message.emit("Rent from the %s: +%s" % [property.title.to_lower(), EconomyManager.format(property.daily_income)])
+
+
+## A mission that opens a shop or puts a property on sale says so.
+func _on_mission_passed(mission: MissionData) -> void:
+	for shop: ShopData in shops:
+		if shop.unlock_mission == mission.id:
+			message.emit("%s is open to you now." % shop.title)
+	for property: PropertyData in properties:
+		if property.unlock_mission == mission.id:
+			message.emit("The %s is for sale: %s." % [property.title.to_lower(), EconomyManager.format(property.price)])
 
 
 # --------------------------------------------------------------------------- markers

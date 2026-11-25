@@ -5,8 +5,13 @@ extends Resource
 ## - TALK_TO: walk up to contact `contact` and press interact; `lines` are spoken, then the
 ##   contact hands over `give_item` and/or takes `take_item` (a delivery).
 ## - ENTER_VEHICLE: get into mission vehicle `vehicle`.
+## - CHECKPOINTS: drive (or run) through `checkpoints` in order, each within `radius`; no need to
+##   stop. `mode` and `vehicle` as for GO_TO.
+## - LOSE_WANTED: get the wanted level back to 0 (lose the police, or a respray).
+## - BUY_PROPERTY: own property `property` (bought at its door; `position` marks the door).
+## Any objective can raise the wanted level when it starts (`wanted_level`).
 
-enum Type { GO_TO, TALK_TO, ENTER_VEHICLE }
+enum Type { GO_TO, TALK_TO, ENTER_VEHICLE, CHECKPOINTS, LOSE_WANTED, BUY_PROPERTY }
 ## How the player must arrive at a GO_TO point.
 enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 
@@ -30,6 +35,18 @@ enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 @export var lines: PackedStringArray = []
 @export var give_item: StringName
 @export var take_item: StringName
+## Plays as a dialogue scene: a two-shot camera and letterbox bars, the player standing still.
+@export var scene: bool = false
+
+@export_group("Checkpoints")
+## CHECKPOINTS: the points to pass, in order.
+@export var checkpoints: PackedVector3Array = PackedVector3Array()
+
+@export_group("Property and police")
+## BUY_PROPERTY: the PropertyData id to own.
+@export var property: StringName
+## When the objective starts the wanted level rises to at least this (0 = leave it).
+@export_range(0, 5) var wanted_level: int = 0
 
 @export_group("Vehicle")
 ## ENTER_VEHICLE: the mission vehicle to get into. GO_TO in IN_VEHICLE mode: the mission vehicle

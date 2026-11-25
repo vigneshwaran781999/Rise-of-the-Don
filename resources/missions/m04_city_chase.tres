@@ -1,0 +1,88 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="3_contact"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="4_vehicle"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="5_sedan"]
+
+[sub_resource type="Resource" id="Resource_kamalam"]
+script = ExtResource("3_contact")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 0.0
+
+[sub_resource type="Resource" id="Resource_car"]
+script = ExtResource("4_vehicle")
+id = &"watched_car"
+label = "the watched car"
+scene = ExtResource("5_sedan")
+position = Vector3(-72, 0, -45.3)
+yaw_degrees = -90.0
+paint = Color(0.114, 0.114, 0.133, 1)
+must_survive = true
+
+[sub_resource type="Resource" id="Resource_brief"]
+script = ExtResource("2_objective")
+type = 1
+text = "Talk to Kamalam."
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: There's a black car by the flower market. The police have been watching it all week.", "KAMALAM: Today I want them to see it. Take it round Ring B, past every one of their eyes.", "KAMALAM: Then lose them. When it's clean, leave it with Murugan at his garage. Never lead them to my door.")
+
+[sub_resource type="Resource" id="Resource_get_in"]
+script = ExtResource("2_objective")
+type = 2
+text = "Get in the watched car by the flower market."
+hint = "Press {vehicle_enter_exit} to get in."
+vehicle = &"watched_car"
+checkpoint = true
+checkpoint_position = Vector3(-72, 0.2, -42.3)
+checkpoint_yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_route"]
+script = ExtResource("2_objective")
+type = 3
+text = "Drive through the checkpoints"
+hint = "Two stars: the police are on you. Drive through each marker, no need to stop."
+radius = 7.0
+mode = 2
+vehicle = &"watched_car"
+checkpoints = PackedVector3Array(-112, 0.15, -20, -60, 0.15, 112, 40, 0.15, 112, 112, 0.15, 40, 112, 0.15, -60)
+wanted_level = 2
+time_limit = 150.0
+
+[sub_resource type="Resource" id="Resource_lose"]
+script = ExtResource("2_objective")
+type = 4
+text = "Lose the police."
+hint = "Get out of their sight, then stay outside the red circle on the minimap until the stars go. A garage respray works too."
+
+[sub_resource type="Resource" id="Resource_drop"]
+script = ExtResource("2_objective")
+text = "Leave the car in Murugan's garage."
+hint = "Drive into the bay and stop."
+position = Vector3(159.7, 0.15, -15)
+radius = 3.5
+mode = 2
+vehicle = &"watched_car"
+
+[resource]
+script = ExtResource("1_mission")
+id = &"city_chase"
+title = "City Chase"
+description = "Kamalam wants the police to see a car, and then lose it."
+category = 1
+prerequisites = Array[StringName]([&"new_connection"])
+start_position = Vector3(-69.5, 0.15, -70)
+start_yaw_degrees = 90.0
+giver = SubResource("Resource_kamalam")
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_brief"), SubResource("Resource_get_in"), SubResource("Resource_route"), SubResource("Resource_lose"), SubResource("Resource_drop")])
+vehicles = Array[ExtResource("4_vehicle")]([SubResource("Resource_car")])
+outro_lines = PackedStringArray("MURUGAN: Kamalam's car? What car? I didn't see any car.")
+reward_cash = 2000

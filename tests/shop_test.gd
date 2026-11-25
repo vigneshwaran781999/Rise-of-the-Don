@@ -48,6 +48,8 @@ func _run() -> void:
 	(_game.get_node("Police") as PoliceManager).enabled = false
 	# Mission 1 runs from the start; quit it so its prompts and dialogue stay out of the way.
 	MissionManager.quit_mission()
+	# The clothes shop opens with mission 3 and the house goes on sale after mission 4.
+	MissionManager.from_save({"completed": ["welcome", "first_opportunity", "new_connection", "city_chase"]})
 	await _ticks(30)
 	var steps: Array[Callable] = [
 		_check_places, _check_food, _check_clothes, _check_respray, _check_property, _check_save_round_trip,

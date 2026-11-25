@@ -186,6 +186,7 @@ Headless tests already cover the logic (`tests/traffic_test.tscn`, `tests/pedest
 - [ ] Sunset to night (around 18:00–19:00): the sky goes orange, then dark blue. Lamps glow, windows light up floor by floor (not all at once, not every one), and street lights pool on the road near you.
 - [ ] At night you can still see where you're going on foot and in the car (L for headlights). Traffic drives with headlights on.
 - [ ] Dawn (around 06:00–07:00): the lights go off again. Nothing flickers or pops as the light changes.
+- [ ] Press F3 by day and after dark: on this PC expect about 35 FPS by day and about 27 at night (4 street lights). Is night smooth enough to drive? Do the street-light pools look right, or too sparse?
 
 ### Map and GPS
 - [ ] The minimap (bottom left) turns with you; "N" stays on north. Driving fast zooms it out.
@@ -208,9 +209,26 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 ### The player, shops, the house and side jobs
 - [ ] You are a low-poly man (Vetri) in a blue shirt and khaki trousers, not a capsule. Walking, his legs and arms swing in step; running and sprinting, the stride lengthens and the swing widens; in a jump the legs stay apart. Does it look right, or do the feet slide?
 - [ ] **Tiffin stall** (green "TIFFIN" board across the road from the bus stand): after the conductor's lines, step into the green ring: "E  BUY FOOD". The menu shows coffee, idli and vada, and full meals with prices; your cash is top right. Hurt yourself (a fall or a crash), then eat: health goes up and cash goes down. When full: "You're not hungry."
-- [ ] **Velanagar Textiles** (pink building, "TEXTILES" board, Ring B west of the police station): six outfits. Buy one: you're wearing it at once (look at Vetri when you leave). Switch back to the travelling clothes and again: free. One you can't afford says so.
+- [ ] **Velanagar Textiles** (pink building, "TEXTILES" board, Ring B west of the police station; it serves you once you have met Kamalam in The New Connection): six outfits. Buy one: you're wearing it at once (look at Vetri when you leave). Switch back to the travelling clothes and again: free. One you can't afford says so.
 - [ ] **Garage** (red "GARAGE" board, far east on the east road): drive in under the board and stop: "E  RESPRAY". With 1–3 stars and no police in sight: the screen fades, and the car comes out a new colour, smoke gone, tyres fixed, stars gone, ₹500 less. With 4+ stars, or police watching, it refuses and charges nothing. Is the bay easy to drive into?
-- [ ] **House for sale** (verandah house north of Ring B, east, with a yellow FOR SALE board): "E  BUY VERANDAH HOUSE  ₹6,000". Without the cash it says so. Once bought: the board goes, the map badge turns to H, and E at the door opens the save slots (Esc goes straight back to the game). Rent arrives every in-game day at midnight ("Rent from the verandah house: +₹400").
+- [ ] **House for sale** (verandah house north of Ring B, east; the yellow FOR SALE board appears after City Chase): "E  BUY VERANDAH HOUSE  ₹6,000". Without the cash it says so. Once bought: the board goes, the map badge turns to H, and E at the door opens the save slots (Esc goes straight back to the game). Rent arrives every in-game day at midnight ("Rent from the verandah house: +₹400").
 - [ ] Map: green F, C and G badges for the shops, an orange ₹ for the house (H once bought).
-- [ ] **Side jobs** (after First Opportunity): a magenta beam by Selvi at the tiffin stall and by Murugan at the garage. **Tiffin Delivery:** she hands you a carrier; run (or drive) to the marked door within 100 s for ₹250. **Garage Run:** take the yellow car to its owner within 120 s for ₹600. Both come back on offer, usually with another address.
+- [ ] **Side jobs** (after The New Connection): a magenta beam by Selvi at the tiffin stall and by Murugan at the garage. **Tiffin Delivery:** she hands you a carrier; run (or drive) to the marked door within 100 s for ₹250. **Garage Run:** take the yellow car to its owner within 120 s for ₹600. Both come back on offer, usually with another address.
 - [ ] Save, quit and load: your outfit, the house and the outfits you've bought come back.
+
+### Missions 3 to 5
+`tests/story_test.tscn` plays these through. These checks are about how they play.
+- [ ] **Names:** in First Opportunity the fixer is now **Durai**, the tailor **Rafiq** and the buyer **Meena**. The prompts and subtitles use the names.
+- [ ] **The New Connection** (magenta beam by Durai at the tank after First Opportunity): he sends you to Kamalam at the market hall (maroon top, gold skirt).
+  - Press E next to her: the camera cuts to a side view of you both, black bars slide in, and you can't walk off.
+  - Read the conversation (Kamalam and Vetri speak; E moves on a line). At the end the camera and control come back. "MISSION PASSED +₹1,500", then "Velanagar Textiles is open to you now."
+  - Is the camera framing good? Does any line go by too fast?
+- [ ] **City Chase** (magenta beam by Kamalam afterwards): she briefs you.
+  - Get into the black car by the flower market: two stars at once, police on their way, and a 2:30 clock. The objective reads "Drive through the checkpoints (1/5)" with a cyan marker and GPS route.
+  - Drive through all five (round Ring B, past the police station); the count goes up with a chime.
+  - Then "Lose the police." Escape them, or respray in the garage. Then "Leave the car in Murugan's garage": stop in the bay. "MISSION PASSED +₹2,000", Murugan's line, and the house goes on sale.
+  - Try failing: wreck the car, or get busted. "Retry" puts you back by the car with no stars.
+  - Is 150 s fair with the police on you? Do roadblocks appear if it reaches three stars?
+- [ ] **Building an Empire** (magenta beam by Durai at the verandah house):
+  - Walking in with less than ₹6,000 says it needs ₹6,000 and doesn't start. Do side jobs until you have it, then walk in again.
+  - Durai talks, then "Buy the verandah house." Buy it at the door: "MISSION PASSED +₹1,000". The house is now your save point and pays rent.

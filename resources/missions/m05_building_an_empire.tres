@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="1_mission"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="3_contact"]
+
+[sub_resource type="Resource" id="Resource_durai"]
+script = ExtResource("3_contact")
+id = &"durai"
+display_name = "Durai"
+look = 0
+top_color = Color(0.165, 0.184, 0.227, 1)
+bottom_color = Color(0.231, 0.231, 0.247, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(67, 0.15, 145.2)
+yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_talk"]
+script = ExtResource("2_objective")
+type = 1
+text = "Talk to Durai."
+contact = &"durai"
+lines = PackedStringArray("DURAI: Kamalam says you did well. Says you'll be around a while.", "DURAI: Then stop sleeping at the bus stand. This house is for sale, and the tenant upstairs pays on time.", "DURAI: Six thousand. A roof of your own, a place to keep your things, and rent coming in every day.")
+
+[sub_resource type="Resource" id="Resource_buy"]
+script = ExtResource("2_objective")
+type = 5
+text = "Buy the verandah house."
+hint = "Walk up to its door and press {interact}."
+position = Vector3(60.33, 0.15, 144.6)
+radius = 1.2
+property = &"verandah_house"
+
+[resource]
+script = ExtResource("1_mission")
+id = &"building_empire"
+title = "Building an Empire"
+description = "Durai knows a house for sale north of Ring B. Bring ₹6,000."
+category = 6
+prerequisites = Array[StringName]([&"city_chase"])
+start_position = Vector3(65.2, 0.15, 144.8)
+start_yaw_degrees = 90.0
+giver = SubResource("Resource_durai")
+min_cash = 6000
+objectives = Array[ExtResource("2_objective")]([SubResource("Resource_talk"), SubResource("Resource_buy")])
+outro_lines = PackedStringArray("DURAI: A landlord already. Every big man in this town started with one roof, Vetri.")
+reward_cash = 1000

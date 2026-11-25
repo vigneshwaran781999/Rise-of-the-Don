@@ -51,15 +51,27 @@ func _run() -> void:
 	var traffic := _game.get_node("Traffic") as TrafficManager
 	var people := _game.get_node("Pedestrians") as PedestrianManager
 	_set_life(traffic, people, false)
+	# The clock stands still at 13:00 so every row has the same light (the cycle still re-applies
+	# its preset every half second, as in play); night gets its own row.
+	var day_night := _game.get_node("DayNight") as DayNightCycle
+	GameState.playing = false
+	GameState.set_hour(13.0)
+	day_night.refresh()
 
 	var results: Array = []
 	for view: Array in VIEWS:
 		results.append(await _measure_view(world, player, view, true))
 	results.append(await _measure_view(world, player, VIEWS[0], false))
+	GameState.set_hour(21.5)
+	day_night.refresh()
+	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - night, 21:30 (lamps, windows, street lights)", VIEWS[0][1], VIEWS[0][2]], true))
+	GameState.set_hour(13.0)
+	day_night.refresh()
 	# Where the time goes: the fixed cost of the screen (sky only), then the spawn view with the
 	# heaviest screen effects switched off and at a lower 3D render resolution.
 	results.append(await _measure_view(world, player, ["Sky only (fixed per-pixel cost)", Vector3(73.5, 1.9, 1.5), Vector3(73.5, 50.0, 1.6)], true))
 	var env: Environment = (world.get_node("Lighting").find_children("*", "WorldEnvironment", true, false)[0] as WorldEnvironment).environment
+	day_night.set_process(false)     # its presets would switch the effects back on
 	env.ssao_enabled = false
 	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - SSAO off", VIEWS[0][1], VIEWS[0][2]], true))
 	env.glow_enabled = false
@@ -69,6 +81,8 @@ func _run() -> void:
 	get_viewport().scaling_3d_scale = 0.75
 	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - 75% 3D resolution", VIEWS[0][1], VIEWS[0][2]], true))
 	get_viewport().scaling_3d_scale = 1.0
+	day_night.set_process(true)
+	day_night.refresh()
 	var drive: Dictionary = await _streaming_drive(world)
 	var life: Array = []
 	for level: int in [-1, 0, 1, 2]:
