@@ -517,6 +517,27 @@ Dated entries: what was built, what broke, how it was fixed.
     - blending and slow drying;
     - the cycle moving on by itself;
     - saving.
+- **Step 9, the audio pass (GDD §13):**
+  - **Footsteps by surface:**
+    - The city builder writes a surface map: one pixel per metre over the whole city, saying road, paving, sand, grass, wood or water, from the same layout as the map image.
+    - `CityData.surface_at()` reads it; `PlayerAudio` plays the footstep for the ground underfoot.
+    - Six synthesised steps: a dull road, a crisp paving tap, a soft sand scuff, a grass rustle, the pier's hollow boards, a splash.
+  - **Ambience per district:**
+    - Five synthesised loops (city traffic hum with far-off horns, waves, machinery with clanks, birdsong, crickets), built on a worker thread so starting the game doesn't wait for them. Each loop crossfades its tail into its head, so it repeats without a seam.
+    - `AmbienceDirector` mixes them from `resources/world/ambience.tres`:
+      - each district's layers by day;
+      - birds give way to crickets at night;
+      - the city hum quietens at night;
+      - waves near the coastline;
+      - everything is muffled in a vehicle;
+      - levels fade as they change.
+    - Rain stays the weather's own layer.
+  - **Already in place from earlier milestones:** engine pitch by RPM, crashes, UI clicks and mission stingers. The buses were Master, Music, SFX, Ambience, UI from M0.
+  - **Tests:** new `tests/audio_test.tscn` checks:
+    - the surface map at eight known spots;
+    - footsteps on sand, in the sea and on the road;
+    - each district's ambience;
+    - night in the Countryside.
 
 **Broke and fixed**
 - **Step 1:**
@@ -545,3 +566,4 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Rain at noon** looked washed out; rain and heavy cloud now also lower the exposure.
   - **Class cache:** the setup script reported a compile error until the new classes were registered by an import (expected for new `class_name` scripts).
   - **Cloud cost:** the performance baseline showed the sky costing 2.6 ms more per frame. The cloud texture was drawn in every weather, and its tint was rewritten every half second, so the sky kept recomputing its light. Clear weather now has no clouds at all, and the tint is only set when it changes; the cost is gone.
+- **Step 9:** no failures; the audio test passed on its first run.

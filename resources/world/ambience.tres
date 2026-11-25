@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="AmbienceSettings" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/ambience_settings.gd" id="1_settings"]
+
+[resource]
+script = ExtResource("1_settings")
+district_layers = {
+"beach": {
+"amb_birds": 0.15,
+"amb_city": 0.25
+},
+"countryside_north": {
+"amb_birds": 0.65
+},
+"countryside_south": {
+"amb_birds": 0.7
+},
+"downtown": {
+"amb_city": 0.8
+},
+"industrial": {
+"amb_city": 0.25,
+"amb_industrial": 0.7
+},
+"luxury": {
+"amb_birds": 0.45,
+"amb_city": 0.15
+},
+"old_town": {
+"amb_birds": 0.15,
+"amb_city": 0.6
+}
+}

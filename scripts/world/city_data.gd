@@ -35,7 +35,16 @@ extends Resource
 @export var map_label_texts: PackedStringArray = PackedStringArray()
 @export var map_label_positions: PackedVector2Array = PackedVector2Array()
 
+@export_group("Surfaces")
+## What the ground is made of, one pixel per metre over get_bounds() (an Image; a SURFACES index in
+## the red channel). Footsteps sound different on each (M7).
+@export var surface_map_path: String = ""
+
+## The ground surfaces the surface map knows, by index.
+const SURFACES: Array[StringName] = [&"road", &"paved", &"sand", &"grass", &"wood", &"water"]
+
 var _chunk_set: Dictionary = {}
+var _surfaces: Image
 
 
 func get_map_texture() -> Texture2D:
@@ -102,3 +111,16 @@ func nearest_police_station(pos: Vector3) -> Transform3D:
 			best_d = d
 			best = station
 	return best
+
+
+## What the ground is made of at pos (one of SURFACES): &"paved" where the city has no surface map.
+func surface_at(pos: Vector3) -> StringName:
+	if _surfaces == null:
+		if surface_map_path == "" or not ResourceLoader.exists(surface_map_path):
+			return &"paved"
+		_surfaces = load(surface_map_path) as Image
+	var b: Rect2 = get_bounds()
+	var x: int = clampi(int(pos.x - b.position.x), 0, _surfaces.get_width() - 1)
+	var y: int = clampi(int(pos.z - b.position.y), 0, _surfaces.get_height() - 1)
+	var index: int = int(round(_surfaces.get_pixel(x, y).r * 255.0))
+	return SURFACES[index] if index < SURFACES.size() else &"paved"

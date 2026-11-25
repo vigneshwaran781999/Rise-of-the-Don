@@ -21,6 +21,9 @@ var _wanted_music: StringName = &""
 var _pad_task: int = -1
 var _pad_stream: AudioStreamWAV  # written by the worker thread, read once the task completes
 var _ambience: Dictionary = {}  # layer StringName -> AudioStreamPlayer
+var _ambience_wanted: Dictionary = {}   # layer -> level asked for before its loop was ready
+var _ambience_task: int = -1
+var _ambience_streams: Dictionary = {}  # written by the worker thread, read once the task completes
 
 
 func _ready() -> void:
@@ -37,29 +40,41 @@ func _ready() -> void:
 	_streams[&"objective"] = AudioSynth.blips(PackedFloat32Array([1174.7, 1568.0]), 0.07, 0.2)
 	_streams[&"cash"] = AudioSynth.blips(PackedFloat32Array([1975.5, 2637.0]), 0.05, 0.16)
 	_streams[&"rain"] = AudioSynth.rain_loop()
+	for surface: StringName in [&"road", &"paved", &"sand", &"grass", &"wood", &"water"]:
+		_streams[StringName("footstep_" + surface)] = AudioSynth.footstep(surface)
 	for i: int in UI_VOICES:
 		_ui_players.append(_make_player(UI_BUS))
 	for i: int in SFX_VOICES:
 		_sfx_players.append(_make_player(SFX_BUS))
 	_music_player = _make_player(MUSIC_BUS)
 	_pad_task = WorkerThreadPool.add_task(_build_pad, false, "Synthesise menu music")
+	_ambience_task = WorkerThreadPool.add_task(_build_ambience, false, "Synthesise ambience")
 
 
 func _process(_delta: float) -> void:
-	if _pad_task == -1 or not WorkerThreadPool.is_task_completed(_pad_task):
-		return
-	WorkerThreadPool.wait_for_task_completion(_pad_task)
-	_pad_task = -1
-	_streams[&"menu_pad"] = _pad_stream
-	set_process(false)
-	if _wanted_music != &"" and _current_music != _wanted_music:
-		play_music(_wanted_music)
+	if _ambience_task != -1 and WorkerThreadPool.is_task_completed(_ambience_task):
+		WorkerThreadPool.wait_for_task_completion(_ambience_task)
+		_ambience_task = -1
+		_streams.merge(_ambience_streams)
+		for layer: StringName in _ambience_wanted:
+			set_ambience(layer, _ambience_wanted[layer])
+	if _pad_task != -1 and WorkerThreadPool.is_task_completed(_pad_task):
+		WorkerThreadPool.wait_for_task_completion(_pad_task)
+		_pad_task = -1
+		_streams[&"menu_pad"] = _pad_stream
+		if _wanted_music != &"" and _current_music != _wanted_music:
+			play_music(_wanted_music)
+	if _pad_task == -1 and _ambience_task == -1:
+		set_process(false)
 
 
 func _exit_tree() -> void:
 	if _pad_task != -1:
 		WorkerThreadPool.wait_for_task_completion(_pad_task)
 		_pad_task = -1
+	if _ambience_task != -1:
+		WorkerThreadPool.wait_for_task_completion(_ambience_task)
+		_ambience_task = -1
 	_silence()
 
 
@@ -136,6 +151,7 @@ func is_music_playing() -> bool:
 ## Plays the looping ambience layer `layer` (a sound name: &"rain"...) at `level` (0-1, linear
 ## volume) on the Ambience bus; 0 stops it.
 func set_ambience(layer: StringName, level: float) -> void:
+	_ambience_wanted[layer] = level
 	var player: AudioStreamPlayer = _ambience.get(layer)
 	if level <= 0.001:
 		if player != null and player.playing:
@@ -188,3 +204,13 @@ func _kill_music_tween() -> void:
 
 func _build_pad() -> void:
 	_pad_stream = AudioSynth.ambient_pad()
+
+
+func _build_ambience() -> void:
+	_ambience_streams = {
+		&"amb_city": AudioSynth.city_hum_loop(),
+		&"amb_waves": AudioSynth.waves_loop(),
+		&"amb_industrial": AudioSynth.industrial_loop(),
+		&"amb_birds": AudioSynth.birds_loop(),
+		&"amb_crickets": AudioSynth.crickets_loop(),
+	}

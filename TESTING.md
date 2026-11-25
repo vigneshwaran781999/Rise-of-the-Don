@@ -305,3 +305,15 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Changes** blend over about 45 s, without a jump.
 - [ ] **Sunset in cloud:** the clouds pick up the sunset colours.
 - [ ] Save in the rain, load: it's still raining.
+
+### Sound (step 9)
+`tests/audio_test.tscn` checks which sounds play where. These checks are about how they sound; wear headphones.
+- [ ] **Old Town and Downtown:** a low traffic rumble with the odd far-off horn; quieter at night. Downtown is busier.
+- [ ] **The beach:** waves breaking and drawing back, louder as you walk to the water. Also at the harbour.
+- [ ] **Industrial Zone:** a machine drone with metal clanks.
+- [ ] **Luxury District and Countryside:** birdsong by day; crickets at night. No traffic hum in the Countryside.
+- [ ] **Crossing between districts** the background fades over a few seconds, without a jump.
+- [ ] **Driving:** the background is muffled inside a vehicle.
+- [ ] **Footsteps:** road, sidewalk, sand (soft), grass (rustle), the pier (hollow boards), wading in the sea (splash). Do they match what you see?
+- [ ] **Rain** over the background, and the background still there underneath.
+- [ ] Are any of the loops obviously repeating, too loud or annoying after a few minutes?

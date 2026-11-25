@@ -253,3 +253,165 @@ static func rain_loop() -> AudioStreamWAV:
 		out[k] = out[k] * t + out[count - fade + k] * (1.0 - t)
 	out.resize(count - fade)
 	return to_wav(out, RATE, true)
+
+
+# --------------------------------------------------------------------------- footsteps and ambience (M7)
+
+## A footstep on `surface` (CityData.SURFACES): a burst of filtered noise over a low body, shaped
+## per surface. Road: dull. Paved: a crisp tap. Sand: a soft scuff. Grass: a rustle. Wood: a hollow
+## knock. Water: a splash.
+static func footstep(surface: StringName) -> AudioStreamWAV:
+	# [seconds, noise brightness, noise level, body Hz, body level, attack seconds, volume, seed]
+	var shapes: Dictionary = {
+		&"road": [0.09, 0.22, 0.8, 80.0, 0.7, 0.003, 0.55, 11],
+		&"paved": [0.08, 0.5, 0.9, 115.0, 0.45, 0.002, 0.5, 13],
+		&"sand": [0.14, 0.12, 1.0, 60.0, 0.15, 0.02, 0.45, 17],
+		&"grass": [0.13, 0.35, 0.9, 70.0, 0.15, 0.012, 0.4, 19],
+		&"wood": [0.16, 0.3, 0.5, 190.0, 0.9, 0.002, 0.6, 23],
+		&"water": [0.3, 0.45, 1.0, 90.0, 0.2, 0.015, 0.5, 29],
+	}
+	var s: Array = shapes.get(surface, shapes[&"paved"])
+	var seconds: float = s[0]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(s[7])
+	var count: int = int(seconds * RATE)
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	for i: int in count:
+		var t: float = float(i) / RATE
+		var env: float = minf(1.0, t / float(s[5])) * exp(-t * 6.0 / seconds)
+		low += (rng.randf_range(-1.0, 1.0) - low) * float(s[1])
+		var body: float = sin(TAU * float(s[3]) * t) * exp(-t * 10.0 / seconds)
+		if surface == &"wood":
+			body += sin(TAU * float(s[3]) * 2.07 * t) * 0.4 * exp(-t * 14.0 / seconds)    # hollow ring
+		if surface == &"water":
+			low *= 0.85 + 0.15 * sin(TAU * 23.0 * t)                                       # sloshing
+		out[i] = (low * float(s[2]) + body * float(s[4])) * env * float(s[6])
+	return to_wav(out)
+
+
+const AMBIENCE_RATE: int = 16000
+
+
+## Fades the last `fade_seconds` of a loop into its start and cuts them off, so it repeats seamlessly.
+static func _seamless(out: PackedFloat32Array, rate: int, fade_seconds: float) -> PackedFloat32Array:
+	var fade: int = int(fade_seconds * rate)
+	var count: int = out.size()
+	for k: int in fade:
+		var t: float = float(k) / fade
+		out[k] = out[k] * t + out[count - fade + k] * (1.0 - t)
+	out.resize(count - fade)
+	return out
+
+
+## Distant city traffic: a low rumble of engines and tyres, a faint mains hum, the odd far-off horn.
+static func city_hum_loop() -> AudioStreamWAV:
+	var rate: int = AMBIENCE_RATE
+	var count: int = int(6.0 * rate)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 301
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	var lower: float = 0.0
+	for i: int in count:
+		var t: float = float(i) / rate
+		low += (rng.randf_range(-1.0, 1.0) - low) * 0.05
+		lower += (low - lower) * 0.1
+		var swell: float = 0.75 + 0.25 * sin(TAU * t / 6.0)
+		out[i] = (low * 0.9 + lower * 1.6) * swell * 0.6 + sin(TAU * 98.0 * t) * 0.01
+	for horn: Array in [[1.3, 415.0, 0.35], [3.9, 470.0, 0.25], [4.4, 470.0, 0.2]]:
+		var at: int = int(float(horn[0]) * rate)
+		for k: int in int(0.35 * rate):
+			var t: float = float(k) / rate
+			var env: float = minf(1.0, t / 0.02) * minf(1.0, (0.35 - t) / 0.05)
+			out[at + k] += (sin(TAU * float(horn[1]) * t) + 0.5 * sin(TAU * float(horn[1]) * 1.26 * t)) * env * 0.04 * float(horn[2]) * 4.0
+	return to_wav(_seamless(out, rate, 0.5), rate, true)
+
+
+## Waves on the shore: hissing surf rising and falling twice every 8 s.
+static func waves_loop() -> AudioStreamWAV:
+	var rate: int = AMBIENCE_RATE
+	var seconds: float = 8.5
+	var count: int = int(seconds * rate)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 302
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	var lower: float = 0.0
+	for i: int in count:
+		var t: float = float(i) / rate
+		low += (rng.randf_range(-1.0, 1.0) - low) * 0.25
+		lower += (low - lower) * 0.08
+		var phase: float = fposmod(t, 4.0) / 4.0              # a wave breaks, then draws back
+		var swell: float = pow(sin(PI * minf(phase * 1.6, 1.0)), 2.0) * (1.0 - phase * 0.4) + 0.12
+		out[i] = (low * 0.45 + lower * 0.9) * swell * 0.75
+	return to_wav(_seamless(out, rate, 0.5), rate, true)
+
+
+## The Industrial Zone: a low machine drone with a slow beat, hiss, and metal clanks now and then.
+static func industrial_loop() -> AudioStreamWAV:
+	var rate: int = AMBIENCE_RATE
+	var count: int = int(6.5 * rate)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 303
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	for i: int in count:
+		var t: float = float(i) / rate
+		low += (rng.randf_range(-1.0, 1.0) - low) * 0.15
+		var drone: float = sin(TAU * 49.0 * t) * 0.5 + sin(TAU * 98.5 * t) * 0.25 + sin(TAU * 147.0 * t) * 0.1
+		out[i] = drone * (0.8 + 0.2 * sin(TAU * 0.5 * t)) * 0.12 + low * 0.12
+	for clank: float in [0.7, 2.6, 4.1]:
+		var at: int = int(clank * rate)
+		for k: int in int(0.6 * rate):
+			var t: float = float(k) / rate
+			var ring: float = sin(TAU * 523.0 * t) + 0.7 * sin(TAU * 1371.0 * t) + 0.5 * sin(TAU * 2213.0 * t)
+			out[at + k] += ring * exp(-t * 9.0) * 0.08
+	return to_wav(_seamless(out, rate, 0.5), rate, true)
+
+
+## Birdsong: bright little chirps and trills scattered over 6 s, over a faint breeze.
+static func birds_loop() -> AudioStreamWAV:
+	var rate: int = AMBIENCE_RATE
+	var count: int = int(6.5 * rate)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 304
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	for i: int in count:
+		low += (rng.randf_range(-1.0, 1.0) - low) * 0.03
+		out[i] = low * 0.15
+	for call: int in 14:
+		var at: float = rng.randf_range(0.0, 5.8)
+		var base: float = rng.randf_range(2200.0, 3800.0)
+		var notes: int = rng.randi_range(2, 5)
+		for n: int in notes:
+			var start: int = int((at + n * 0.07) * rate)
+			var length: int = int(0.05 * rate)
+			var phase: float = 0.0
+			for k: int in length:
+				if start + k >= count:
+					break
+				var t: float = float(k) / length
+				phase += TAU * base * (1.0 + 0.35 * t) / rate         # a quick upward sweep
+				out[start + k] += sin(phase) * sin(PI * t) * 0.06
+	return to_wav(_seamless(out, rate, 0.5), rate, true)
+
+
+## Crickets at night: two high trills pulsing on and off.
+static func crickets_loop() -> AudioStreamWAV:
+	var rate: int = AMBIENCE_RATE
+	var count: int = int(3.4 * rate)
+	var out := PackedFloat32Array()
+	out.resize(count)
+	for i: int in count:
+		var t: float = float(i) / rate
+		var a: float = (1.0 if fposmod(t, 0.9) < 0.45 else 0.0) * (0.5 + 0.5 * sin(TAU * 32.0 * t))
+		var b: float = (1.0 if fposmod(t + 0.3, 1.3) < 0.5 else 0.0) * (0.5 + 0.5 * sin(TAU * 27.0 * t))
+		out[i] = sin(TAU * 4300.0 * t) * a * 0.035 + sin(TAU * 3900.0 * t) * b * 0.025
+	return to_wav(_seamless(out, rate, 0.4), rate, true)

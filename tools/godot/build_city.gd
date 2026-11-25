@@ -30,6 +30,9 @@ const LOT_COLOURS: Dictionary = {
 ## saved as a small lossless PNG. Its import settings (MAP_IMPORT, written if missing) have Godot
 ## block-compress it for the GPU, so the whole city fits in a few MB of video memory.
 const MAP_PATH: String = "res://assets/world/maps/city_map.png"
+## What the ground is made of, 1 pixel per metre (M7, footstep sounds): a CityData.SURFACES index
+## per pixel.
+const SURFACE_MAP_PATH: String = "res://assets/world/maps/city_surfaces.res"
 const MAP_IMPORT: String = "[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTexture2D\"\n\n[params]\n\ncompress/mode=2\ncompress/high_quality=false\nmipmaps/generate=false\ndetect_3d/compress_to=0\n"
 const MAP_PIXELS_PER_METRE: int = 4
 const MAP_COLOURS: Dictionary = {
@@ -113,9 +116,13 @@ func _run() -> void:
 	if not _write_map():
 		quit(1)
 		return
+	if not _write_surface_map():
+		quit(1)
+		return
 	var city := CityData.new()
 	city.display_name = "Velanagar"
 	city.map_texture_path = MAP_PATH
+	city.surface_map_path = SURFACE_MAP_PATH
 	city.police_stations = _layout.police_stations.duplicate()
 	city.places = _layout.places.duplicate()
 	for label: Array in _layout.map_labels:
@@ -215,6 +222,44 @@ func _write_map() -> bool:
 	return true
 
 
+## What the ground is made of, for footsteps: one pixel per metre, each a CityData.SURFACES index
+## (in the red channel): lots by their ground (sand, grass and paddy, or paving), sidewalks paved,
+## roads, the pier's boards, villa lawns, and the sea and lakes.
+func _write_surface_map() -> bool:
+	var bounds: Rect2 = _layout.get_bounds()
+	var image := Image.create(int(bounds.size.x), int(bounds.size.y), false, Image.FORMAT_R8)
+	var surface := func(id: StringName) -> Color: return Color8(CityData.SURFACES.find(id), 0, 0)
+	image.fill(surface.call(&"grass"))
+	var lot_surface: Dictionary = {&"lot_sand": &"sand", &"lot_grass": &"grass", &"lot_paddy": &"grass"}
+	for p: Dictionary in _layout.placements:
+		var kit: String = str(p["kit"])
+		if kit.begins_with("lot_"):
+			_map_fill(image, bounds, _map_rect(p), surface.call(lot_surface.get(p["kit"], &"paved")), 1.0)
+	for p: Dictionary in _layout.placements:
+		var kit: String = str(p["kit"])
+		if kit.begins_with("road_walk"):
+			_map_fill(image, bounds, _map_rect(p), surface.call(&"paved"), 1.0)
+		elif kit.begins_with("road_"):
+			_map_fill(image, bounds, _map_rect(p), surface.call(&"road"), 1.0)
+	for p: Dictionary in _layout.placements:
+		var kit: String = str(p["kit"])
+		if kit == "bld_bh_pier":
+			_map_fill(image, bounds, _map_rect(p), surface.call(&"wood"), 1.0)
+		elif kit.begins_with("bld_lx_villa"):
+			_map_fill(image, bounds, _map_rect(p), surface.call(&"grass"), 1.0)
+	for r: Rect2 in _layout.water + _layout.lakes:
+		_map_fill(image, bounds, r, surface.call(&"water"), 1.0)
+	# The pier stands over the water: its boards win.
+	for p: Dictionary in _layout.placements:
+		if p["kit"] == &"bld_bh_pier":
+			_map_fill(image, bounds, _map_rect(p), surface.call(&"wood"), 1.0)
+	var err: Error = ResourceSaver.save(image, SURFACE_MAP_PATH, ResourceSaver.FLAG_COMPRESS)
+	if err != OK:
+		push_error("build_city: could not save the surface map (%d)" % err)
+		return false
+	return true
+
+
 ## A placement's footprint (its piece's bounds, transformed) as a world X/Z rectangle.
 func _map_rect(p: Dictionary) -> Rect2:
 	var b: AABB = (_kit[p["kit"]] as KitPiece).bounds
@@ -228,8 +273,7 @@ func _map_rect(p: Dictionary) -> Rect2:
 	return Rect2(lo, hi - lo)
 
 
-func _map_fill(image: Image, bounds: Rect2, world: Rect2, colour: Color) -> void:
-	var scale: float = MAP_PIXELS_PER_METRE
+func _map_fill(image: Image, bounds: Rect2, world: Rect2, colour: Color, scale: float = MAP_PIXELS_PER_METRE) -> void:
 	var x0: int = clampi(roundi((world.position.x - bounds.position.x) * scale), 0, image.get_width())
 	var y0: int = clampi(roundi((world.position.y - bounds.position.y) * scale), 0, image.get_height())
 	var x1: int = clampi(roundi((world.end.x - bounds.position.x) * scale), 0, image.get_width())
