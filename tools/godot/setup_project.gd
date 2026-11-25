@@ -38,6 +38,11 @@ func _setup_core_settings() -> void:
 	ProjectSettings.set_setting("application/run/main_scene", MAIN_SCENE)
 	# Smooth rendering between 60 Hz physics ticks on high-refresh screens.
 	ProjectSettings.set_setting("physics/common/physics_interpolation", true)
+	# Buildings in the streamed districts carry box occluders (dense streets hide most of the town).
+	ProjectSettings.set_setting("rendering/occlusion_culling/use_occlusion_culling", true)
+	# Finer vertical navmesh cells, so pedestrian paths sit on the 0.15 m sidewalks (must match
+	# the cell height the district builder bakes with).
+	ProjectSettings.set_setting("navigation/3d/default_cell_height", 0.1)
 	for entry: Array in AUTOLOADS:
 		ProjectSettings.set_setting("autoload/" + str(entry[0]), "*" + str(entry[1]))
 
@@ -86,6 +91,7 @@ func _setup_input_map() -> void:
 	# Menus and debug
 	_action("pause", MOVE_DEADZONE, [_key(KEY_ESCAPE), _button(JOY_BUTTON_START)])
 	_action("toggle_fps", MOVE_DEADZONE, [_key(KEY_F3)])
+	_action("toggle_lane_debug", MOVE_DEADZONE, [_key(KEY_F4)])
 
 
 func _action(action_name: String, deadzone: float, events: Array[InputEvent]) -> void:

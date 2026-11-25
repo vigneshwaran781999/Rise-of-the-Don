@@ -11,3 +11,7 @@
 *.ttf binary
 *.otf binary
 *.blend binary
+
+# Generated Godot binary scenes and resources (district chunks, baked kit meshes, lane graph)
+*.scn binary
+*.res binary

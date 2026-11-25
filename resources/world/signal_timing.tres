@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SignalTiming" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/signal_timing.gd" id="1_timing"]
+
+[resource]
+script = ExtResource("1_timing")
+green_seconds = 14.0
+amber_seconds = 3.0
+all_red_seconds = 2.0

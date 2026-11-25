@@ -5,13 +5,13 @@ extends Node
 ##   "$GODOT" --path . res://tests/screenshot.tscn -- --scene=res://scenes/main/game.tscn \
 ##       --out=C:/path/shot.png [--frames=90] [--view=yaw,pitch] [--cam=x,y,z --look=x,y,z]
 ##       [--pause] [--press=ButtonName,OtherButton]
-##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]]
+##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --pause opens the pause menu; --press presses buttons (found by node name) in order.
 ## --drive puts the player in the test block's sedan; --throttle holds the accelerator for that
 ## many frames (with --steer), --hood picks the hood camera, --health sets the car's health share
-## (below 0.35 it smokes), --headlights switches them on.
+## (below 0.35 it smokes), --headlights switches them on. --lanes shows the F4 lane/navmesh view.
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -39,6 +39,8 @@ func _run() -> void:
 		cam.look_at(_vec3(str(args.get("look", "0,0,0"))), Vector3.UP)
 		cam.make_current()
 	await get_tree().process_frame
+	if args.has("lanes") and instance.has_node("LaneDebug"):
+		(instance.get_node("LaneDebug") as LaneGraphDebug).visible = true
 	if args.has("drive"):
 		await _drive(instance, args)
 	if args.has("pause"):

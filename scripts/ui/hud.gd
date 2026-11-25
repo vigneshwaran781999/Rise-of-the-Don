@@ -7,6 +7,7 @@ extends CanvasLayer
 const EXHAUSTED_COLOUR := Color(0.25, 0.42, 0.48)
 const CAR_HEALTH_COLOUR := Color("ffb02e")
 const HINT_SECONDS: float = 7.0
+const AREA_TITLE_SECONDS: float = 3.5
 ## [actions, label] for the driving reminder.
 const DRIVING_HINTS: Array = [
 	[["vehicle_accelerate"], "accelerate"], [["vehicle_brake"], "brake / reverse"],
@@ -32,6 +33,10 @@ var _vehicle: VehicleController
 var _engine: VehicleEngine
 var _damage: VehicleDamage
 var _hint_shown: bool = false
+var _area_box: VBoxContainer
+var _area_title: Label
+var _area_subtitle: Label
+var _area_tween: Tween
 
 
 func _ready() -> void:
@@ -107,6 +112,25 @@ func get_car_health_shown() -> float:
 	return _car_health_bar.value
 
 
+## Fades a district name in at the top centre for a few seconds (on arrival).
+func show_area_title(title: String, subtitle: String) -> void:
+	_area_title.text = title
+	_area_subtitle.text = subtitle
+	_area_box.modulate.a = 0.0
+	_area_box.show()
+	if _area_tween != null and _area_tween.is_valid():
+		_area_tween.kill()
+	_area_tween = create_tween()
+	_area_tween.tween_property(_area_box, "modulate:a", 1.0, 0.8)
+	_area_tween.tween_interval(AREA_TITLE_SECONDS)
+	_area_tween.tween_property(_area_box, "modulate:a", 0.0, 1.2)
+	_area_tween.tween_callback(_area_box.hide)
+
+
+func get_area_title() -> String:
+	return _area_title.text if _area_box.visible else ""
+
+
 ## The prompt as shown ("" when hidden), e.g. "F  GET IN".
 func get_prompt_text() -> String:
 	return "%s  %s" % [_prompt_key.text, _prompt_text.text] if _prompt.visible else ""
@@ -121,7 +145,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if _fps_label.visible:
 		var fps: float = Engine.get_frames_per_second()
-		_fps_label.text = "%d FPS   %.1f ms" % [roundi(fps), 1000.0 / maxf(fps, 1.0)]
+		var text: String = "%d FPS   %.1f ms\n%d draw calls" % [roundi(fps), 1000.0 / maxf(fps, 1.0),
+			int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))]
+		if Performance.has_custom_monitor(WorldStreamer.MONITOR):
+			text += "   %d chunks" % int(Performance.get_custom_monitor(WorldStreamer.MONITOR))
+		_fps_label.text = text
 	if _vehicle != null:
 		_speedometer.set_reading(_vehicle.get_speed_kmh(), _engine.get_rpm_fraction(), _engine.get_gear_text())
 
@@ -212,10 +240,11 @@ func _build() -> void:
 	_fps_label.offset_left = -320.0
 	_fps_label.offset_right = -30.0
 	_fps_label.offset_top = 26.0
-	_fps_label.offset_bottom = 60.0
+	_fps_label.offset_bottom = 92.0
 
 	_build_prompt(root)
 	_build_vehicle_panel(root)
+	_build_area_title(root)
 
 	_hint = Label.new()
 	_hint.name = "DrivingHint"
@@ -281,6 +310,27 @@ func _build_vehicle_panel(root: Control) -> void:
 	_vehicle_panel.offset_right = -30.0
 	_vehicle_panel.offset_bottom = -30.0
 	_vehicle_panel.hide()
+
+
+func _build_area_title(root: Control) -> void:
+	_area_box = VBoxContainer.new()
+	_area_box.name = "AreaTitle"
+	_area_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_area_box.add_theme_constant_override("separation", 0)
+	root.add_child(_area_box)
+	_area_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_area_box.offset_left = -500.0
+	_area_box.offset_right = 500.0
+	_area_box.offset_top = 90.0
+	_area_title = Label.new()
+	_area_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_area_title.label_settings = UIStyle.glow_label(64, UIStyle.TEXT, UIStyle.MAGENTA, 16)
+	_area_box.add_child(_area_title)
+	_area_subtitle = Label.new()
+	_area_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_area_subtitle.label_settings = UIStyle.glow_label(22, UIStyle.CYAN, UIStyle.CYAN, 6)
+	_area_box.add_child(_area_subtitle)
+	_area_box.hide()
 
 
 func _panel(node_name: String) -> PanelContainer:

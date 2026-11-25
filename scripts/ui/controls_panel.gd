@@ -25,6 +25,7 @@ const ROWS: Array = [
 	["GENERAL"],
 	["Pause", ["pause"], "", ""],
 	["FPS counter", ["toggle_fps"], "", ""],
+	["Lane and navmesh debug view", ["toggle_lane_debug"], "", ""],
 ]
 const JOY_BUTTON_NAMES: Dictionary = {
 	0: "A", 1: "B", 2: "X", 3: "Y", 4: "Back", 6: "Start",

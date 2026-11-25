@@ -85,3 +85,65 @@ Dated entries: what was built, what broke, how it was fixed.
 - Smoke puffs looked like solid white balls in the first screenshot → smaller, more transparent particles.
 
 **Performance note:** driving view at spawn in the windowed run: 60 FPS (VSync-capped), ~710-800 draw calls, ~0.1 M primitives, 157 MB video memory. The sedan costs about 21 draw calls (9 body material surfaces plus 3 per wheel), more in shadow passes; worth merging for AI traffic in M4.
+
+---
+
+## 2026-11-25 — M3: city district (Old Town)
+
+**Built**
+- **District plan** (`scripts/world/old_town_layout.gd`, deterministic):
+  - Old Town covers 512 × 512 m. The walled temple compound sits in the middle with four gopurams, a central shrine (vimana) and a pillared hall (mandapam), ringed by a lane.
+  - **Roads:** main roads (12 m, four lanes) along the gopuram axes and on rings at ±112 and ±184. Lanes (8 m, two lanes) run in between.
+  - **Junctions:** 166 in all; the 24 where two main roads cross have traffic lights, plus zebras where main roads meet the temple ring.
+  - **Blocks:** sidewalks with kerbs facing the road. Shops line the main roads and houses line the lanes, packed along each frontage with seeded variety, for 1,152 buildings in total.
+  - **Special blocks:** a market square (market hall, stalls, flower stalls, handcarts), a temple tank and two parks.
+- **New Blender kit** (`tools/blender/old_town.py`):
+  - **Road kit v2:** road and lane tiles with left-hand traffic markings, three junction boxes, zebra crossings with stop lines, sidewalk, footpath and corner tiles.
+  - **Signal pole:** red, amber and green lamp materials that the game switches.
+  - **Props:** two market stalls, a flower stall, a handcart, a bollard and a neem tree.
+  - **Buildings:** 14 Old Town row buildings (verandah houses with thinnai seats and clay-tile roofs, shops with shutters, awnings and blank sign boards, a lodge with a rooftop sign frame), plus the market hall, mandapam, vimana and temple tank.
+- **Collision as separate convex pieces:** `rotd_mesh.CollisionSet` writes `-convcolonly` objects. The M1 buildings were regenerated the same way, so touching boxes never fuse and gateways stay open.
+- **District builder** (`tools/godot/build_old_town.gd`, about 5 s):
+  - **Kit baking:** `KitBaker` turns every model into one surface with a shared palette shader (`shaders/palette_lit.gdshader`; colour, roughness, metallic and glow per vertex). Each building is now one draw call; the M1 gopuram had 16 surfaces.
+  - **Chunk scenes:** writes 16 binary chunk scenes (128 m, about 30 KB each). Each has:
+    - ground tiles and props as `InstanceBatch` MultiMeshes,
+    - buildings with a 280 m visibility range and box occluders inside their upper floors,
+    - the traffic signals for its junctions,
+    - one static body of simple convex shapes (a ground slab, a kerb-bevelled slab per block, building and prop hulls),
+    - a baked pedestrian navmesh.
+  - **Shared files:** the always-loaded temple landmark scene, the lane graph and the district manifest (`DistrictData`).
+- **Streaming:**
+  - **`WorldStreamer`:** loads chunks within 200 m of the player on a background thread (one added per frame), frees them beyond 250 m, and freezes parked cars whose ground isn't loaded.
+  - **`District`:** the root script of `scenes/world/old_town.tscn`, which also holds the lighting, boundary walls, safety floor, outer ground, spawn and three parked sedans.
+  - **New Game:** now starts here.
+- **Traffic signals** (`TrafficSignal`, timing in `resources/world/signal_timing.tres`): a two-phase cycle (green 14 s, amber 3 s, all red 2 s). Each junction is offset so they don't all change together. `get_light(axis)` is ready for M4 traffic.
+- **Lane graph** (`LaneGraph`, built by `LaneGraphBuilder`): 8,472 nodes, left-hand traffic.
+  - **Main roads:** two lanes each way; left turns go from the kerb-side lane and right turns from the inner lane.
+  - **Junctions:** curved paths through every junction. Stop lines carry the junction id, the signal axis, and "signalized" or "give way".
+  - **District edge:** U-turns where roads meet it.
+  - **Connectivity:** fully connected, with no dead ends.
+- **Pedestrian navmesh:** baked from block slabs and crossing strips, with buildings, props and the temple as obstacles. Roads are only walkable at crossings. 14,386 polygons, and chunks join exactly at their borders.
+- **HUD and debug:** an "OLD TOWN / VELANAGAR" title card on arrival; F3 now also shows draw calls and loaded chunks; a new **F4** debug view draws the lane graph (stop lines in their live light colour) and navmesh edges. Occlusion culling is on in the project.
+- **Tests:**
+  - **Smoke test:** now 31 checks. It runs in Old Town (district loaded, streaming out and back with the parked car freezing, signal cycle and lamps, lane-graph connectivity and keep-left, navmesh routes and that roads aren't walkable, kerb step-up), and the vehicle checks moved to Ring B.
+  - **`tests/player_test.tscn`:** keeps the M1 kerb, ramp and gateway course on the test block.
+  - **`tests/perf_baseline.tscn`:** measures FPS and render stats at fixed viewpoints, plus a streaming drive.
+  - **Screenshot tool:** gained `--lanes`.
+
+**Performance baseline** (details in `docs/PERFORMANCE.md`; this machine has an Intel UHD Graphics 730 integrated GPU, well below the GTX 1650 target class):
+- **Frame rate:** 36-41 FPS at 1920×1080, VSync off, at seven viewpoints with 250-510 draw calls.
+- **Where the time goes:** sky only runs at 67 FPS. SSAO off gives 46 FPS, and SSAO plus glow off gives 62 FPS. Per-pixel effects dominate, not draw calls.
+- **Streaming drive** across the district at 72 km/h: worst frame 29.6 ms, with no hitch.
+
+**Broke / fixed**
+- **Roads, props and gopurams were invisible:** MultiMeshes saved from the headless builder were empty, because a MultiMesh keeps its instances in the rendering server, which headless runs don't have. Now `InstanceBatch` stores the transforms as data and builds the MultiMesh when the chunk loads.
+- **Navmesh baking failed** ("root node needs to be inside the SceneTree"): the builder ran in `_initialize`, before the tree was running. It now runs one frame later.
+- **Navmesh warnings and height:** baking warned that the agent height and radius weren't multiples of the cell size, and the navmesh floated about 0.35 m above the sidewalks. The agent is now 2.0 × 0.5 m with 0.1 m cell height, and the project's navigation map uses the same 0.1 m (`setup_project.gd`).
+- **Navmesh gaps between chunks:** baking exactly the chunk with `border_size` left a 2 m gap. Baking the chunk grown by the border makes the edges meet exactly on the chunk line.
+- **Navmesh on rooftops:** rooftops became unreachable navmesh islands. The bake now only covers street level, to 2.6 m, which cut 26% of the polygons.
+- **Navmesh queries returned nothing right after chunks loaded:** Godot 4.7 builds navigation regions in the background. The smoke test now waits for the map to sync.
+- **Unreachable outer lanes:** 140 outer-lane nodes at the district edge couldn't be reached, because every U-turn fed the inner lane. Each lane now turns into its matching lane.
+- **Invisible temple tank:** the block's lot ground and the full-map outer ground plane both covered the sunken pond. The tank block gets ground around the pond, and the outer ground is now a frame around the district.
+- **Fused collision boxes:** would have filled verandahs and blocked the gopuram passage once baked into hulls. Fixed with separate convex pieces (`CollisionSet`); `tests/player_test.tscn` still walks through the M1 gopuram.
+- **Streaming test expectation:** expected the chunk count to return exactly to its starting value, but a chunk inside the 200 to 250 m hysteresis band is correctly kept. The test now checks that every wanted chunk is loaded.
+- **Haze:** too thick looking into the sun at first (0.0055), now 0.0042.

@@ -4,10 +4,12 @@ extends Node
 ## Prints "SMOKE TEST PASSED" and exits 0, or "FAILED: <reason>" and exits 1.
 ## Any engine or script error logged while it runs also fails the test.
 ##
-## It drives the real game: main menu -> New Game -> walk, sprint, jump, look, HUD -> get in
-## the sedan, drive, brake, reverse, steer, cameras, horn, lights, crash, get out -> pause ->
-## back to the main menu. Input goes through the real input map (simulated key events).
-## Detailed handling figures are measured separately by tests/vehicle_test.tscn.
+## It drives the real game: main menu -> New Game (Old Town) -> chunk streaming, traffic
+## signals, lane graph, pedestrian navmesh -> walk, sprint, jump, kerb, look, HUD -> get in the
+## sedan, drive, brake, reverse, steer, cameras, horn, lights, crash, get out -> pause -> back
+## to the main menu. Input goes through the real input map (simulated key events).
+## More detail lives in per-feature tests: tests/vehicle_test.tscn (handling figures) and
+## tests/player_test.tscn (kerb, ramps and gateway on the M1 test block).
 
 const ErrorCatcher := preload("res://tests/error_catcher.gd")
 const TIMEOUT_SEC: float = 180.0
@@ -19,11 +21,20 @@ const REQUIRED_ACTIONS: PackedStringArray = [
 	"look_left", "look_right", "look_up", "look_down",
 	"vehicle_enter_exit", "interact", "pause", "toggle_fps",
 	"vehicle_accelerate", "vehicle_brake", "vehicle_steer_left", "vehicle_steer_right",
-	"vehicle_handbrake", "vehicle_horn", "vehicle_headlights", "vehicle_camera",
+	"vehicle_handbrake", "vehicle_horn", "vehicle_headlights", "vehicle_camera", "toggle_lane_debug",
 ]
 ## Vehicle models: visuals only, no static '-colonly' body (a car is a moving rigid body).
 const VEHICLE_ASSETS: PackedStringArray = ["vehicles/veh_sedan_body", "vehicles/veh_sedan_wheel"]
+## Old Town kit pieces that must exist as baked meshes (one surface each).
+const KIT_MESHES: PackedStringArray = [
+	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
+	"bld_ot_house_01", "bld_ot_shop_04", "bld_ot_lodge_01", "bld_temple_gopuram", "bld_ot_vimana",
+	"bld_ot_tank", "bld_ot_market_hall", "prop_streetlight", "prop_neem_tree", "prop_market_stall_a",
+]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
+## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
+## the car checks put the sedan here, facing west.
+const TEST_ROAD := Vector3(-20.0, 0.6, 109.0)
 const REQUIRED_BUSES: PackedStringArray = ["Master", "Music", "SFX", "Ambience", "UI"]
 ## Every generated asset must import with at least one auto-built collision body.
 const COLLIDABLE_ASSETS: PackedStringArray = [
@@ -65,7 +76,8 @@ func _run_checks() -> String:
 	var steps: Array[Callable] = [
 		_check_project_settings, _check_input_map, _check_audio_and_settings, _check_test_cube,
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_spawn,
-		_check_walk_forward, _check_sprint, _check_jump, _check_kerbs_ramps_and_gateway,
+		_check_streaming, _check_traffic_signals, _check_lane_graph, _check_navmesh,
+		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
 		_check_camera, _check_hud,
 		_check_vehicle_parked, _check_enter_vehicle, _check_drive_brake_reverse, _check_steering,
 		_check_vehicle_cameras, _check_horn_and_lights, _check_crash_damage, _check_pause_in_vehicle,
@@ -169,8 +181,13 @@ func _check_asset_collisions() -> String:
 		node.free()
 		if meshes < 1 or bodies > 0:
 			return "%s should be visuals only (meshes %d, static bodies %d)" % [asset, meshes, bodies]
-	print("  ok  %d Blender assets imported, each with visuals and collision; %d vehicle models" % [
-		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size()])
+	for kit_name: String in KIT_MESHES:
+		var mesh_path: String = "res://assets/world/kit/%s.res" % kit_name
+		var mesh := load(mesh_path) as ArrayMesh if ResourceLoader.exists(mesh_path) else null
+		if mesh == null or mesh.get_surface_count() != 1 or not (mesh.surface_get_material(0) is ShaderMaterial):
+			return "%s should be one surface with the palette material (run tools/godot/build_old_town.gd)" % mesh_path
+	print("  ok  %d Blender assets imported, each with visuals and collision; %d vehicle models; %d Old Town kit meshes baked to one draw call each" % [
+		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size(), KIT_MESHES.size()])
 	return ""
 
 
@@ -232,11 +249,20 @@ func _check_new_game() -> String:
 		return "New Game did not load the game scene"
 	if _player() == null:
 		return "game scene has no player"
-	var buildings: Node = game.get_node_or_null("World/Buildings")
-	var count: int = buildings.get_child_count() if buildings != null else 0
-	if count < 8:
-		return "expected the block to have 8-12 buildings (+ temple group), found %d nodes" % count
-	print("  ok  New Game loads the city block (%d building nodes)" % count)
+	var world := game.get_node_or_null("World") as District
+	if world == null or world.get_display_name() != "Old Town":
+		return "New Game should start in the Old Town district"
+	var buildings: int = 0
+	for c: Vector2i in world.streamer.get_loaded_coords():
+		buildings += world.streamer.get_chunk(c).get_node("Buildings").get_child_count()
+	if buildings < 100:
+		return "only %d buildings loaded around the spawn" % buildings
+	if world.get_node_or_null("Landmarks/Temple") == null:
+		return "the temple landmark is not loaded"
+	if _hud().get_area_title() != "OLD TOWN":
+		return "no OLD TOWN title card on arrival (got '%s')" % _hud().get_area_title()
+	print("  ok  New Game starts in Old Town: %d chunks, %d buildings around the spawn, temple landmark, title card" % [
+		world.streamer.get_loaded_count(), buildings])
 	return ""
 
 
@@ -263,14 +289,15 @@ func _check_walk_forward() -> String:
 	player.state_changed.disconnect(on_state)
 	var moved: Vector3 = player.global_position - start
 	var flat := Vector2(moved.x, moved.z)
+	var away: Vector3 = Vector3.FORWARD.rotated(Vector3.UP, player.camera_rig.get_yaw())
 	if flat.length() <= 3.0:
 		return "holding W for 2 s moved the player only %.2f m" % flat.length()
-	if moved.z > -2.5:
-		return "W should move away from the camera (north, -Z); moved %s" % moved
+	if moved.dot(away) < flat.length() * 0.9:
+		return "W should move away from the camera (towards the gopuram); moved %s" % moved
 	if not states.has(PlayerController.State.RUN):
 		return "never entered RUN while holding W"
 	await _physics_frames(30)
-	print("  ok  holding W for 2 s moved the player %.1f m north" % flat.length())
+	print("  ok  holding W for 2 s moved the player %.1f m away from the camera" % flat.length())
 	return ""
 
 
@@ -336,36 +363,193 @@ func _check_jump() -> String:
 	return ""
 
 
-## Walks over the bevelled kerb, up the 18-degree ramp, into the 50-degree ramp (must fail)
-## and through the gopuram gateway. Camera yaw 0, so W = north, A = west, D = east.
-func _check_kerbs_ramps_and_gateway() -> String:
+## From the road onto the sidewalk south of the east gopuram road, over the bevelled kerb.
+## Camera facing west, so A walks south. (The full kerb/ramp/gateway course: player_test.tscn.)
+func _check_kerb_step_up() -> String:
 	var player: PlayerController = _player()
-	player.camera_rig.set_view_degrees(0.0, -12.0)
-
-	await _teleport(player, Vector3(-4.0, 0.1, 30.0))
+	player.camera_rig.set_view_degrees(90.0, -12.0)
+	await _teleport(player, Vector3(70.0, 0.1, 4.5))
 	await _hold(KEY_A, 60)
-	if player.global_position.x > -6.6 or absf(player.global_position.y - 0.15) > 0.05:
-		return "could not step west onto the sidewalk over the kerb (at %s)" % player.global_position
-
-	await _teleport(player, Vector3(24.0, 0.25, 30.0))
-	await _hold(KEY_D, 90)
-	var platform_y: float = 1.15
-	if absf(player.global_position.y - platform_y) > 0.08 or not player.is_on_floor():
-		return "could not walk up the 18-degree ramp onto the platform (at %s)" % player.global_position
-
-	await _teleport(player, Vector3(35.0, 0.25, 39.0))
-	await _hold(KEY_W, 90)
-	if player.global_position.y > 0.6:
-		return "walked up the 50-degree ramp, which is steeper than the slope limit (y=%.2f)" % player.global_position.y
-
-	await _teleport(player, Vector3(3.0, 0.1, 30.0))
-	await _hold(KEY_D, 240)  # 4 s at 5 m/s: road -> kerb -> plinth -> passage -> courtyard (x ~ 23)
-	if player.global_position.x < 21.0:
-		return "could not walk east through the gopuram gateway into the courtyard (at %s)" % player.global_position
-
-	await _teleport(player, Vector3(-3.0, 0.1, 30.0))
-	print("  ok  kerb step-up, 18-degree ramp climbed, 50-degree ramp refused, walked through the gateway")
+	if player.global_position.z < 6.6 or absf(player.global_position.y - 0.15) > 0.05 or not player.is_on_floor():
+		return "could not step south from the road onto the sidewalk over the kerb (at %s)" % player.global_position
+	await _teleport(player, Vector3(70.0, 0.1, 1.5))
+	print("  ok  stepped up the bevelled kerb from the road onto the Old Town sidewalk")
 	return ""
+
+
+# --------------------------------------------------------------------------- Old Town district
+
+## Moves the streaming focus to the far north-west corner while the player is held still: the
+## chunks there stream in on a background thread, the chunk around the spawn is freed and the
+## sedan parked there freezes (its ground is gone). Then everything is put back.
+func _check_streaming() -> String:
+	var world: District = _world()
+	var streamer: WorldStreamer = world.streamer
+	var data: DistrictData = world.data
+	for z: int in data.chunk_count.y:
+		for x: int in data.chunk_count.x:
+			if not ResourceLoader.exists(data.chunk_path(Vector2i(x, z))):
+				return "chunk scene missing: " + data.chunk_path(Vector2i(x, z))
+	var player: PlayerController = _player()
+	var car: VehicleController = _car()
+	var spawn_chunk: Vector2i = data.chunk_at(player.global_position)
+	var start_count: int = streamer.get_loaded_count()
+	var corner := Node3D.new()
+	get_tree().current_scene.add_child(corner)
+	corner.global_position = Vector3(-230.0, 0.0, -230.0)
+	player.process_mode = Node.PROCESS_MODE_DISABLED
+	streamer.focus = corner
+	var frames: int = 0
+	while frames < 900 and not (streamer.is_chunk_loaded(Vector2i(0, 0)) and not streamer.is_chunk_loaded(spawn_chunk)):
+		await get_tree().physics_frame
+		frames += 1
+	var streamed_in: bool = streamer.is_chunk_loaded(Vector2i(0, 0))
+	var streamed_out: bool = not streamer.is_chunk_loaded(spawn_chunk)
+	var far_count: int = streamer.get_loaded_count()
+	var car_frozen: bool = car.freeze
+	streamer.focus = player
+	streamer.load_around_now(player.global_position)
+	player.process_mode = Node.PROCESS_MODE_INHERIT
+	corner.queue_free()
+	await _physics_frames(20)
+	if not streamed_in or not streamed_out:
+		return "moving the focus to the far corner should load chunk (0, 0) and free the spawn chunk (in %s, out %s)" % [streamed_in, streamed_out]
+	if not car_frozen or car.freeze:
+		return "the parked sedan should freeze while its chunk is unloaded and thaw when it is back (frozen %s, now %s)" % [car_frozen, car.freeze]
+	if not player.is_on_floor():
+		return "after streaming back the player should stand on the ground (at %s)" % player.global_position
+	for c: Vector2i in streamer.wanted_chunks(player.global_position):
+		if not streamer.is_chunk_loaded(c):
+			return "after streaming back, chunk %s near the player is missing" % c
+	print("  ok  streaming: %d of 16 chunks around the spawn; at the far corner %d chunks streamed in on a background thread within %.1f s, the spawn chunk was freed and its parked sedan froze; all restored" % [
+		start_count, far_count, frames / 60.0])
+	return ""
+
+
+func _check_traffic_signals() -> String:
+	var signals: Array[Node] = get_tree().get_nodes_in_group(TrafficSignal.GROUP)
+	if signals.size() < 4:
+		return "only %d traffic signals are loaded around the spawn" % signals.size()
+	var sig := signals[0] as TrafficSignal
+	var cycle: float = sig.timing.cycle_seconds()
+	var seen: Dictionary = {}
+	var t: float = 0.0
+	while t < cycle:
+		var a: int = sig.light_at(t, 0)
+		var b: int = sig.light_at(t, 1)
+		if a != TrafficSignal.Light.RED and b != TrafficSignal.Light.RED:
+			return "both directions get green or amber at %.2f s into the cycle" % t
+		seen[Vector2i(0, a)] = true
+		seen[Vector2i(1, b)] = true
+		t += 0.25
+	for axis: int in 2:
+		for light: int in 3:
+			if not seen.has(Vector2i(axis, light)):
+				return "direction %d never shows %s" % [axis, TrafficSignal.Light.keys()[light]]
+	sig.set_time(1.0)
+	if sig.get_lamp_energy(0, TrafficSignal.Light.GREEN) < 1.0 or sig.get_lamp_energy(0, TrafficSignal.Light.RED) > 0.5 \
+			or sig.get_lamp_energy(1, TrafficSignal.Light.RED) < 1.0:
+		return "the signal lamps don't follow the lights (north-south green, east-west red)"
+	if sig.get_child_count() < 3:
+		return "junction %d has only %d signal poles" % [sig.junction_id, sig.get_child_count()]
+	print("  ok  %d traffic signals loaded; over a %.0f s cycle each direction gets green, amber and red, never two greens at once; lamps follow the lights" % [
+		signals.size(), cycle])
+	return ""
+
+
+func _check_lane_graph() -> String:
+	var lanes: LaneGraph = _world().get_lane_graph()
+	if lanes == null or lanes.size() < 1000:
+		return "the lane graph is missing or tiny"
+	var disconnected: int = lanes.count_disconnected()
+	if disconnected != 0:
+		return "%d lane nodes are dead ends or can't be reached" % disconnected
+	# Keep left: on the north road (x = 0, a main road) northbound lanes are west of the centre.
+	var kept_left: int = 0
+	var wrong_side: int = 0
+	for i: int in lanes.size():
+		var p: Vector3 = lanes.get_position(i)
+		if absf(p.x) > 6.0 or p.z < -175.0 or p.z > -155.0 \
+				or lanes.has_flag(i, LaneGraph.Flag.IN_JUNCTION) or lanes.has_flag(i, LaneGraph.Flag.U_TURN):
+			continue
+		var next: PackedInt32Array = lanes.get_next(i)
+		if next.is_empty() or absf(lanes.get_position(next[0]).z - p.z) < 0.5:
+			continue
+		var northbound: bool = lanes.get_position(next[0]).z < p.z
+		if northbound == (p.x < 0.0):
+			kept_left += 1
+		else:
+			wrong_side += 1
+	if kept_left < 4 or wrong_side > 0:
+		return "traffic should keep left on the north road (%d nodes on the left, %d on the right)" % [kept_left, wrong_side]
+	# Every stop line at traffic lights near the player belongs to a loaded TrafficSignal.
+	var signal_ids: Dictionary = {}
+	for node: Node in get_tree().get_nodes_in_group(TrafficSignal.GROUP):
+		signal_ids[(node as TrafficSignal).junction_id] = true
+	var here: Vector3 = _player().global_position
+	var stops: int = 0
+	var lit: int = 0
+	var unmatched: int = 0
+	for i: int in lanes.size():
+		if not lanes.has_flag(i, LaneGraph.Flag.STOP_LINE):
+			continue
+		stops += 1
+		if lanes.has_flag(i, LaneGraph.Flag.SIGNALIZED):
+			lit += 1
+			if lanes.get_position(i).distance_to(here) < 150.0 and not signal_ids.has(lanes.junction[i]):
+				unmatched += 1
+	if lit == 0 or unmatched > 0:
+		return "stop lines at traffic lights: %d, %d of them near the player have no signal loaded" % [lit, unmatched]
+	print("  ok  lane graph: %d nodes, all connected (no dead ends), traffic keeps left, %d stop lines (%d at traffic lights, each matched to its signal)" % [
+		lanes.size(), stops, lit])
+	return ""
+
+
+## Pedestrians walk sidewalks and cross at crossings: the middle of a road is not on the navmesh,
+## and getting to the far side of the gopuram road means walking round by the zebra crossing.
+func _check_navmesh() -> String:
+	var map: RID = _player().get_world_3d().navigation_map
+	var north_walk := Vector3(70.0, 0.15, -8.0)
+	var south_walk := Vector3(70.0, 0.15, 8.0)
+	# Navigation regions are processed in the background: wait until the map has synced the
+	# chunks (streamed back in by the previous check).
+	var waited: int = 0
+	while waited < 180 and NavigationServer3D.map_get_closest_point(map, south_walk) == Vector3.ZERO:
+		await get_tree().physics_frame
+		waited += 1
+	var regions: int = NavigationServer3D.map_get_regions(map).size()
+	if regions < 4:
+		return "only %d navmesh regions are registered" % regions
+	var a: Vector3 = NavigationServer3D.map_get_closest_point(map, north_walk)
+	var b: Vector3 = NavigationServer3D.map_get_closest_point(map, south_walk)
+	if _flat(a).distance_to(_flat(north_walk)) > 0.6 or _flat(b).distance_to(_flat(south_walk)) > 0.6:
+		return "the sidewalks either side of the road are not on the navmesh (%s, %s)" % [a, b]
+	var road_middle := Vector3(66.0, 0.0, 0.0)
+	var nearest: Vector3 = NavigationServer3D.map_get_closest_point(map, road_middle)
+	if _flat(nearest).distance_to(_flat(road_middle)) < 2.0:
+		return "the middle of the road is walkable (navmesh at %s)" % nearest
+	var path: PackedVector3Array = NavigationServer3D.map_get_path(map, a, b, true)
+	var length: float = _path_length(path)
+	if path.is_empty() or _flat(path[path.size() - 1]).distance_to(_flat(b)) > 0.6:
+		return "no walking route across the gopuram road"
+	if length < 25.0:
+		return "the walk across the road is only %.1f m: it should detour to the zebra crossing" % length
+	# A walk along the north temple plaza crosses the border between two chunks (x = 0).
+	var west: Vector3 = NavigationServer3D.map_get_closest_point(map, Vector3(-20.0, 0.15, -40.0))
+	var east: Vector3 = NavigationServer3D.map_get_closest_point(map, Vector3(20.0, 0.15, -40.0))
+	var across: PackedVector3Array = NavigationServer3D.map_get_path(map, west, east, true)
+	if across.is_empty() or _flat(across[across.size() - 1]).distance_to(_flat(east)) > 0.6 or _path_length(across) > 70.0:
+		return "no sensible route along the temple plaza across the chunk border (%.1f m)" % _path_length(across)
+	print("  ok  navmesh: %d regions; roads aren't walkable; crossing the road detours %.0f m via the zebra; routes join across chunk borders" % [
+		regions, length])
+	return ""
+
+
+func _path_length(path: PackedVector3Array) -> float:
+	var total: float = 0.0
+	for i: int in range(1, path.size()):
+		total += path[i - 1].distance_to(path[i])
+	return total
 
 
 func _teleport(player: PlayerController, pos: Vector3) -> void:
@@ -451,7 +635,7 @@ func _check_vehicle_parked() -> String:
 		return "the parked sedan should be still, empty and switched off"
 	if _hud().is_speedometer_visible():
 		return "the speedometer shows while on foot"
-	# Walk into its side (camera yaw 0, so A = west, towards the car): the player is blocked and
+	# Walk into it (camera yaw 0, so A = west, towards its back): the player is blocked and
 	# the car doesn't budge.
 	var player: PlayerController = _player()
 	var parked_at: Vector3 = car.global_position
@@ -505,7 +689,9 @@ func _check_drive_brake_reverse() -> String:
 	var hud: Hud = _hud()
 	var engine := car.get_node("Engine") as VehicleEngine
 	var audio := car.get_node("Audio") as VehicleAudio
+	await _place_car(car, TEST_ROAD)
 	var start: Vector3 = car.global_position
+	var heading: Vector3 = car.global_basis.z
 	var front_wheel: VehicleWheel3D = car.get_node("WheelFrontLeft") as VehicleWheel3D
 	var spun: bool = false
 	var wheel_basis: Basis = front_wheel.transform.basis
@@ -525,8 +711,9 @@ func _check_drive_brake_reverse() -> String:
 	_key(KEY_W, false)
 	if kmh < 35.0:
 		return "3 s of throttle reached only %.0f km/h" % kmh
-	if moved.z > -15.0 or absf(moved.x) > 1.5:
-		return "the car should drive straight on, north; it moved %s" % moved
+	var along: float = moved.dot(heading)
+	if along < 15.0 or (moved - heading * along).length() > 1.5:
+		return "the car should drive straight ahead; it moved %s" % moved
 	if absi(shown - roundi(kmh)) > 2:
 		return "the speedometer shows %d km/h, the car does %.0f" % [shown, kmh]
 	if wheel_rpm < 100.0 or gear < 2 or not audible:
@@ -554,13 +741,13 @@ func _check_drive_brake_reverse() -> String:
 	if gear_shown != "R":
 		return "the speedometer shows gear '%s' while reversing" % gear_shown
 	print("  ok  W: %.0f km/h in 3 s, %.0f m straight on (speedometer %d, gear %d, engine audible, wheels spin); S: stopped in %.1f m, then reversed at %.0f km/h (gear R)" % [
-		kmh, -moved.z, shown, gear, stop_distance, reverse_kmh])
+		kmh, along, shown, gear, stop_distance, reverse_kmh])
 	return ""
 
 
 func _check_steering() -> String:
 	var car: VehicleController = _car()
-	await _place_car(car, Vector3(-30.0, 0.6, -3.0))   # open stretch of the east-west road, facing west
+	await _place_car(car, TEST_ROAD)
 	var start_heading: float = _heading(car)
 	var max_steer: float = 0.0
 	var max_axle_turn: float = 0.0
@@ -590,7 +777,7 @@ func _check_steering() -> String:
 func _check_vehicle_cameras() -> String:
 	var car: VehicleController = _car()
 	var cam: VehicleCamera = _vehicle_camera()
-	await _place_car(car, Vector3(-20.0, 0.6, -3.0))
+	await _place_car(car, TEST_ROAD)
 	_key(KEY_W, true)
 	await _physics_frames(90)   # the chase camera swings in behind a moving car
 	_key(KEY_W, false)
@@ -644,8 +831,8 @@ func _check_crash_damage() -> String:
 	var car: VehicleController = _car()
 	var hud: Hud = _hud()
 	var damage := car.get_node("Damage") as VehicleDamage
-	await _place_car(car, Vector3(-20.0, 0.6, -3.0))
-	var wall: StaticBody3D = _temp_wall(Vector3(-36.0, 1.5, -3.0), Vector3(1.0, 3.0, 11.0))
+	await _place_car(car, TEST_ROAD)
+	var wall: StaticBody3D = _temp_wall(Vector3(TEST_ROAD.x - 16.0, 1.5, 112.0), Vector3(1.0, 3.0, 13.0))
 	var before: float = damage.health
 	var impacts: Array = []
 	var on_impact := func(impact_kmh: float, _amount: float) -> void: impacts.append(impact_kmh)
@@ -676,7 +863,7 @@ func _check_crash_damage() -> String:
 
 func _check_pause_in_vehicle() -> String:
 	var car: VehicleController = _car()
-	await _place_car(car, Vector3(-20.0, 0.6, -3.0))
+	await _place_car(car, TEST_ROAD)
 	_key(KEY_W, true)
 	await _physics_frames(60)
 	_tap(KEY_ESCAPE)
@@ -702,7 +889,7 @@ func _check_exit_vehicle() -> String:
 	var player: PlayerController = _player()
 	var car: VehicleController = _car()
 	var hud: Hud = _hud()
-	await _place_car(car, Vector3(-20.0, 0.6, -3.0))
+	await _place_car(car, TEST_ROAD)
 	_tap(KEY_F)
 	await _physics_frames(5)
 	if player.is_in_vehicle() or player.vehicle != null:
@@ -760,7 +947,7 @@ func _check_exit_blocked_door() -> String:
 	var car: VehicleController = _car()
 	if not await _get_in(player, car):
 		return "could not get back in"
-	await _place_car(car, Vector3(-20.0, 0.6, -3.0))
+	await _place_car(car, TEST_ROAD)
 	var driver_side: Vector3 = -car.global_basis.x
 	var wall: StaticBody3D = _temp_wall(car.global_position + driver_side * 1.6 + Vector3.UP * 1.0, Vector3(7.0, 3.0, 0.6))
 	await _physics_frames(2)
@@ -864,6 +1051,10 @@ func _check_pause_and_return_to_menu() -> String:
 func _player() -> PlayerController:
 	var scene: Node = get_tree().current_scene
 	return scene.get_node_or_null("Player") as PlayerController if scene != null else null
+
+
+func _world() -> District:
+	return get_tree().current_scene.get_node("World") as District
 
 
 func _car() -> VehicleController:

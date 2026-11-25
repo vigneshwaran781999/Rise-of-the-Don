@@ -1,6 +1,6 @@
 # Manual Testing Checklist
 
-Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print `SMOKE TEST PASSED`) and, for vehicle handling figures, `tests/vehicle_test.tscn` (`VEHICLE TEST PASSED`). These checks cover what a headless run can't judge: how things look, sound and feel. Tick each box; note anything that fails in DEVELOPMENT_LOG.md.
+Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print `SMOKE TEST PASSED`), `tests/player_test.tscn` (kerb, ramps and gateway on the M1 test block) and `tests/vehicle_test.tscn` (vehicle handling figures). Performance is measured by `tests/perf_baseline.tscn` (see `docs/PERFORMANCE.md`). These checks cover what a headless run can't judge: how things look, sound and feel. Tick each box; note anything that fails in DEVELOPMENT_LOG.md.
 
 ---
 
@@ -86,3 +86,38 @@ Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print
 - [ ] Below about a third health, grey smoke rises from the engine; below 15 % it turns dark; at zero the smoke goes black and the engine won't run (you can still get out).
 - [ ] If the car ever ends up on its side or roof while you are in it, it rights itself after about 2.5 s. (Hard to do on purpose in this flat block; the vehicle test checks it.)
 - [ ] Pausing while driving freezes the car and its sounds; resuming carries on.
+
+## M3 — Old Town district
+
+Since M3, **New Game starts in Old Town**. The M1 test block is still in the project (`scenes/world/test_block.tscn`) and is used by `tests/player_test.tscn`. The M1 checks that mention it (spawn view, ramps, the small gopuram courtyard) now apply to that test level, not to New Game.
+
+### Arrival and looks
+- [ ] New Game: an "OLD TOWN / VELANAGAR" title fades in at the top. You stand on a road leading west to the temple's east gopuram, with a sedan parked against the left kerb ahead.
+- [ ] The temple: four gopurams, red-and-white striped walls, a tall central shrine and a pillared hall inside, palms and neem trees. There are flower stalls and bollards by each gate. You can walk through a gopuram into the courtyard.
+- [ ] **Main roads:** four lanes, a double yellow centre line, dashed lane lines, black-and-yellow kerbs and sidewalks with streetlights.
+- [ ] **Lanes:** narrow, with a dashed centre line and footpaths.
+- [ ] **Junctions:** zebra crossings where traffic lights are.
+- [ ] **Buildings:** pastel shops with awnings and blank sign boards on main roads, houses with clay-tile roofs and pillared verandahs in the lanes, a few lodges with rooftop sign frames and some apartment blocks.
+- [ ] Does the mix feel like a dense, lively old town? Nothing should float, sink, overlap badly or flicker.
+- [ ] Market square (north-west of the temple): a market hall, rows of stalls with red and blue canopies, flower stalls and handcarts.
+- [ ] Temple tank (south-east of the temple): stone steps going down to green water, a pavilion in the middle and a railing around it.
+- [ ] Two small parks full of trees. Some block courtyards have a neem tree.
+- [ ] The gopurams stay on the skyline from anywhere in the district.
+- [ ] Distant streets fade into a warm haze. Walking or driving at street level, you shouldn't see buildings pop in or out nearby.
+
+### Streaming and performance
+- [ ] F3 now shows draw calls and the number of loaded chunks under the FPS. Drive from one corner of the district to the other: the chunk count changes, and the drive shouldn't stutter.
+- [ ] With F3, note the FPS at the spawn and in the market square on your machine. On this machine's integrated GPU it was about 37-41 FPS at 1920×1080 (`docs/PERFORMANCE.md`). Is it smooth enough for you?
+- [ ] Drive the start sedan to a far corner and back past the other two parked sedans (Ring B west, and the road north of the temple). They are still parked where they were: a car whose ground is not loaded is frozen, so none falls through the world.
+
+### Traffic lights, lanes and navmesh
+- [ ] Traffic lights where two main roads cross cycle green, amber, red, one direction at a time (14 s green, 3 s amber, 2 s all red).
+- [ ] Press F4 for the debug view, then F4 again to hide it. Check that:
+  - cyan lanes run on the **left** side of every road (left-hand traffic), with white turn paths curving through junctions;
+  - stop lines show the live light colour (green, amber or red, and yellow means give way);
+  - the green navmesh outline covers sidewalks, plazas and crossings, but not roads.
+
+### Driving in Old Town
+- [ ] The ring roads are fun to drive, and the lanes are tight but drivable.
+- [ ] Kerbs bump the car up onto sidewalks, and buildings and walls stop it (and damage it).
+- [ ] Invisible walls stop you at the edge of the district.

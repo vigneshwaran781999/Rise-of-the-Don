@@ -1,0 +1,431 @@
+extends SceneTree
+## Builds the streamed Old Town district (M3) from the Blender kit:
+##   1. bakes every model it uses into a one-draw-call mesh in assets/world/kit/ (KitBaker),
+##   2. lays out the town (OldTownLayout, deterministic),
+##   3. writes one scene per 128 m chunk to scenes/world/chunks/old_town/: ground tiles and props
+##      as MultiMeshes, buildings, occluders, traffic signals, simple convex collision and the
+##      baked pedestrian navmesh for that chunk,
+##   4. writes the always-loaded temple landmark scene, the lane graph and the district manifest.
+## Re-run after changing the layout or any Blender asset (after build_all.sh and an import):
+##   "$GODOT" --headless --path . --script res://tools/godot/build_old_town.gd
+
+const KIT_DIR: String = "res://assets/world/kit/"
+const OUT_DIR: String = "res://scenes/world/chunks/old_town/"
+const LANDMARKS_PATH: String = OUT_DIR + "landmarks.scn"
+const LANES_PATH: String = "res://resources/world/old_town_lanes.res"
+const DISTRICT_PATH: String = "res://resources/world/old_town.tres"
+const MATERIAL_PATH: String = KIT_DIR + "palette_material.tres"
+const SHADER_PATH: String = "res://shaders/palette_lit.gdshader"
+const SIGNAL_POLE_PATH: String = "res://assets/models/props/prop_signal_pole.glb"
+const SIGNAL_TIMING_PATH: String = "res://resources/world/signal_timing.tres"
+const LOT_COLOURS: Dictionary = {
+	&"lot_paved": Color("8e897f"), &"lot_warm": Color("a08a70"), &"lot_stone": Color("a39581"), &"lot_grass": Color("5f7d3c"),
+}
+## Static world collision layer, and a private layer for the navmesh source shapes.
+const WORLD_LAYER: int = 1
+const NAV_SOURCE_LAYER: int = 1 << 30
+const BUILDING_VISIBILITY: float = 280.0
+const PROP_VISIBILITY: float = 200.0
+
+var _material: ShaderMaterial
+var _kit: Dictionary = {}          # StringName -> KitPiece (mesh saved in KIT_DIR)
+var _layout: OldTownLayout
+var _stats: Dictionary = {"buildings": 0, "props": 0, "ground": 0, "shapes": 0, "nav_polys": 0, "signals": 0}
+
+
+func _initialize() -> void:
+	# The scene tree only runs from the first frame on (navmesh parsing needs it), so build then.
+	_run.call_deferred()
+
+
+func _run() -> void:
+	var started: int = Time.get_ticks_msec()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(KIT_DIR))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
+	_material = _make_material()
+	_layout = OldTownLayout.new()
+	_layout.generate()
+	if not _bake_kit():
+		quit(1)
+		return
+	var source: NavigationMeshSourceGeometryData3D = _parse_nav_source()
+	var timing := load(SIGNAL_TIMING_PATH) as SignalTiming
+	var pole := load(SIGNAL_POLE_PATH) as PackedScene
+	var count: int = int(2.0 * OldTownLayout.HALF / OldTownLayout.CHUNK_SIZE)
+	for cz: int in count:
+		for cx: int in count:
+			if not _build_chunk(Vector2i(cx, cz), source, timing, pole):
+				quit(1)
+				return
+	if not _build_landmarks():
+		quit(1)
+		return
+	var err: Error = ResourceSaver.save(_layout.lane_graph, LANES_PATH, ResourceSaver.FLAG_COMPRESS)
+	if err != OK:
+		push_error("build_old_town: could not save the lane graph (%d)" % err)
+		quit(1)
+		return
+	var district := DistrictData.new()
+	district.display_name = "Old Town"
+	district.chunk_size = OldTownLayout.CHUNK_SIZE
+	district.origin = Vector2(-OldTownLayout.HALF, -OldTownLayout.HALF)
+	district.chunk_count = Vector2i(count, count)
+	district.chunk_path_format = OUT_DIR + "chunk_%d_%d.scn"
+	district.lane_graph = load(LANES_PATH) as LaneGraph
+	err = ResourceSaver.save(district, DISTRICT_PATH)
+	if err != OK:
+		push_error("build_old_town: could not save the district (%d)" % err)
+		quit(1)
+		return
+	var lanes: LaneGraph = _layout.lane_graph
+	print("build_old_town: %d chunks, %d buildings, %d props, %d ground tiles, %d collision shapes, %d navmesh polygons" % [
+		count * count, _stats["buildings"], _stats["props"], _stats["ground"], _stats["shapes"], _stats["nav_polys"]])
+	print("build_old_town: %d junctions (%d with traffic lights), %d crossings, lane graph %d nodes (%d disconnected), %d kit meshes" % [
+		_layout.junction_count, _stats["signals"], _layout.crossings.size(), lanes.size(), lanes.count_disconnected(), _kit.size()])
+	print("build_old_town: done in %.1f s" % ((Time.get_ticks_msec() - started) / 1000.0))
+	quit(0)
+
+
+# --------------------------------------------------------------------------- kit
+
+func _make_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = load(SHADER_PATH) as Shader
+	ResourceSaver.save(mat, MATERIAL_PATH)
+	return load(MATERIAL_PATH) as ShaderMaterial
+
+
+func _bake_kit() -> bool:
+	var names: Array[StringName] = []
+	for p: Dictionary in _layout.placements:
+		if not names.has(p["kit"]):
+			names.append(p["kit"])
+	names.sort()
+	for kit_name: StringName in names:
+		var piece: KitPiece
+		if LOT_COLOURS.has(kit_name):
+			piece = KitPiece.new()
+			piece.mesh = _lot_quad(LOT_COLOURS[kit_name])
+			piece.bounds = piece.mesh.get_aabb()
+		else:
+			var path: String = _glb_path(kit_name)
+			if not ResourceLoader.exists(path):
+				push_error("build_old_town: missing model %s" % path)
+				return false
+			piece = KitBaker.bake(load(path) as PackedScene, _material)
+		var mesh_path: String = KIT_DIR + str(kit_name) + ".res"
+		var err: Error = ResourceSaver.save(piece.mesh, mesh_path, ResourceSaver.FLAG_COMPRESS)
+		if err != OK:
+			push_error("build_old_town: could not save %s (%d)" % [mesh_path, err])
+			return false
+		piece.mesh = load(mesh_path) as ArrayMesh
+		_kit[kit_name] = piece
+	return true
+
+
+func _glb_path(kit_name: StringName) -> String:
+	var n: String = str(kit_name)
+	var folder: String = "road" if n.begins_with("road_") else ("props" if n.begins_with("prop_") else "buildings")
+	return "res://assets/models/%s/%s.glb" % [folder, n]
+
+
+## A 1 x 1 m patch of lot ground at sidewalk height, coloured for the palette material.
+func _lot_quad(colour: Color) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
+	var y: float = OldTownLayout.LOT_TOP
+	var corners: Array[Vector3] = [Vector3(-0.5, y, -0.5), Vector3(0.5, y, -0.5), Vector3(0.5, y, 0.5), Vector3(-0.5, y, 0.5)]
+	for i: int in [0, 1, 2, 0, 2, 3]:
+		st.set_color(colour.srgb_to_linear())
+		st.set_uv2(Vector2(0.95, 0.0))
+		st.set_custom(0, Color(0, 0, 0))
+		st.set_normal(Vector3.UP)
+		st.add_vertex(corners[i])
+	var mesh: ArrayMesh = st.commit()
+	mesh.surface_set_material(0, _material)
+	return mesh
+
+
+# --------------------------------------------------------------------------- navmesh
+
+func _nav_template() -> NavigationMesh:
+	var nav := NavigationMesh.new()
+	nav.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	nav.geometry_collision_mask = NAV_SOURCE_LAYER
+	nav.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
+	nav.cell_size = 0.25
+	nav.cell_height = 0.1        # matches navigation/3d/default_cell_height (setup_project.gd)
+	nav.agent_height = 2.0      # multiples of the 0.25 m cells
+	nav.agent_radius = 0.5
+	nav.agent_max_climb = 0.3
+	nav.agent_max_slope = 40.0
+	nav.edge_max_error = 1.0
+	nav.border_size = 1.0
+	return nav
+
+
+## Walkable ground (every block slab and the crossings over roads) plus everything standing on
+## it (buildings, props, the temple), for the whole district. Roads themselves are left out, so
+## people only cross them at crossings.
+func _parse_nav_source() -> NavigationMeshSourceGeometryData3D:
+	var root := Node3D.new()
+	root.name = "NavSource"
+	get_root().add_child(root)
+	var body := StaticBody3D.new()
+	body.collision_layer = NAV_SOURCE_LAYER
+	root.add_child(body)
+	for b: Dictionary in _layout.blocks:
+		_add_shape(body, _block_hull(b["rect"], b["walk"], b["rect"]))
+	for r: Rect2 in _layout.crossings:
+		var box := BoxShape3D.new()
+		box.size = Vector3(r.size.x, 0.2, r.size.y)
+		_add_shape(body, box, Transform3D(Basis.IDENTITY, Vector3(r.get_center().x, -0.1, r.get_center().y)))
+	for p: Dictionary in _layout.placements:
+		if p["kind"] == &"ground":
+			continue
+		for hull: PackedVector3Array in (_kit[p["kit"]] as KitPiece).hulls:
+			var shape: ConvexPolygonShape3D = _hull_shape(hull, p["xform"])
+			if shape != null:
+				_add_shape(body, shape)
+	var source := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(_nav_template(), source, root)
+	root.free()
+	return source
+
+
+# --------------------------------------------------------------------------- chunks
+
+func _build_chunk(coord: Vector2i, source: NavigationMeshSourceGeometryData3D, timing: SignalTiming, pole: PackedScene) -> bool:
+	var rect := Rect2(-OldTownLayout.HALF + coord.x * OldTownLayout.CHUNK_SIZE, -OldTownLayout.HALF + coord.y * OldTownLayout.CHUNK_SIZE,
+		OldTownLayout.CHUNK_SIZE, OldTownLayout.CHUNK_SIZE)
+	var root := Node3D.new()
+	root.name = "Chunk_%d_%d" % [coord.x, coord.y]
+	var ground := _child(root, root, Node3D.new(), "Ground")
+	var buildings := _child(root, root, Node3D.new(), "Buildings")
+	var props := _child(root, root, Node3D.new(), "Props")
+	var occluders := _child(root, root, Node3D.new(), "Occluders")
+	var signals := _child(root, root, Node3D.new(), "Signals")
+	var body := _child(root, root, StaticBody3D.new(), "Collision") as StaticBody3D
+	body.collision_layer = WORLD_LAYER
+	body.collision_mask = 0
+
+	# Ground under the roads: one slab for the whole chunk, top at road level.
+	var slab := BoxShape3D.new()
+	slab.size = Vector3(rect.size.x, 1.0, rect.size.y)
+	_own_shape(root, body, slab, Transform3D(Basis.IDENTITY, Vector3(rect.get_center().x, -0.5, rect.get_center().y)))
+	# Raised blocks (sidewalks and lots), clipped to the chunk, kerbs bevelled for walking up.
+	for b: Dictionary in _layout.blocks:
+		var part: Rect2 = (b["rect"] as Rect2).intersection(rect)
+		if part.size.x > 0.01 and part.size.y > 0.01:
+			_own_shape(root, body, _block_hull(part, b["walk"], b["rect"]))
+
+	var multimesh: Dictionary = {}   # kit -> Array[Transform3D]
+	var index: int = 0
+	for p: Dictionary in _layout.placements:
+		var xform: Transform3D = p["xform"]
+		if p["kind"] == &"landmark" or OldTownLayout.chunk_of(xform.origin.x, xform.origin.z) != coord:
+			continue
+		var piece: KitPiece = _kit[p["kit"]]
+		if p["kind"] == &"building":
+			var mi := MeshInstance3D.new()
+			mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+			mi.mesh = piece.mesh
+			mi.transform = xform
+			mi.visibility_range_end = BUILDING_VISIBILITY
+			_child(root, buildings, mi, "B%03d_%s" % [index, str(p["kit"]).trim_prefix("bld_")])
+			_add_occluder(root, occluders, piece, xform, index)
+			_stats["buildings"] += 1
+			index += 1
+		else:
+			if not multimesh.has(p["kit"]):
+				multimesh[p["kit"]] = []
+			(multimesh[p["kit"]] as Array).append(xform)
+			_stats["ground" if p["kind"] == &"ground" else "props"] += 1
+		for hull: PackedVector3Array in piece.hulls:
+			var shape: ConvexPolygonShape3D = _hull_shape(hull, xform)
+			if shape != null:
+				_own_shape(root, body, shape)
+	for kit_name: StringName in multimesh:
+		var is_ground: bool = str(kit_name).begins_with("road_") or str(kit_name).begins_with("lot_")
+		var mmi: InstanceBatch = _multimesh(_kit[kit_name], multimesh[kit_name])
+		if is_ground:
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		else:
+			mmi.visibility_range_end = PROP_VISIBILITY
+		_child(root, ground if is_ground else props, mmi, str(kit_name))
+
+	for s: Dictionary in _layout.signals:
+		var centre: Vector3 = s["position"]
+		if OldTownLayout.chunk_of(centre.x, centre.z) != coord:
+			continue
+		var sig := TrafficSignal.new()
+		sig.junction_id = int(s["junction"])
+		sig.timing = timing
+		sig.time_offset = fposmod(float(s["junction"]) * 7.3, timing.cycle_seconds())
+		sig.position = centre
+		_child(root, signals, sig, "Signal_%d" % int(s["junction"]))
+		var k: int = 0
+		for head: Array in s["heads"]:
+			var head_xform: Transform3D = head[0]
+			var instance := pole.instantiate() as Node3D
+			instance.transform = Transform3D(head_xform.basis, head_xform.origin - centre)
+			instance.set_meta(&"signal_axis", int(head[1]))
+			instance.name = "Pole%d" % k
+			sig.add_child(instance)
+			instance.owner = root
+			k += 1
+		_stats["signals"] += 1
+
+	var region := NavigationRegion3D.new()
+	var nav: NavigationMesh = _nav_template()
+	# Bake the chunk grown by the border size: the border is trimmed off again, which leaves edges
+	# exactly on the chunk boundary, so neighbouring chunks' navmeshes join up.
+	var grown: Rect2 = rect.grow(nav.border_size)
+	# Only street level (to 2.6 m: a person's height above the sidewalks), so rooftops never become
+	# unreachable islands of navmesh.
+	nav.filter_baking_aabb = AABB(Vector3(grown.position.x, -2.0, grown.position.y), Vector3(grown.size.x, 4.6, grown.size.y))
+	NavigationServer3D.bake_from_source_geometry_data(nav, source)
+	region.navigation_mesh = nav
+	_child(root, root, region, "Navigation")
+	_stats["nav_polys"] += nav.get_polygon_count()
+
+	var packed := PackedScene.new()
+	var err: Error = packed.pack(root)
+	if err == OK:
+		err = ResourceSaver.save(packed, OUT_DIR + "chunk_%d_%d.scn" % [coord.x, coord.y], ResourceSaver.FLAG_COMPRESS)
+	root.free()
+	if err != OK:
+		push_error("build_old_town: could not save chunk %s (%d)" % [coord, err])
+		return false
+	return true
+
+
+## The temple compound: always loaded so the gopurams stay on the skyline from anywhere.
+func _build_landmarks() -> bool:
+	var root := Node3D.new()
+	root.name = "OldTownLandmarks"
+	var visuals := _child(root, root, Node3D.new(), "Temple")
+	var body := _child(root, root, StaticBody3D.new(), "Collision") as StaticBody3D
+	body.collision_layer = WORLD_LAYER
+	body.collision_mask = 0
+	var groups: Dictionary = {}
+	for p: Dictionary in _layout.placements:
+		if p["kind"] != &"landmark":
+			continue
+		if not groups.has(p["kit"]):
+			groups[p["kit"]] = []
+		(groups[p["kit"]] as Array).append(p["xform"])
+		for hull: PackedVector3Array in (_kit[p["kit"]] as KitPiece).hulls:
+			var shape: ConvexPolygonShape3D = _hull_shape(hull, p["xform"])
+			if shape != null:
+				_own_shape(root, body, shape)
+	for kit_name: StringName in groups:
+		var xforms: Array = groups[kit_name]
+		if xforms.size() >= 3:
+			_child(root, visuals, _multimesh(_kit[kit_name], xforms), str(kit_name))
+		else:
+			for k: int in xforms.size():
+				var mi := MeshInstance3D.new()
+				mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+				mi.mesh = (_kit[kit_name] as KitPiece).mesh
+				mi.transform = xforms[k]
+				_child(root, visuals, mi, "%s_%d" % [str(kit_name), k])
+	var packed := PackedScene.new()
+	var err: Error = packed.pack(root)
+	if err == OK:
+		err = ResourceSaver.save(packed, LANDMARKS_PATH, ResourceSaver.FLAG_COMPRESS)
+	root.free()
+	if err != OK:
+		push_error("build_old_town: could not save the landmarks (%d)" % err)
+	return err == OK
+
+
+# --------------------------------------------------------------------------- shapes and nodes
+
+## Convex slab for (part of) a block: bottom at road level, top at sidewalk height, bevelled
+## towards the road on sides that face one (walk width > 0) so people and wheels can mount it.
+func _block_hull(part: Rect2, walk: Array, whole: Rect2) -> ConvexPolygonShape3D:
+	var bevel: float = OldTownLayout.KERB_BEVEL
+	var inset: Array[float] = [0.0, 0.0, 0.0, 0.0]   # w, e, n, s
+	if float(walk[0]) > 0.0 and is_equal_approx(part.position.x, whole.position.x):
+		inset[0] = bevel
+	if float(walk[1]) > 0.0 and is_equal_approx(part.end.x, whole.end.x):
+		inset[1] = bevel
+	if float(walk[2]) > 0.0 and is_equal_approx(part.position.y, whole.position.y):
+		inset[2] = bevel
+	if float(walk[3]) > 0.0 and is_equal_approx(part.end.y, whole.end.y):
+		inset[3] = bevel
+	var top: float = OldTownLayout.LOT_TOP
+	var pts := PackedVector3Array([
+		Vector3(part.position.x, -0.05, part.position.y), Vector3(part.end.x, -0.05, part.position.y),
+		Vector3(part.end.x, -0.05, part.end.y), Vector3(part.position.x, -0.05, part.end.y),
+		Vector3(part.position.x + inset[0], top, part.position.y + inset[2]), Vector3(part.end.x - inset[1], top, part.position.y + inset[2]),
+		Vector3(part.end.x - inset[1], top, part.end.y - inset[3]), Vector3(part.position.x + inset[0], top, part.end.y - inset[3]),
+	])
+	var shape := ConvexPolygonShape3D.new()
+	shape.points = pts
+	return shape
+
+
+## A kit hull placed in the world (scale baked into the points), or null if it is too flat.
+func _hull_shape(hull: PackedVector3Array, xform: Transform3D) -> ConvexPolygonShape3D:
+	var pts := PackedVector3Array()
+	var box := AABB()
+	for k: int in hull.size():
+		var p: Vector3 = xform * hull[k]
+		pts.append(p)
+		box = AABB(p, Vector3.ZERO) if k == 0 else box.expand(p)
+	if box.size.x < 0.02 or box.size.y < 0.02 or box.size.z < 0.02:
+		return null
+	var shape := ConvexPolygonShape3D.new()
+	shape.points = pts
+	return shape
+
+
+## Box occluder inside a building's upper floors (never over open shopfronts or verandahs).
+func _add_occluder(root: Node3D, parent: Node, piece: KitPiece, xform: Transform3D, index: int) -> void:
+	var b: AABB = piece.bounds
+	var bottom: float = 3.6
+	var top: float = b.end.y - 1.0
+	if top - bottom < 2.0:
+		return
+	var scale: Vector3 = xform.basis.get_scale()
+	var occ := BoxOccluder3D.new()
+	occ.size = Vector3(b.size.x * 0.7 * scale.x, top - bottom, b.size.z * 0.6 * scale.z)
+	var instance := OccluderInstance3D.new()
+	instance.occluder = occ
+	var local_centre := Vector3(b.get_center().x, (bottom + top) * 0.5, b.get_center().z)
+	instance.transform = Transform3D(xform.basis.orthonormalized(), xform * local_centre)
+	_child(root, parent, instance, "O%03d" % index)
+
+
+func _multimesh(piece: KitPiece, xforms: Array) -> InstanceBatch:
+	var batch := InstanceBatch.new()
+	batch.mesh = piece.mesh
+	batch.transforms = InstanceBatch.pack(xforms)
+	batch.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # static scenery
+	return batch
+
+
+func _add_shape(body: StaticBody3D, shape: Shape3D, xform: Transform3D = Transform3D.IDENTITY) -> void:
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	cs.transform = xform
+	body.add_child(cs)
+
+
+func _own_shape(root: Node3D, body: StaticBody3D, shape: Shape3D, xform: Transform3D = Transform3D.IDENTITY) -> void:
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	cs.transform = xform
+	_child(root, body, cs, "S%d" % body.get_child_count())
+	_stats["shapes"] += 1
+
+
+func _child(root: Node3D, parent: Node, node: Node, node_name: String) -> Node:
+	node.name = node_name
+	parent.add_child(node)
+	if node != root:
+		node.owner = root
+	return node

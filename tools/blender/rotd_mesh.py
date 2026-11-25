@@ -317,3 +317,33 @@ class MeshBuilder:
 def collision_material() -> bpy.types.Material:
     """Collision-only meshes still need a material slot for a clean export."""
     return material("collision", "#ff00ff", double_sided=False)
+
+
+class CollisionSet:
+    """Collision for one asset as separate convex pieces. Each piece is exported as its own
+    '<name>_cNN-convcolonly' object, so Godot's importer gives it its own convex shape. Unlike
+    one '-colonly' trimesh, touching pieces never fuse when the district builder turns them
+    into convex hulls (a gateway passage between two piers stays open)."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.parts: list[MeshBuilder] = []
+
+    def _new(self) -> MeshBuilder:
+        mb = MeshBuilder()
+        self.parts.append(mb)
+        return mb
+
+    def box(self, x0: float, y0: float, z0: float, x1: float, y1: float, z1: float) -> None:
+        self._new().box(x0, y0, z0, x1, y1, z1, collision_material())
+
+    def hull(self, points) -> None:
+        self._new().convex_hull(points, collision_material())
+
+    def frustum(self, cx: float, cy: float, z0: float, sx0: float, sy0: float,
+                sx1: float, sy1: float, h: float) -> None:
+        self._new().frustum(cx, cy, z0, sx0, sy0, sx1, sy1, h, collision_material(), bottom=True)
+
+    def build(self) -> None:
+        for i, mb in enumerate(self.parts):
+            mb.build(f"{self.name}_c{i:02d}-convcolonly")

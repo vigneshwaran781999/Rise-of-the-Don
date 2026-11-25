@@ -1,7 +1,7 @@
 """Placeholder buildings -> assets/models/buildings/
 
 Every building has its pivot at the base centre and its front facing Blender -Y
-(Godot +Z after import). Collision is a simple box-based '-colonly' mesh.
+(Godot +Z after import). Collision is box-based convex pieces (rm.CollisionSet).
 
   bld_shophouse_01..03  8 x 12 m, 2-3 storeys: shutter or open shopfront, striped awning,
                         blank sign board with a neon strip, balcony, rooftop water tank
@@ -59,10 +59,10 @@ def water_tank(mb: rm.MeshBuilder, x: float, y: float, z: float, stand) -> None:
 
 
 def box_collision(name: str, boxes: list[tuple]) -> None:
-    col = rm.MeshBuilder()
+    col = rm.CollisionSet(name)
     for b in boxes:
-        col.box(*b, rm.collision_material())
-    col.build(name + "-colonly")
+        col.box(*b)
+    col.build()
 
 
 # --------------------------------------------------------------------------- shophouse
@@ -357,19 +357,18 @@ def gopuram() -> None:
         kalasam(mb, kx, 0.0, crown_top - 0.05, gold)
     mb.build(name)
 
-    col = rm.MeshBuilder()
-    cm = rm.collision_material()
+    col = rm.CollisionSet(name)
     # Plinth bevelled front and back so you can walk up through the gateway.
-    col.convex_hull([
+    col.hull([
         (-7.5, -5.8, -0.1), (7.5, -5.8, -0.1), (7.5, 5.8, -0.1), (-7.5, 5.8, -0.1),
         (-7.5, -5.8, 0.0), (7.5, -5.8, 0.0), (7.5, 5.8, 0.0), (-7.5, 5.8, 0.0),
         (-7.5, -5.0, 0.35), (7.5, -5.0, 0.35), (7.5, 5.0, 0.35), (-7.5, 5.0, 0.35),
-    ], cm)
-    col.box(-7.0, -4.5, 0.35, -1.8, 4.5, base_top, cm)
-    col.box(1.8, -4.5, 0.35, 7.0, 4.5, base_top, cm)
-    col.box(-1.8, -4.5, 4.9, 1.8, 4.5, base_top, cm)
-    col.frustum(0.0, 0.0, base_top, 14.1, 9.1, length, bd + 0.4, crown_top - base_top, cm, bottom=True)
-    col.build(name + "-colonly")
+    ])
+    col.box(-7.0, -4.5, 0.35, -1.8, 4.5, base_top)
+    col.box(1.8, -4.5, 0.35, 7.0, 4.5, base_top)
+    col.box(-1.8, -4.5, 4.9, 1.8, 4.5, base_top)
+    col.frustum(0.0, 0.0, base_top, 14.1, 9.1, length, bd + 0.4, crown_top - base_top)
+    col.build()
     rm.export_glb("buildings", name)
 
 
@@ -403,12 +402,11 @@ def shrine() -> None:
     kalasam(mb, 0.0, 0.0, z + 1.65, gold, scale=1.2)
     mb.build(name)
 
-    col = rm.MeshBuilder()
-    cm = rm.collision_material()
-    col.box(-3.5, -3.5, 0.0, 3.5, 3.5, 0.5, cm)
-    col.box(-2.8, -2.8, 0.5, 2.8, 2.8, 4.0, cm)
-    col.frustum(0.0, 0.0, 4.0, 5.0, 5.0, 1.2, 1.2, z + 1.7 - 4.0, cm, bottom=True)
-    col.build(name + "-colonly")
+    col = rm.CollisionSet(name)
+    col.box(-3.5, -3.5, 0.0, 3.5, 3.5, 0.5)
+    col.box(-2.8, -2.8, 0.5, 2.8, 2.8, 4.0)
+    col.frustum(0.0, 0.0, 4.0, 5.0, 5.0, 1.2, 1.2, z + 1.7 - 4.0)
+    col.build()
     rm.export_glb("buildings", name)
 
 
