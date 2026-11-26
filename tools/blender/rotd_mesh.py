@@ -46,21 +46,27 @@ def clear_scene() -> None:
         bpy.data.lights.remove(light)
 
 
-def export_glb(category: str, file_stem: str) -> str:
-    """Export everything in the scene to assets/models/<category>/<file_stem>.glb."""
+def export_glb(category: str, file_stem: str, animations: bool = False) -> str:
+    """Export everything in the scene to assets/models/<category>/<file_stem>.glb. With
+    `animations`, each NLA track becomes one animation (rigged characters, M8); skinned meshes
+    keep their armature modifier (not applied)."""
     out_dir = os.path.join(MODELS_DIR, category)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, file_stem + ".glb")
+    options = {}
+    if animations:
+        options = {"export_animation_mode": "NLA_TRACKS", "export_skins": True, "export_force_sampling": True}
     bpy.ops.export_scene.gltf(
         filepath=path,
         export_format="GLB",
         use_selection=False,
-        export_apply=True,
+        export_apply=not animations,
         export_yup=True,
         export_cameras=False,
         export_lights=False,
-        export_animations=False,
+        export_animations=animations,
         export_materials="EXPORT",
+        **options,
     )
     tris = 0
     for obj in bpy.data.objects:

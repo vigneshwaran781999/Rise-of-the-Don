@@ -246,8 +246,6 @@ func revive() -> void:
 
 func _go_down() -> void:
 	_punch_left = 0.0
-	model.rotation.x = -PI * 0.5            # falls flat on their back
-	model.position.y = 0.15
 	_set_state(State.DOWN)
 	died.emit()
 

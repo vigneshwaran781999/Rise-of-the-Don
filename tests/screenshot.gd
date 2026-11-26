@@ -8,7 +8,7 @@ extends Node
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--weather=clear|cloudy|fog|rain] [--waypoint=x,z]
 ##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id] [--mission=id[:n] [--talk]]
-##       [--scene_at=seconds]
+##       [--scene_at=seconds] [--figure=walk|run|punch|... [--figure_at=seconds]]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --at moves the player there first (the city streams in around them: for --cam shots far away).
@@ -76,6 +76,8 @@ func _run() -> void:
 		await _shop(instance, StringName(str(args["shop"])))
 	if args.has("mission"):
 		await _mission(instance, str(args["mission"]), args.has("talk"))
+	if args.has("figure") and instance.has_node("Player"):
+		await _pose_player(instance.get_node("Player/Model/Figure") as PlayerFigure, str(args["figure"]), float(args.get("figure_at", "0.3")))
 	if args.has("scene_at") and instance.has_node("Missions"):
 		var cutscene: CutscenePlayer = (instance.get_node("Missions") as MissionDirector).get_cutscene()
 		while cutscene.is_playing() and cutscene.get_time() < float(args["scene_at"]):
@@ -341,4 +343,28 @@ func _mission(game: Node, spec: String, talk: bool) -> void:
 		event.action = &"interact"
 		event.pressed = pressed
 		Input.parse_input_event(event)
+		await get_tree().process_frame
+
+
+## --figure=walk|run|sprint (that gait), sit|drive|down|fall|talk (that state), guard (fists up)
+## or punch|windup|hit|knocked|getup|jump|land (that action, `seconds` in): holds the player's
+## figure in it for the picture (M8).
+func _pose_player(figure: PlayerFigure, pose: String, seconds: float) -> void:
+	figure.set_process(false)
+	var speeds: Dictionary = {"walk": HumanFigure.WALK_SPEED, "run": HumanFigure.RUN_SPEED, "sprint": HumanFigure.SPRINT_SPEED}
+	if speeds.has(pose):
+		figure.set_speed(speeds[pose])
+	elif StringName(pose) in HumanFigure.STATES:
+		figure.set_state(StringName(pose))
+	elif pose == "guard":
+		figure.set_guard(1.0)
+	elif StringName(pose) in HumanFigure.ACTIONS:
+		figure.play(StringName(pose))
+		var started: int = Time.get_ticks_msec()
+		while Time.get_ticks_msec() - started < int(seconds * 1000.0):
+			await get_tree().process_frame
+		get_tree().paused = true
+		return
+	var since: int = Time.get_ticks_msec()
+	while Time.get_ticks_msec() - since < int(seconds * 1000.0) + 400:
 		await get_tree().process_frame

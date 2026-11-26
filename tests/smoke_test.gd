@@ -1119,7 +1119,7 @@ func _check_hud() -> String:
 	if not police.get_cars().is_empty() or not police.get_officers().is_empty():
 		return "no police should be about at level 0"
 	var figure := player.get_node_or_null("Model/Figure") as PlayerFigure
-	if figure == null or figure.mesh == null or figure.get_outfit() == null or figure.get_outfit().id != &"arrival":
+	if figure == null or not figure.has_body() or figure.get_outfit() == null or figure.get_outfit().id != &"arrival":
 		return "the player should be the character model in their travelling clothes"
 	var places := game.get_node_or_null("Places") as PlaceDirector
 	if places == null or places.get_map_blips().size() != 2:

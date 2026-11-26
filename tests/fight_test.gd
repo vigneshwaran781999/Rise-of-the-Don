@@ -105,19 +105,31 @@ func _check_punch() -> String:
 		return "the Attack input should throw a punch (state %s)" % _player.get_state_name()
 	if _fists.punch():
 		return "a second punch shouldn't start while the first is under way"
+	# How far the right fist gets in front of the player (the skeleton, posed by the animation).
+	var skeleton: Skeleton3D = figure.get_skeleton()
+	var hand: int = skeleton.find_bone("RightHand")
+	var rest_reach: float = _reach(skeleton, hand)
 	var arm: float = 0.0
+	var playing: bool = false
 	for i: int in 40:
-		arm = maxf(arm, float(figure.get_instance_shader_parameter(&"punch")))
-		await get_tree().physics_frame
+		arm = maxf(arm, _reach(skeleton, hand))
+		playing = playing or figure.is_playing(&"punch")
+		await get_tree().process_frame
 	if _player.state == PlayerController.State.PUNCH:
 		return "the punch should be over after 0.7 s"
-	if arm < 0.9:
-		return "the right arm should be thrown out in the punch (got %.2f)" % arm
-	var guard: float = float(figure.get_instance_shader_parameter(&"guard"))
+	if not playing or arm < 0.45:
+		return "the right fist should be thrown out in front in the punch animation (playing %s, reach %.2f m, at rest %.2f m)" % [playing, arm, rest_reach]
+	var guard: float = figure.get_guard()
 	if guard < 0.5:
 		return "the fists should stay up for a moment after a punch (guard %.2f)" % guard
-	_note("Attack throws a punch (PUNCH state, arm out %.2f, fists up %.2f after); no second punch mid-swing" % [arm, guard])
+	_note("Attack throws a punch (PUNCH state, the punch animation: the fist reaches %.2f m in front, %.2f m at rest; fists up %.2f after); no second punch mid-swing" % [arm, rest_reach, guard])
 	return ""
+
+
+## How far in front of the player a bone is (along the way they face).
+func _reach(skeleton: Skeleton3D, bone: int) -> float:
+	var at: Vector3 = skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
+	return (at - _player.global_position).dot(_player.get_facing())
 
 
 func _check_pedestrian() -> String:

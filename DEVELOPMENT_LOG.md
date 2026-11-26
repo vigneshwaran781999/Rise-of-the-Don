@@ -710,3 +710,21 @@ Dated entries: what was built, what broke, how it was fixed.
   - Downloaded the standard Godot 4.7.2 editor and export templates from the official GitHub release, after checking them against the release's SHA-512 sums. Installed the Windows x86_64 templates and switched the project, `CLAUDE.md` and the README to the standard editor. It is the same engine commit as the .NET build, the project imports with no errors, and the ".NET Sdk not found" message is gone.
   - `export_presets.cfg`: a "Windows Desktop" preset (x86_64; tests, tools and docs left out; the game data in `RiseOfTheDon.pck` beside the `.exe`).
   - The first export is 109 MB of `.exe` plus 24 MB of `.pck`. The exported game reaches its main menu, and the game scene runs 1500 frames from the exported pack, both with no errors.
+- **Step 2, the rigged character (the player first):**
+  - **`tools/blender/humans.py`:**
+    - Builds an original low-poly person with a 22-bone skeleton. The bone names follow Godot's humanoid profile, so any humanoid GLB can stand in later.
+    - The skinned body has each part bound to one bone, with joint caps at knees and elbows; a skirt or veshti follows the hips and partly the legs.
+    - Three bodies share the one skeleton: `chr_man`, `chr_woman` and `chr_elder` (790-910 triangles each).
+    - Seventeen keyframed animations: idle, walk, run, sprint, jump, fall, land, punch (the fist out at 0.16 s, when the blow lands), guard, windup, hit, knocked, down, getup, sit, drive, talk.
+    - Poses are written in the character's frame (forward swing, knee bend, lean), turned into each bone's space, and sampled at 30 fps. The script checks a few poses (ankles at rest height, a walking stride, the punch reaching forward at chest height, lying flat on the back, sitting knees) and fails the export if they're wrong.
+  - **`HumanBaker`:** merges a model into one skinned surface for `shaders/human.gdshader` (base colour, roughness and tint channel per vertex), so everyone of a kind shares one mesh and one material. It also prepares the clips, setting the looping ones to loop seamlessly.
+  - **`HumanFigure`:** one `AnimationTree`, built once and shared, does all of this:
+    - blends idle, walk, run and sprint by speed, playing them a little faster or slower to match;
+    - switches whole-body states (move, sit, drive, down, fall, talk);
+    - layers the guard over the arms and chest;
+    - plays one-off actions over everything.
+  - **The player** (`PlayerFigure`) is the rigged man in their outfit:
+    - the gait follows their speed, and the fall state plays in the air;
+    - a punch plays the punch and the fists stay up afterwards;
+    - a blow plays the hit, a knock-out plays the knocked fall into lying down, and waking at the hospital plays getting up.
+  - **Tests:** the fight test now measures the real right hand: during a punch it reaches 0.60 m in front of the player, against 0.12 m at rest. The screenshot tool can hold the player in any gait, state or action (`--figure`).
