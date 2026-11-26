@@ -783,3 +783,34 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Leak warning with `--quit-after`:** stopping the exported game with the engine's `--quit-after` switch (a test switch that ends the main loop without the game's own quit) printed "14 ObjectDB instances were leaked at exit". Running from source with `--quit-after` prints the same (18-19). `--verbose` shows they are all sounds that were still playing (engine loops, footsteps): the scene is torn down mid-mix, and the audio thread never gets the mix step in which it lets go of their playbacks. Players can't reach that path: the Exit buttons and the window's close button go through `AudioManager.quit_game`, which the step 6 probe showed exits clean.
 
 **Approved** by the user on 2026-11-26. M8 was the last milestone in GAME_DESIGN.md; the game ships as version 1.0.0.
+
+## 2026-11-26 — After 1.0: skirts and veshtis
+
+The user picked this from the open items in the M8 report: the legs of women and older men poked through their long skirts and veshtis.
+
+**What was wrong:** the skirt was one four-sided box, with vertices only at the waist and the hem. The hem followed each thigh by at most 55%, and the shins not at all. A probe (a Blender script that poses every clip frame by frame and tests each shin vertex against the posed skirt) and renders showed:
+- the leading shin came out through the front when walking;
+- the trailing shin stuck out of the back when running;
+- seated, the cloth sloped down like a ramp with the knees and shins outside it.
+
+**The fix** (`tools/blender/humans.py`):
+- **Shape:** the skirt is now built in rings: waist, two over the hips and thighs, one at the knee, one mid-shin, and the hem. Each ring is a rounded box (12 segments) plus a point 3 cm either side of the centre line, front and back.
+- **Weights:** each side follows the hips at the waist, its thigh fully by the knee, and its shin fully from mid-shin down. Only the narrow strip down the middle, front and back, is shared by both legs; it hangs between them.
+- **Size:** the woman and the elder go from about 900 to 1026 and 962 triangles.
+
+**Measured** (the deepest a shin comes out through the cloth, worst frame of each clip; a ray-crossing inside test):
+
+| Clip | Before | After |
+|---|---:|---:|
+| walk | 6-7 cm | 0 |
+| run | 11 cm | 0-0.3 cm |
+| sprint | 14 cm | 2.7-3.0 cm (one frame at the top of the stride: the kneecap in the fold behind the bent knee) |
+| sit, drive | 15-16 cm | 0 |
+| get up | 15-16 cm | 0-0.4 cm |
+| the rest | 0 | 0 |
+
+**Kept from regressing:** `check_skirt` runs in the export, like the pose checks. It poses every frame of every clip and fails the export if any shin comes more than 4 cm out through the cloth. It adds under a second per body. Run with a near-zero tolerance, it reports the sprint frame, so the check does detect clipping.
+
+**In the engine:** the screenshot tool has `--figure_look=chr_woman` (or `chr_elder`) to dress the player's figure as another body. Side-on shots of walking, running, sprinting and sitting in the game look like the Blender renders, which shows the four-bone skinning survives the import.
+
+`humans.py` now only builds when run as a script (`if __name__ == "__main__"`), so the probe can import it. `chr_man.glb` came out byte-identical.

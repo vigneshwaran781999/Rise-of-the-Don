@@ -9,9 +9,10 @@ LeftFoot, LeftToes and the Right ones), so any humanoid GLB with those bones can
 All three bodies share the one skeleton, so the animations fit each.
 
 Body: each low-poly part is bound rigidly to one bone (the faceted, toy-like look of the city),
-with joint caps at knees, elbows and shoulders; a long skirt or veshti follows the hips and
-partly the legs. Materials name the colour channels the game tints per person: chr_top,
-chr_bottom, chr_skin, chr_hair; the rest keep their colour.
+with joint caps at knees, elbows and shoulders. A long skirt or veshti is built in rings from the
+waist to the hem: it follows the hips at the waist, each thigh down to the knee and each shin
+below, so the legs stay inside it as they swing and bend. Materials name the colour channels
+the game tints per person: chr_top, chr_bottom, chr_skin, chr_hair; the rest keep their colour.
 
   chr_man      shirt, trousers, shoes (the player and most men)
   chr_woman    blouse, long skirt, braid, sandals
@@ -22,7 +23,8 @@ Animations (seconds; * = loops): idle* 3, walk* 1.0 (1.4 m/s), run* 0.7 (4 m/s),
 windup 0.45, hit 0.4, knocked 0.9, down* 2, getup 1.2, sit* 2, drive* 2, talk* 2.5.
 Rotations are authored in the character's own frame (X to its left, Y backwards, Z up) and
 converted to each bone's local space. The script checks a few poses (feet planted, a punch
-reaching forward, lying on the ground) and fails if they are wrong.
+reaching forward, lying on the ground) and, for a skirt or veshti, that no shin comes out
+through the cloth in any frame of any clip; it fails if they are wrong.
 
 Run:  "$BLENDER" --background --factory-startup --python tools/blender/humans.py [-- names...]
 """
@@ -33,6 +35,7 @@ import sys
 
 import bpy
 from mathutils import Euler, Matrix, Quaternion, Vector
+from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -197,16 +200,66 @@ def legs(sb: SkinBuilder, m: dict, covered: bool) -> None:
             sb.on(f"{side}Foot", sandal)
 
 
+KNEE_Z = 0.51           # the knee joint at rest (LowerLeg's head)
+SKIRT_SEGMENTS = 12     # around the skirt; a rounded box in section, like the torso
+SKIRT_ROUNDING = 4.0    # superellipse exponent: 2 is an ellipse, higher is boxier
+THIGH_FROM = 0.05       # depth (0 at the waist, 1 at the hem) where the thighs start to pull
+SHIN_REACH = 0.5        # below the knee, the share of the way to the hem by which it follows the shin fully
+MIDDLE = 0.03           # within this of the centre line, the skirt is shared by both legs
+
+
+def skirt(sb: SkinBuilder, m: dict, top_z: float, bottom_z: float, top: tuple, bottom: tuple) -> tuple:
+    """A long skirt or veshti from the waist (top_z, width x depth `top`) to the hem (bottom_z,
+    `bottom`), in rings: two over the hips and thighs, one at the knee, one mid-shin and the hem,
+    so it can bend with the legs (see skirt_weights). Besides the even segments, each ring has a
+    point MIDDLE either side of the centre line, front and back, which keeps the part shared by
+    both legs narrow. Returns (first vertex, end vertex, hem vertices) for check_skirt(); the
+    hem's face is the last one."""
+    rings_z = [top_z, 0.86, 0.68, KNEE_Z, (KNEE_Z + bottom_z) * 0.5, bottom_z]
+    e = 2.0 / SKIRT_ROUNDING
+    rings = []
+    for z in rings_z:
+        f = (top_z - z) / (top_z - bottom_z)
+        a = (top[0] + (bottom[0] - top[0]) * f) * 0.5
+        b = (top[1] + (bottom[1] - top[1]) * f) * 0.5
+        off = math.pi * 0.5 - math.acos((MIDDLE / a) ** (1.0 / e))      # where |x| = MIDDLE
+        angles = [math.tau * i / SKIRT_SEGMENTS for i in range(SKIRT_SEGMENTS)]
+        angles += [math.pi * 0.5 - off, math.pi * 0.5 + off, math.pi * 1.5 - off, math.pi * 1.5 + off]
+        ring = []
+        for ang in sorted(angles):
+            c, s = math.cos(ang), math.sin(ang)
+            ring.append(Vector((a * math.copysign(abs(c) ** e, c), b * math.copysign(abs(s) ** e, s), z)))
+        rings.append(ring)
+
+    def build() -> None:
+        for upper, lower in zip(rings, rings[1:]):
+            inside = Vector((0.0, 0.0, (upper[0].z + lower[0].z) * 0.5))
+            for i in range(len(upper)):
+                j = (i + 1) % len(upper)
+                sb.face([lower[i], lower[j], upper[j], upper[i]], m["bottom"], inside=inside)
+        sb.face(rings[0], m["bottom"], outward=Vector((0, 0, 1)))
+        sb.face(rings[-1], m["bottom"], outward=Vector((0, 0, -1)))
+    start = len(sb.verts)
+    sb.on_blend(build, skirt_weights(top_z, bottom_z))
+    return start, len(sb.verts), len(rings[-1])
+
+
 def skirt_weights(top_z: float, bottom_z: float):
-    """Near the waist a skirt follows the hips; lower down, half the hips and half the leg on
-    its side (a seam down the middle stays with the hips)."""
+    """At the waist a skirt follows the hips. Down to the knee it comes to follow the thigh on
+    its side, and below the knee the shin, so the legs stay inside it as they swing and bend.
+    The middle of the front and back is shared by both legs (it hangs between them)."""
+    knee = (top_z - KNEE_Z) / (top_z - bottom_z)
+
     def weigh(co: Vector) -> dict:
         t = max(0.0, min(1.0, (top_z - co.z) / (top_z - bottom_z)))
-        if abs(co.x) < 0.02 or t < 0.25:
-            return {"Hips": 1.0}
-        leg = "LeftUpperLeg" if co.x > 0 else "RightUpperLeg"
-        share = min(0.55, (t - 0.25) * 0.9)
-        return {"Hips": 1.0 - share, leg: share}
+        leg = smooth((t - THIGH_FROM) / (knee - THIGH_FROM))
+        shin = smooth((t - knee) / ((1.0 - knee) * SHIN_REACH))
+        left = max(0.0, min(1.0, 0.5 + co.x / (2.0 * MIDDLE)))
+        out = {"Hips": 1.0 - leg}
+        for side, share in (("Left", left), ("Right", 1.0 - left)):
+            out[f"{side}UpperLeg"] = leg * share * (1.0 - shin)
+            out[f"{side}LowerLeg"] = leg * share * shin
+        return {bone: w for bone, w in out.items() if w > 1e-4}
     return weigh
 
 
@@ -222,28 +275,31 @@ def person(name: str, kind: str) -> None:
     rig = build_armature()
     sb = SkinBuilder()
     torso(sb, m, "top")
+    cloth = None
     if kind == "man":
         sb.on("Hips", lambda: sb.frustum(0, 0, 0.86, 0.32, 0.2, 0.31, 0.19, 0.16, m["bottom"], bottom=True))
         head(sb, m, "short")
         arms(sb, m, 0.28)
         legs(sb, m, covered=False)
     elif kind == "woman":
-        sb.on_blend(lambda: sb.frustum(0, 0, 0.12, 0.46, 0.36, 0.32, 0.22, 0.9, m["bottom"], bottom=True), skirt_weights(1.0, 0.12))
+        cloth = skirt(sb, m, 1.02, 0.12, (0.32, 0.22), (0.46, 0.36))
         sb.on("Hips", lambda: sb.box(-0.165, -0.105, 0.98, 0.165, 0.105, 1.04, m["skin"]))       # waist
         head(sb, m, "braid")
         arms(sb, m, 0.16)
         legs(sb, m, covered=True)
     else:
-        sb.on_blend(lambda: sb.frustum(0, 0, 0.16, 0.4, 0.31, 0.32, 0.22, 0.86, m["bottom"], bottom=True), skirt_weights(1.0, 0.16))
+        cloth = skirt(sb, m, 1.02, 0.16, (0.32, 0.22), (0.40, 0.31))
         sb.on("Hips", lambda: sb.box(-0.168, -0.108, 0.96, 0.168, 0.108, 1.02, m["bottom"]))     # folded waist
         sb.on("UpperChest", lambda: sb.box(0.06, -0.12, 1.12, 0.2, 0.12, 1.47, m["towel"]))      # towel over the shoulder
         head(sb, m, "grey")
         arms(sb, m, 0.28)
         legs(sb, m, covered=True)
-    sb.build_skinned("Body", rig)
+    body = sb.build_skinned("Body", rig)
     for clip in CLIPS:
         make_action(rig, *clip)
     check_poses(rig, name)
+    if cloth is not None:
+        check_skirt(rig, body, sb, cloth, name)
     rig.animation_data.action = None
     rm.export_glb("characters", name, animations=True)
 
@@ -581,6 +637,76 @@ def check_poses(rig: bpy.types.Object, name: str) -> None:
     print(f"{name}: poses checked (feet, walk, punch, lying, sitting)")
 
 
+# How far a shin may come out through a skirt: at the top of a sprint stride the kneecap
+# sinks about 3 cm into the fold behind the bent knee for a frame or two.
+SKIRT_TOLERANCE = 0.04
+# Skewed directions for the inside test (a ray along an axis can graze an edge).
+_RAYS = [Vector(d).normalized() for d in ((0.31, -0.93, 0.17), (-0.27, 0.91, 0.3), (0.95, 0.12, -0.28))]
+
+
+def _inside(bvh: BVHTree, p: Vector) -> bool:
+    """Whether p is inside a closed mesh: odd ray crossings, by a majority of three rays."""
+    votes = 0
+    for d in _RAYS:
+        origin, crossings = p.copy(), 0
+        while crossings < 64:
+            hit = bvh.ray_cast(origin, d)[0]
+            if hit is None:
+                break
+            crossings += 1
+            origin = hit + d * 1e-5
+        votes += crossings % 2
+    return votes >= 2
+
+
+def check_skirt(rig: bpy.types.Object, body: bpy.types.Object, sb: SkinBuilder, cloth: tuple, name: str) -> None:
+    """The legs stay inside a long skirt or veshti: in every frame of every clip, no part of a
+    shin that is under the cloth at rest comes out through it by more than SKIRT_TOLERANCE.
+    (Out from under the hem is fine.)"""
+    start, end, hem_size = cloth
+    faces = [[i - start for i in f] for f in sb.faces if start <= f[0] < end]
+    hem = len(faces) - 1
+    hem_z = min(sb.verts[i].z for i in range(end - hem_size, end))
+    shins = [i for i, w in enumerate(sb.weights)
+             if not start <= i < end and len(w) == 1 and next(iter(w)).endswith("LowerLeg")
+             and sb.verts[i].z > hem_z + 0.02]
+    tracks = rig.animation_data.nla_tracks
+    for track in tracks:
+        track.mute = True
+    scene = bpy.context.scene
+    frame_before = scene.frame_current
+    problems = []
+    for track in tracks:
+        action = track.strips[0].action
+        rig.animation_data.action = action
+        worst, worst_frame = 0.0, 0
+        first, last = (int(v) for v in action.frame_range)
+        for frame in range(first, last + 1):
+            scene.frame_set(frame)
+            evaluated = body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+            mesh = evaluated.to_mesh()
+            cloth_at = [mesh.vertices[i].co.copy() for i in range(start, end)]
+            shin_at = [mesh.vertices[i].co.copy() for i in shins]
+            evaluated.to_mesh_clear()
+            bvh = BVHTree.FromPolygons(cloth_at, faces, all_triangles=False)
+            for p in shin_at:
+                _loc, _normal, face, dist = bvh.find_nearest(p)
+                if face == hem or dist <= worst or _inside(bvh, p):
+                    continue
+                worst, worst_frame = dist, frame
+        if worst > SKIRT_TOLERANCE:
+            problems.append(f"{action.name}: a shin comes {worst * 100:.1f} cm out through the skirt (frame {worst_frame})")
+    for track in tracks:
+        track.mute = False
+    rig.animation_data.action = None
+    scene.frame_set(frame_before)
+    apply_pose(rig, {})
+    bpy.context.view_layer.update()
+    if problems:
+        raise SystemExit(f"{name}: skirt check failed:\n  " + "\n  ".join(problems))
+    print(f"{name}: skirt checked ({len(tracks)} clips, legs inside within {SKIRT_TOLERANCE * 100:.0f} cm)")
+
+
 BUILDERS = {
     "chr_man": lambda: person("chr_man", "man"),
     "chr_woman": lambda: person("chr_woman", "woman"),
@@ -593,4 +719,5 @@ def main() -> None:
         BUILDERS[name]()
 
 
-main()
+if __name__ == "__main__":
+    main()

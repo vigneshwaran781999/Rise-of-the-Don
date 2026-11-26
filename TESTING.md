@@ -380,7 +380,7 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Jumping:** the take-off crouch, the arms in the air, the landing crouch.
 - [ ] **Punching** (left mouse): the right fist goes straight out, the shoulders turn, the fists stay up a moment, then drop.
 - [ ] **Getting hit and knocked out** (missions 6+ fights): the stagger; falling flat on your back; getting up when you wake at the hospital.
-- [ ] **Pedestrians:** walking, chatting (hand gestures), sitting on benches; punched (stagger, then knocked down, getting up and running). Skirts and veshtis: the legs poke out behind the hem a little mid-stride; is it bad enough to matter?
+- [ ] **Pedestrians:** walking, chatting (hand gestures), sitting on benches; punched (stagger, then knocked down, getting up and running). (Skirts and veshtis: see "After 1.0" below.)
 - [ ] **Police officers** running after you; **fighters** squaring up, winding up (the arm drawn back) and punching.
 - [ ] **Cutscene people** walking in, gesturing while they speak.
 - [ ] **Motorcycle:** the rider sits with hands on the bars and leans with the bike.
@@ -397,3 +397,12 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Fullscreen:** switches between a window and the whole screen.
 - [ ] **Street lights at night:** pools of warm light on the road and sidewalk under the nearest lamps (orange in the Industrial Zone).
 - [ ] Settings are kept after quitting and starting again.
+
+## After 1.0
+
+### Skirts and veshtis
+- [ ] Watch women (long skirts) and older men (white veshtis) **walking** past, side on and from behind: the legs stay inside the cloth, and the hem swings with each step. Only the feet show below it.
+- [ ] **Running away** (punch a woman or an older man once: after the stagger they run off): the hem swings out with the trailing leg, and only the foot shows. At the very top of a sprint stride a speck of knee may show in the fold behind the bent knee for a frame; that is expected.
+- [ ] **Sitting on benches:** the cloth covers the thighs and falls over the knees to the shins, with no knees or shins showing through.
+- [ ] **Knocked down and getting up** (missions 6+, or punching someone twice): no shins through the cloth while they lie, kneel and stand.
+- [ ] The skirts no longer look like stiff boxes: rounded at the corners, bending at the knees. Does the new shape suit the city's look?
