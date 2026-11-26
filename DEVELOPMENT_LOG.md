@@ -814,3 +814,9 @@ The user picked this from the open items in the M8 report: the legs of women and
 **In the engine:** the screenshot tool has `--figure_look=chr_woman` (or `chr_elder`) to dress the player's figure as another body. Side-on shots of walking, running, sprinting and sitting in the game look like the Blender renders, which shows the four-bone skinning survives the import.
 
 `humans.py` now only builds when run as a script (`if __name__ == "__main__"`), so the probe can import it. `chr_man.glb` came out byte-identical.
+
+**Approved** by the user on 2026-11-26 and released as **1.0.1**:
+- **Version 1.0.1:** set in `setup_project.gd` (re-run) and in the export preset's file and product versions.
+- **The release export:** `build/windows/` holds the new `.exe` (109 MB) and `.pck` (24 MB). Windows reads the file properties back as "Rise of the Don", file and product version 1.0.1.0.
+- **Checks on the exported pack:** the main menu and 1500 frames of the game scene run with no errors. The smoke and save tests pass.
+- **Leak warning with `--quit-after`:** both runs print it for sounds still playing when the switch cuts the game off: the menu music loop (2 instances), and engine and footstep sounds in the game. It is the same test-only path as at 1.0.0 (players quit through `AudioManager.quit_game`).

@@ -370,8 +370,8 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 ### The Windows build (step 1)
 - [ ] Copy `build/windows/` (`RiseOfTheDon.exe` and `RiseOfTheDon.pck`) to another folder or PC and run the `.exe`: the main menu appears, New Game works.
 - [ ] In Explorer, `RiseOfTheDon.exe` shows the game's icon (not the Godot logo), at small and large icon sizes. The game window and its taskbar button show it too.
-- [ ] Right-click the `.exe` → Properties → Details: product name "Rise of the Don", file and product version 1.0.0.0.
-- [ ] The main menu footer reads "v1.0.0".
+- [ ] Right-click the `.exe` → Properties → Details: product name "Rise of the Don", file and product version 1.0.1.0.
+- [ ] The main menu footer reads "v1.0.1".
 - [ ] Close the game with the window's X button, mid-game and on the menu: it closes within a second or two, with no error dialog.
 - [ ] Opening the project in the Godot 4.7.2 editor (the standard build) shows no errors.
 
