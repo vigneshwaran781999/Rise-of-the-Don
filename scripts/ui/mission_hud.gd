@@ -34,12 +34,14 @@ func _ready() -> void:
 	_build()
 	MissionManager.mission_started.connect(_on_mission_started)
 	MissionManager.mission_passed.connect(_on_mission_passed)
+	MissionManager.replay_passed.connect(_on_replay_passed)
 	MissionManager.mission_failed.connect(_on_mission_failed)
 	MissionManager.mission_ended.connect(_on_mission_ended)
 
 
 func _exit_tree() -> void:
 	for pair: Array in [[MissionManager.mission_started, _on_mission_started], [MissionManager.mission_passed, _on_mission_passed],
+			[MissionManager.replay_passed, _on_replay_passed],
 			[MissionManager.mission_failed, _on_mission_failed], [MissionManager.mission_ended, _on_mission_ended]]:
 		if (pair[0] as Signal).is_connected(pair[1]):
 			(pair[0] as Signal).disconnect(pair[1])
@@ -106,7 +108,7 @@ func show_hint(text: String) -> void:
 func _on_mission_started(mission: MissionData, checkpoint: int) -> void:
 	_title.text = mission.title.to_upper()
 	if checkpoint == 0:
-		_show_banner(mission.title.to_upper(), mission.description)
+		_show_banner(mission.title.to_upper(), ("Replay. " if MissionManager.is_replay() else "") + mission.description)
 	else:
 		_show_banner(mission.title.to_upper(), "Back at the last checkpoint")
 	AudioManager.play_ui(&"mission_start")
@@ -115,6 +117,11 @@ func _on_mission_started(mission: MissionData, checkpoint: int) -> void:
 func _on_mission_passed(mission: MissionData) -> void:
 	var reward: String = ("+" + EconomyManager.format(mission.reward_cash)) if mission.reward_cash > 0 else ""
 	_show_banner("MISSION PASSED", reward)
+	AudioManager.play_ui(&"mission_passed")
+
+
+func _on_replay_passed(_mission: MissionData) -> void:
+	_show_banner("REPLAY PASSED", "Back to where you were in a moment")
 	AudioManager.play_ui(&"mission_passed")
 
 

@@ -31,7 +31,9 @@ var choices: Dictionary = {}
 
 func _ready() -> void:
 	MissionManager.mission_passed.connect(func(_mission: MissionData) -> void: add_stat(&"missions_passed"))
-	MissionManager.mission_failed.connect(func(_mission: MissionData, _reason: String) -> void: add_stat(&"missions_failed"))
+	MissionManager.mission_failed.connect(func(_mission: MissionData, _reason: String) -> void:
+		if not MissionManager.is_replay():       # replays leave the record alone
+			add_stat(&"missions_failed"))
 	EconomyManager.cash_changed.connect(_on_cash_changed)
 
 

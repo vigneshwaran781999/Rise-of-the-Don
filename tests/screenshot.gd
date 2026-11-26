@@ -9,6 +9,7 @@ extends Node
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--weather=clear|cloudy|fog|rain] [--waypoint=x,z]
 ##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id] [--mission=id[:n] [--talk]]
 ##       [--scene_at=seconds] [--figure=walk|run|punch|... [--figure_at=seconds] [--figure_look=chr_woman]]
+##       [--story_passed]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --at moves the player there first (the city streams in around them: for --cam shots far away).
@@ -72,6 +73,8 @@ func _run() -> void:
 		await _police(instance, args)
 	if args.has("outfit"):
 		GameState.set_outfit(StringName(str(args["outfit"])))
+	if args.has("story_passed"):
+		_pass_story()
 	if args.has("shop"):
 		await _shop(instance, StringName(str(args["shop"])))
 	if args.has("mission"):
@@ -347,6 +350,16 @@ func _mission(game: Node, spec: String, talk: bool) -> void:
 		event.pressed = pressed
 		Input.parse_input_event(event)
 		await get_tree().process_frame
+
+
+## --story_passed: every story mission counts as passed (the opening mission stops), so Pause →
+## Missions lists them all, e.g. --story_passed --pause --press=MissionsButton.
+func _pass_story() -> void:
+	MissionManager.quit_mission()
+	var completed: Array[String] = []
+	for mission: MissionData in MissionManager.story.missions:
+		completed.append(String(mission.id))
+	MissionManager.from_save({"completed": completed})
 
 
 ## --figure=walk|run|sprint (that gait), sit|drive|down|fall|talk (that state), guard (fists up)

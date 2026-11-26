@@ -406,3 +406,13 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Sitting on benches:** the cloth covers the thighs and falls over the knees to the shins, with no knees or shins showing through.
 - [ ] **Knocked down and getting up** (missions 6+, or punching someone twice): no shins through the cloth while they lie, kneel and stand.
 - [ ] The skirts no longer look like stiff boxes: rounded at the corners, bending at the knees. Does the new shape suit the city's look?
+
+### Mission select
+- [ ] Pause → **Missions**: the story missions you've passed, numbered in story order with a line about each. Side jobs aren't listed. The list scrolls with the mouse wheel, arrow keys and the gamepad's D-pad.
+- [ ] Pick one: the screen goes black for a moment and you're at the mission's start, with a "Replay." banner. Play it through: "REPLAY PASSED", no cash, and after the closing lines you fade back to where you were, with "Back where you were."
+- [ ] During a replay, pause → Save Game: the slots are greyed and a line says why.
+- [ ] Pause → Missions during a replay: **End Replay: <title>** at the top. Pick it: back where you were.
+- [ ] Fail a replay and choose Quit Mission: back where you were. (Retry restarts it at the checkpoint as usual.)
+- [ ] With a wanted star, in a car, or during a mission: the rows are greyed and the panel says why.
+- [ ] Replay the last mission and pick the other answer at the ending choice: you see the other ending. Afterwards, save and load: the story still has your first answer.
+- [ ] Your health and the clock (top right) are as they were when you picked the replay.

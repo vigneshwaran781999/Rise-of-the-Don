@@ -5,8 +5,9 @@ extends Node3D
 ## player where they saved, a running mission resumes at its checkpoint). Streams the city in
 ## around the player and runs its day and night, starts traffic and pedestrians, hooks the HUD up
 ## to the player and the missions, hands the view between the on-foot and vehicle cameras when
-## the player gets in or out, takes a knocked-out player to hospital (M7), captures the mouse for
-## camera look, and gives SaveManager the player's state.
+## the player gets in or out, takes a knocked-out player to hospital (M7), hands the pause menu the
+## mission replays (after 1.0), captures the mouse for camera look, and gives SaveManager the
+## player's state.
 
 const ENTER_BLEND_SECONDS: float = 0.6
 const EXIT_BLEND_SECONDS: float = 0.45
@@ -35,6 +36,7 @@ const DOWN_SECONDS: float = 1.5
 @onready var regions: RegionWatcher = $Regions
 @onready var weather: WeatherCycle = $Weather
 @onready var ambience: AmbienceDirector = $Ambience
+@onready var replay: MissionReplay = $Replay
 
 
 func _ready() -> void:
@@ -94,6 +96,9 @@ func _ready() -> void:
 	hud.bind_map(player, world.data, gps)
 	map_screen.setup(player, world.data, gps)
 	pause_menu.map_screen = map_screen
+	replay.setup(player, missions, police, place_player)
+	replay.message.connect(hud.get_mission_hud().show_hint)
+	pause_menu.replay = replay
 	player.vehicle_entered.connect(_on_vehicle_entered)
 	player.vehicle_exited.connect(_on_vehicle_exited)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

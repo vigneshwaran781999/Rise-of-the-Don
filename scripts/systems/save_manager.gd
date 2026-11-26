@@ -35,8 +35,9 @@ func unbind_session(session: GameSession) -> void:
 		_session = null
 
 
+## Not during a mission replay (it would save the replay's side of the story).
 func can_save() -> bool:
-	return _session != null and is_instance_valid(_session) and _session.is_inside_tree()
+	return _session != null and is_instance_valid(_session) and _session.is_inside_tree() and not MissionManager.is_replay()
 
 
 func slot_path(slot: int) -> String:

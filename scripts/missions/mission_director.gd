@@ -90,6 +90,7 @@ func setup(player: PlayerController, world: CityWorld) -> void:
 	MissionManager.objective_started.connect(_on_objective_started)
 	MissionManager.mission_failed.connect(_on_mission_failed)
 	MissionManager.mission_passed.connect(_on_mission_passed)
+	MissionManager.replay_passed.connect(_on_mission_passed)
 	MissionManager.mission_ended.connect(_on_mission_ended)
 	MissionManager.availability_changed.connect(_refresh_offers)
 	_refresh_offers()
@@ -100,6 +101,7 @@ func _exit_tree() -> void:
 			[MissionManager.objective_started, _on_objective_started],
 			[MissionManager.mission_failed, _on_mission_failed],
 			[MissionManager.mission_passed, _on_mission_passed],
+			[MissionManager.replay_passed, _on_mission_passed],
 			[MissionManager.mission_ended, _on_mission_ended],
 			[MissionManager.availability_changed, _refresh_offers]]:
 		var sig: Signal = pair[0]

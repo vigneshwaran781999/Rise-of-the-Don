@@ -3,10 +3,15 @@ extends Node
 ## mission's current objective and last checkpoint. It knows nothing about the world: the game
 ## scene's MissionDirector makes objectives happen and reports back through complete_objective()
 ## and fail(). Rewards, stats and the autosave hang off the signals. Autoload: MissionManager.
+## A passed story mission can be replayed (after 1.0; Pause → Missions, MissionReplay): it runs
+## like any mission, but passing it emits replay_passed instead of mission_passed (no reward,
+## stats or autosave), it is never saved as the running mission, and saving waits until it ends.
 
 signal mission_started(mission: MissionData, checkpoint: int)
 signal objective_started(mission: MissionData, index: int)
 signal mission_passed(mission: MissionData)
+## A replay was played through to the end (it was passed before: nothing new is earned).
+signal replay_passed(mission: MissionData)
 signal mission_failed(mission: MissionData, reason: String)
 ## After a mission is passed, or quit (usually after failing it).
 signal mission_ended(mission: MissionData)
@@ -22,6 +27,7 @@ var _active: MissionData
 var _index: int = -1
 var _checkpoint: int = 0
 var _failed: bool = false
+var _replay: bool = false
 var _resume_id: StringName = &""
 var _resume_checkpoint: int = 0
 
@@ -66,6 +72,35 @@ func get_available() -> Array[MissionData]:
 		if unlocked:
 			result.append(mission)
 	return result
+
+
+## Story missions already passed, in story order: the ones that can be replayed (the side jobs
+## are on offer again anyway).
+func get_replayable() -> Array[MissionData]:
+	var result: Array[MissionData] = []
+	for mission: MissionData in story.missions:
+		if _completed.has(mission.id) and not mission.repeatable and not mission.objectives.is_empty():
+			result.append(mission)
+	return result
+
+
+## Replays passed mission `id` from the top. False if a mission runs or it can't be replayed.
+func replay(id: StringName) -> bool:
+	var mission: MissionData = get_mission(id)
+	if _active != null or mission == null or not get_replayable().has(mission):
+		return false
+	_active = mission
+	_replay = true
+	_failed = false
+	_checkpoint = 0
+	_begin_at_checkpoint()
+	availability_changed.emit()
+	return true
+
+
+## Whether the running mission is a replay.
+func is_replay() -> bool:
+	return _active != null and _replay
 
 
 func is_active() -> bool:
@@ -161,10 +196,11 @@ func to_save() -> Dictionary:
 	var completed: Array[String] = []
 	for id: StringName in _completed:
 		completed.append(String(id))
+	var running: bool = _active != null and not _replay      # a replay is never saved
 	return {
 		"completed": completed,
-		"active": String(_active.id) if _active != null else "",
-		"checkpoint": _checkpoint if _active != null else 0,
+		"active": String(_active.id) if running else "",
+		"checkpoint": _checkpoint if running else 0,
 	}
 
 
@@ -210,9 +246,14 @@ func _next_applying(from: int) -> int:
 
 func _pass() -> void:
 	var mission: MissionData = _active
-	_completed.append(mission.id)
+	var replayed: bool = _replay
+	if not replayed:
+		_completed.append(mission.id)
 	_clear_active()
-	mission_passed.emit(mission)
+	if replayed:
+		replay_passed.emit(mission)
+	else:
+		mission_passed.emit(mission)
 	mission_ended.emit(mission)
 	availability_changed.emit()
 
@@ -222,3 +263,4 @@ func _clear_active() -> void:
 	_index = -1
 	_checkpoint = 0
 	_failed = false
+	_replay = false

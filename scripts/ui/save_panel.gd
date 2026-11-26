@@ -42,6 +42,8 @@ func _on_opening() -> void:
 	_confirm_slot = -1
 	_status.text = ""
 	_heading.text = "SAVE GAME" if mode == Mode.SAVE else "LOAD GAME"
+	if mode == Mode.SAVE and MissionManager.is_replay():
+		_status.text = "You can't save during a mission replay. End it from Pause → Missions, or play it through."
 	_refresh()
 
 

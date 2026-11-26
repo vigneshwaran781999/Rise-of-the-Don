@@ -1,6 +1,7 @@
 class_name PauseMenu
 extends CanvasLayer
-## Esc / Start pauses the game: Resume, Map, Save Game, Settings, Main Menu, Quit (subset of GDD §10).
+## Esc / Start pauses the game: Resume, Map, Missions (replay a passed story mission, after 1.0),
+## Save Game, Settings, Main Menu, Quit (subset of GDD §10).
 ## Pausing stops gameplay through SceneTree.paused and frees the mouse.
 
 const MAIN_MENU_SCENE: String = "res://scenes/main/main_menu.tscn"
@@ -13,9 +14,17 @@ var _settings_button: Button
 var _save: SavePanel
 var _save_button: Button
 var _map_button: Button
+var _missions: MissionsPanel
+var _missions_button: Button
 var _save_only: bool = false     # opened straight on the save panel (at a property): closing it resumes
 ## The full map, opened from here (set by the game session).
 var map_screen: MapScreen
+## Mission replays, started from the Missions panel (set by the game session).
+var replay: MissionReplay:
+	set(value):
+		replay = value
+		if _missions != null:
+			_missions.replay = value
 
 
 func _ready() -> void:
@@ -43,6 +52,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_settings.close()
 	elif _save.visible:
 		_save.close()
+	elif _missions.visible:
+		_missions.close()
 	else:
 		resume()
 	get_viewport().set_input_as_handled()
@@ -55,6 +66,7 @@ func open() -> void:
 	_menu.show()
 	_settings.hide()
 	_save.hide()
+	_missions.hide()
 	_resume.grab_focus()
 	AudioManager.play_ui(&"ui_accept")
 
@@ -97,6 +109,8 @@ func _build() -> void:
 	_resume.pressed.connect(resume)
 	_map_button = _add_button(box, "Map", "MapButton")
 	_map_button.pressed.connect(_open_map)
+	_missions_button = _add_button(box, "Missions", "MissionsButton")
+	_missions_button.pressed.connect(_open_missions)
 	_save_button = _add_button(box, "Save Game", "SaveGameButton")
 	_save_button.pressed.connect(_open_save)
 	_settings_button = _add_button(box, "Settings", "SettingsButton")
@@ -112,6 +126,12 @@ func _build() -> void:
 	_save = SavePanel.new()
 	center.add_child(_save)
 	_save.closed.connect(_on_save_closed)
+	_missions = MissionsPanel.new()
+	_missions.replay = replay
+	center.add_child(_missions)
+	_missions.closed.connect(_on_missions_closed)
+	_missions.replay_chosen.connect(_on_replay_chosen)
+	_missions.end_chosen.connect(_on_end_replay)
 
 
 func _add_button(parent: Control, text: String, node_name: String) -> Button:
@@ -133,6 +153,41 @@ func _on_settings_closed() -> void:
 func _open_save() -> void:
 	_menu.hide()
 	_save.open_as(SavePanel.Mode.SAVE)
+
+
+func _open_missions() -> void:
+	_menu.hide()
+	_missions.open()
+
+
+func _on_missions_closed() -> void:
+	if not _root.visible:
+		return                 # closed by picking a replay: the game resumed
+	_menu.show()
+	_missions_button.grab_focus()
+
+
+func _on_replay_chosen(id: StringName) -> void:
+	if replay == null:
+		return
+	_close_for_play()
+	replay.start(id)
+
+
+func _on_end_replay() -> void:
+	if replay == null:
+		return
+	_close_for_play()
+	replay.end()
+
+
+## Back to the game from the Missions panel (a replay starting or ending).
+func _close_for_play() -> void:
+	_root.hide()
+	_missions.hide()
+	get_tree().paused = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	AudioManager.play_ui(&"ui_accept")
 
 
 func _on_save_closed() -> void:

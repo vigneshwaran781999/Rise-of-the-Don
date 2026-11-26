@@ -820,3 +820,41 @@ The user picked this from the open items in the M8 report: the legs of women and
 - **The release export:** `build/windows/` holds the new `.exe` (109 MB) and `.pck` (24 MB). Windows reads the file properties back as "Rise of the Don", file and product version 1.0.1.0.
 - **Checks on the exported pack:** the main menu and 1500 frames of the game scene run with no errors. The smoke and save tests pass.
 - **Leak warning with `--quit-after`:** both runs print it for sounds still playing when the switch cuts the game off: the menu music loop (2 instances), and engine and footstep sounds in the game. It is the same test-only path as at 1.0.0 (players quit through `AudioManager.quit_game`).
+
+## 2026-11-26 — After 1.0: mission select
+
+The user picked this next. Their choices (all the recommended options):
+- **Where:** in the pause menu only.
+- **Rewards:** no cash for a replay.
+- **Afterwards:** the player goes back where they were.
+- **The ending choice:** a different answer in a replay doesn't change the saved story.
+
+**Built**
+- **`MissionManager`:**
+  - `get_replayable()` lists the story missions already passed, in story order (side jobs are on offer anyway).
+  - `replay(id)` runs one from the top; `is_replay()` says whether the running mission is one.
+  - Passing a replay emits a new `replay_passed` instead of `mission_passed`. The cash reward, the stats, the autosave and the "shop open" messages all hang off `mission_passed`, so replays stay out of them without changes there.
+  - A replay is never written as the running mission in a save.
+  - A failed replay isn't counted in the stats (`GameState`).
+- **`MissionReplay`** (new, a node in the game scene):
+  - Starting a replay notes the player's position, facing, health, the clock and day, and the story's choices.
+  - The jump to the mission's start happens behind black.
+  - However the replay ends (passed, failed and quit, or ended from the pause menu), it restores the choices at once. After a pass it waits for the banner and the closing lines (at most 12 s). Then it fades to black, puts the player back where they were with their health and the clock, clears the police, and fades in with "Back where you were."
+  - If the player has walked into another mission's start meanwhile, they stay with it.
+  - It refuses to start during another mission, with the police after you, in a vehicle, or while knocked down, and says which.
+- **Pause → Missions** (`MissionsPanel`, new): the passed story missions, numbered, each with the first sentence of its description.
+  - Picking one resumes the game and starts the replay.
+  - During a replay the rows are greyed behind **End Replay: <title>**. When a replay can't start, the rows are greyed and the reason is shown.
+- **Saving:** `SaveManager.can_save()` is false during a replay, and the save panel says why.
+- **HUD:** a replay's start banner begins "Replay."; passing one shows "REPLAY PASSED" with no reward.
+- **Test, `tests/replay_test`:**
+  - the list;
+  - the three blocked cases;
+  - mission 1 replayed through with every promise checked (no cash, stats, autosave or saving; the fade; back where they were with health, facing and clock);
+  - the ending choice changed in a replay and restored by End Replay;
+  - a failed replay quit from the failure screen.
+
+  The clock check is real: a replay moves the clock about 0.17 in-game hours, and the tolerance is 0.05.
+- **Screenshot tool:** `--story_passed` marks the whole story passed, so `--pause --press=MissionsButton` shows the full list.
+
+**Known:** mission 5's "buy the house" step passes at once in a replay (the house is already yours).
