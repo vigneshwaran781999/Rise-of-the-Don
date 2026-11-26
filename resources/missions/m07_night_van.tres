@@ -1,0 +1,199 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_l8p6u"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_df5xy"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="3_0i6be"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="4_w50cf"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="5_oh4fj"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="6_wko5t"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_3dbqh"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_s4vrv"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/motorbike.tscn" id="9_sfkg3"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/suv.tscn" id="10_jo0pg"]
+
+[sub_resource type="Resource" id="Resource_3wuha"]
+script = ExtResource("1_l8p6u")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_18yvo"]
+script = ExtResource("2_df5xy")
+type = 1
+text = "Talk to Kamalam."
+alternatives = PackedVector3Array()
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: Every evening a white van does the rounds of my lanes, collecting for Periyasamy.", "KAMALAM: I want to know where that money goes. Take Murugan\'s motorbike and follow the van.", "KAMALAM: Not too close. If they see you, we learn nothing.", "VETRI: And if it goes to the harbour?", "KAMALAM: Then we\'ve lost nothing but petrol.")
+scene = true
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_of63h"]
+script = ExtResource("2_df5xy")
+type = 2
+text = "Get on Murugan's motorbike."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+vehicle = &"bike"
+
+[sub_resource type="Resource" id="Resource_mgc4d"]
+script = ExtResource("2_df5xy")
+type = 8
+text = "Follow the white van."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array(-26, 0, -507.5)
+follow_near = 12.0
+follow_far = 85.0
+choices = PackedStringArray()
+vehicle = &"van"
+checkpoint = true
+checkpoint_position = Vector3(-62, 0.15, -52)
+checkpoint_yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_n0clj"]
+script = ExtResource("4_w50cf")
+speaker = "Bala"
+top_color = Color(0.10980392, 0.10980392, 0.12156863, 1)
+bottom_color = Color(0.22745098, 0.22745098, 0.2509804, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-1, 0, -2.6, -1, 0, -2.6, -1.1, 0, -0.6)
+times = PackedFloat32Array(0, 0.5, 2.5)
+face_player = false
+
+[sub_resource type="Resource" id="Resource_p3yox"]
+script = ExtResource("4_w50cf")
+speaker = "Raghavan"
+look = 2
+top_color = Color(0.9490196, 0.9411765, 0.9098039, 1)
+bottom_color = Color(0.9254902, 0.92156863, 0.89411765, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(1.5, 0, 1.6, 1.5, 0, 1.6, 1.1, 0, 0)
+times = PackedFloat32Array(0, 1, 3)
+yaw_degrees = 90.0
+face_player = false
+
+[sub_resource type="Resource" id="Resource_l3wi6"]
+script = ExtResource("6_wko5t")
+seconds = 4.0
+camera_from = Vector3(-5.5, 2.6, -14)
+camera_to = Vector3(-4.8, 2.3, -13.8)
+look_from = Vector3(0, 1.6, 0)
+look_to = Vector3(0, 1.6, 0)
+caption = "DOWNTOWN"
+
+[sub_resource type="Resource" id="Resource_evrci"]
+script = ExtResource("6_wko5t")
+seconds = 4.5
+camera_from = Vector3(-5.6, 1.75, -13.2)
+camera_to = Vector3(-5.5, 1.75, -13.1)
+look_from = Vector3(-0.3, 1.5, -0.4)
+look_to = Vector3(0.2, 1.5, -0.2)
+fov_from = 28.0
+fov_to = 28.0
+line = "BALA: The day's collection, Councillor. Periyasamy sends his respects."
+
+[sub_resource type="Resource" id="Resource_8oxao"]
+script = ExtResource("6_wko5t")
+seconds = 4.0
+camera_from = Vector3(-2.6, 1.75, -1.3)
+camera_to = Vector3(-2.5, 1.75, -1.2)
+look_from = Vector3(1.1, 1.6, 0)
+look_to = Vector3(1.1, 1.6, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "RAGHAVAN: Respect doesn't renew harbour licences, Bala. Money does."
+
+[sub_resource type="Resource" id="Resource_n2b3u"]
+script = ExtResource("6_wko5t")
+seconds = 3.5
+camera_from = Vector3(-2.5, 1.75, -1.2)
+camera_to = Vector3(-2.4, 1.75, -1.1)
+look_from = Vector3(1.1, 1.6, 0)
+look_to = Vector3(1.1, 1.6, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "RAGHAVAN: Tell him the price went up. Elections are expensive."
+
+[sub_resource type="Resource" id="Resource_j1yxm"]
+script = ExtResource("6_wko5t")
+seconds = 4.0
+camera_from = Vector3(-3.2, 1.7, -11.8)
+camera_to = Vector3(-3.3, 1.7, -11.9)
+look_from = Vector3(-4, 1.6, -13)
+look_to = Vector3(-4, 1.6, -13)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Councillor Raghavan. Kamalam will want to hear this."
+
+[sub_resource type="Resource" id="Resource_yysmv"]
+script = ExtResource("5_oh4fj")
+id = &"c07_tower"
+anchor = Vector3(-26, 0.15, -506)
+shots = Array[ExtResource("6_wko5t")]([SubResource("Resource_l3wi6"), SubResource("Resource_evrci"), SubResource("Resource_8oxao"), SubResource("Resource_n2b3u"), SubResource("Resource_j1yxm")])
+actors = Array[ExtResource("4_w50cf")]([SubResource("Resource_n0clj"), SubResource("Resource_p3yox")])
+player_position = Vector3(-4, 0, -13)
+player_yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_d0bvo"]
+script = ExtResource("2_df5xy")
+type = 6
+text = "Watch."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_yysmv")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_eyi5b"]
+script = ExtResource("2_df5xy")
+type = 1
+text = "Tell Kamalam what you saw."
+alternatives = PackedVector3Array()
+contact = &"kamalam"
+lines = PackedStringArray("VETRI: The money goes to Councillor Raghavan. Bala hands it over himself.", "KAMALAM: Raghavan. He signs the harbour licences. So Periyasamy buys the harbour with my market\'s money.", "KAMALAM: You did well. Keep your head down for a day or two.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_fn11a"]
+script = ExtResource("8_s4vrv")
+id = &"bike"
+label = "Murugan's motorbike"
+scene = ExtResource("9_sfkg3")
+position = Vector3(-64, 0, -46)
+yaw_degrees = 90.0
+paint = Color(0.16470589, 0.35686275, 0.84313726, 1)
+must_survive = false
+
+[sub_resource type="Resource" id="Resource_tr01f"]
+script = ExtResource("8_s4vrv")
+id = &"van"
+label = "the white van"
+scene = ExtResource("10_jo0pg")
+position = Vector3(-50, 0, -60)
+paint = Color(0.93333334, 0.91764706, 0.8784314, 1)
+must_survive = false
+
+[resource]
+script = ExtResource("7_3dbqh")
+id = &"night_van"
+title = "The Night Van"
+description = "Kamalam wants to know where her market's money goes."
+prerequisites = Array[StringName]([&"thorns"])
+start_position = Vector3(-74, 0.15, -69.5)
+giver = SubResource("Resource_3wuha")
+objectives = Array[ExtResource("2_df5xy")]([SubResource("Resource_18yvo"), SubResource("Resource_of63h"), SubResource("Resource_mgc4d"), SubResource("Resource_d0bvo"), SubResource("Resource_eyi5b")])
+vehicles = Array[ExtResource("8_s4vrv")]([SubResource("Resource_fn11a"), SubResource("Resource_tr01f")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 3000

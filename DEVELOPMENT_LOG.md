@@ -401,7 +401,7 @@ Dated entries: what was built, what broke, how it was fixed.
     - **Baseline fixes:** the baseline now holds the clock at 13:00 with a separate night row. It also pauses the cycle while switching SSAO and glow off, because its presets had been switching them back on.
     - **Rename:** the mission test's checks follow the M2 character rename.
 
-## 2026-11-25 — M7: expansion (in progress)
+## 2026-11-25 to 2026-11-26 — M7: expansion
 
 **Scope agreed with the user:**
 - **Districts:** each new district is a 512 m square like Old Town (Countryside about twice that), joined into one city about 1.5 km across.
@@ -611,6 +611,26 @@ Dated entries: what was built, what broke, how it was fixed.
     - FOLLOW: waiting for the player, keeping left round a corner, arrival, spotted, lost;
     - ESCAPE: the circle, the chaser, getting out;
     - CHOICE: the card, the branch, the saved answer.
+- **Step 12b, the story: missions 6-15:**
+  - **Cast:** seven new original characters. Periyasamy (the harbour boss), Bala (his enforcer), Inspector Nandini (Crime Branch), Councillor Raghavan, Leela (owner of the Sea Breeze resort), Ravi (Vetri's friend from home) and Varadhan (the man in the mansion), plus his driver Suresh and the clerk Murali.
+  - **Missions** (`resources/missions/m06_thorns.tres` to `m15_rise_of_the_don.tres`, after Building an Empire in `story.tres`):
+    - Thorns
+    - The Night Van
+    - The Inspector
+    - The Ledger
+    - Old Friends
+    - The Detective
+    - Fire in the Lanes
+    - The Man in the Mansion
+    - Harbour Lights
+    - Rise of the Don
+
+    Between them: nine cutscenes plus two ending cutscenes, six fights (two against Bala), two tails, three escapes, and the final choice with two endings ("The Honest Road", "The Don of Velanagar"). Lent vehicles cover the long trips, and checkpoints sit before the fights and tails.
+  - **Authoring:** a one-off script (kept out of the repo) wrote the mission files from a few staging helpers: two people talking face to face, cameras on the open side. The `.tres` files are the source now, editable in the inspector. Every position was checked against the built city: people, fighters and cars clear of buildings, and each cutscene camera able to see its subject.
+  - **Cutscene fill light:** a soft light rides with the cutscene camera, so faces read at night.
+  - **Tests:**
+    - new `tests/campaign_test.tscn` plays missions 6-15 from their start markers to their rewards, and both endings. It fails if anyone stands inside a building, a lent car isn't on the road, or a cutscene shot's camera can't see what it looks at;
+    - the smoke test checks the story's order.
 
 **Broke and fixed**
 - **Step 1:**
@@ -655,3 +675,25 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Fixes to the test itself:**
     - the player started within sight of the van, so it set off at once;
     - the escape check read the chaser after it had been cleaned up out of sight.
+- **Step 12b:**
+  - **People and cameras inside things:** checking every authored position against the built city found:
+    - Kamalam and the first fights among the market stalls;
+    - the harbour scenes inside stacks of containers;
+    - a thug on a signal pole;
+    - two cutscene cameras behind walls or poles.
+
+    All moved to open ground (I mapped the market and the container yard on a 2 m grid to find it). The campaign test now checks this every run.
+  - **Lent vehicles floating:** the existing missions park vehicles at ground level and the director lifts them 0.6 m. Mine were already at 0.6, so they spawned 1.2 m up, fell asleep in mid-air, and the walk to the door failed. They are at ground level now.
+  - **Drive-to goals out of a car's reach:** a goal on the sidewalk with a 5 m radius couldn't be reached from the road. Drive-to goals now sit at the kerb with room to stop on the road.
+  - **E opened the tiffin stall in a cutscene:** mission 10's opening scene is at the tiffin stall's door. Pressing E to skip a shot opened the stall's menu, which paused the game. The shops now step aside during cutscenes, as they already did during dialogue.
+  - **Two Kamalams:** after a mission passes its people linger until out of sight, so the next mission's giver (Kamalam again) appeared beside the old one. A giver or contact now replaces any lingering figure of the same person.
+  - **"Initializing already initialized RID":** this engine error, first seen once in step 5, came back often while my probes loaded chunks quickly. It names the headless dummy renderer's mesh storage, which isn't safe when two loader threads create meshes at once. The streamer now loads chunks in the background one at a time (the next starts as soon as one finishes), and a teleport waits for the background load before loading the rest itself. In four probe runs afterwards it didn't appear; the full suite below is the wider check.
+  - **Generator ran without autoloads:** the first run wrote broken files. I removed them and restored `story.tres` from git before running it again properly.
+
+**Known issues at the end of M7**
+- No mission-select or debug menu, so checking the later story by hand means playing on from mission 5 (or keeping a save).
+- Cutscenes don't set the time of day; night scenes rely on the camera's fill light.
+- Vehicles lent by a mission stay where they were left after it passes and are never removed (as since M5); over a long game they add up.
+- Fighters with no navmesh path run straight at the player.
+- Video memory: 333 MB, of which only the map (19 MB) is accounted for (from step 1).
+- The headless "already initialized RID" engine race is mitigated, not proven gone.

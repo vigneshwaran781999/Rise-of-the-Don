@@ -6,11 +6,20 @@
 [ext_resource type="Resource" path="res://resources/missions/m02_first_opportunity.tres" id="4_first"]
 [ext_resource type="Resource" path="res://resources/missions/job_tiffin.tres" id="5_job_tiffin"]
 [ext_resource type="Resource" path="res://resources/missions/job_garage.tres" id="6_job_garage"]
+[ext_resource type="Resource" path="res://resources/missions/m06_thorns.tres" id="7_elsb7"]
 [ext_resource type="Resource" path="res://resources/missions/m03_new_connection.tres" id="7_m03"]
+[ext_resource type="Resource" path="res://resources/missions/m07_night_van.tres" id="8_7vg1j"]
 [ext_resource type="Resource" path="res://resources/missions/m04_city_chase.tres" id="8_m04"]
 [ext_resource type="Resource" path="res://resources/missions/m05_building_an_empire.tres" id="9_m05"]
+[ext_resource type="Resource" path="res://resources/missions/m08_inspector.tres" id="9_mpi1j"]
+[ext_resource type="Resource" path="res://resources/missions/m09_ledger.tres" id="10_0eucu"]
+[ext_resource type="Resource" path="res://resources/missions/m10_old_friends.tres" id="11_wvus4"]
+[ext_resource type="Resource" path="res://resources/missions/m11_detective.tres" id="12_qiaue"]
+[ext_resource type="Resource" path="res://resources/missions/m12_fire.tres" id="13_57knw"]
+[ext_resource type="Resource" path="res://resources/missions/m13_mansion.tres" id="14_3pwtp"]
+[ext_resource type="Resource" path="res://resources/missions/m14_harbour.tres" id="15_nuoae"]
+[ext_resource type="Resource" path="res://resources/missions/m15_rise_of_the_don.tres" id="16_waml3"]
 
 [resource]
 script = ExtResource("1_story")
-missions = Array[ExtResource("2_mission")]([ExtResource("3_welcome"), ExtResource("4_first"), ExtResource("7_m03"), ExtResource("8_m04"), ExtResource("9_m05"), ExtResource("5_job_tiffin"), ExtResource("6_job_garage")])
-starting_cash = 200
+missions = Array[ExtResource("2_mission")]([ExtResource("3_welcome"), ExtResource("4_first"), ExtResource("7_m03"), ExtResource("8_m04"), ExtResource("9_m05"), ExtResource("7_elsb7"), ExtResource("8_7vg1j"), ExtResource("9_mpi1j"), ExtResource("10_0eucu"), ExtResource("11_wvus4"), ExtResource("12_qiaue"), ExtResource("13_57knw"), ExtResource("14_3pwtp"), ExtResource("15_nuoae"), ExtResource("16_waml3"), ExtResource("5_job_tiffin"), ExtResource("6_job_garage")])

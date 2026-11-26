@@ -1,0 +1,239 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_kp15o"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_5v0ka"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="3_hlha4"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="4_la2qo"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="5_bvdp0"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="6_ywyxq"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_t7fol"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_n4a4x"]
+
+[sub_resource type="Resource" id="Resource_wx2es"]
+script = ExtResource("1_kp15o")
+id = &"durai_clinic"
+display_name = "Durai"
+top_color = Color(0.165, 0.184, 0.227, 1)
+bottom_color = Color(0.231, 0.231, 0.247, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(-124.5, 0.15, -8.599999)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_iw65g"]
+script = ExtResource("1_kp15o")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_jcr4o"]
+script = ExtResource("3_hlha4")
+speaker = "Kamalam"
+contact = &"kamalam"
+look = 1
+top_color = Color(1, 1, 1, 1)
+bottom_color = Color(1, 1, 1, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(1.1, 0, 0)
+times = PackedFloat32Array(0)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_5wku4"]
+script = ExtResource("3_hlha4")
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-6.9, 0, -12)
+times = PackedFloat32Array(0)
+yaw_degrees = -45.0
+guard = true
+face_player = false
+
+[sub_resource type="Resource" id="Resource_wshbf"]
+script = ExtResource("3_hlha4")
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-10.9, 0, -14)
+times = PackedFloat32Array(0)
+yaw_degrees = -60.0
+guard = true
+face_player = false
+
+[sub_resource type="Resource" id="Resource_tr406"]
+script = ExtResource("3_hlha4")
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-4.9, 0, -16)
+times = PackedFloat32Array(0)
+yaw_degrees = -30.0
+face_player = false
+
+[sub_resource type="Resource" id="Resource_5gu0m"]
+script = ExtResource("5_bvdp0")
+seconds = 3.5
+camera_from = Vector3(5, 3.2, -9)
+camera_to = Vector3(3.5, 2.6, -7.5)
+look_from = Vector3(0, 1.3, 0)
+look_to = Vector3(0, 1.3, 0)
+fov_from = 55.0
+caption = "THE FLOWER MARKET"
+
+[sub_resource type="Resource" id="Resource_xjra7"]
+script = ExtResource("5_bvdp0")
+seconds = 5.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "KAMALAM: They came at dawn. Twelve of them. They broke the stalls, and they broke Durai's ribs."
+
+[sub_resource type="Resource" id="Resource_3h585"]
+script = ExtResource("5_bvdp0")
+seconds = 2.0
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Where is he?"
+
+[sub_resource type="Resource" id="Resource_snop0"]
+script = ExtResource("5_bvdp0")
+seconds = 4.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "KAMALAM: At the clinic. Five of them are still here, laughing in my lanes."
+
+[sub_resource type="Resource" id="Resource_e4jbx"]
+script = ExtResource("5_bvdp0")
+camera_from = Vector3(-3, 1.7, -2)
+camera_to = Vector3(-3.4, 1.7, -2.4)
+look_from = Vector3(-7.5, 1.4, -13.5)
+look_to = Vector3(-7.5, 1.4, -13.5)
+fov_from = 45.0
+fov_to = 45.0
+line = "KAMALAM: Make them stop laughing."
+
+[sub_resource type="Resource" id="Resource_sma8t"]
+script = ExtResource("4_la2qo")
+id = &"c12_fire"
+anchor = Vector3(-70.9, 0.15, -71)
+anchor_yaw_degrees = 180.0
+shots = Array[ExtResource("5_bvdp0")]([SubResource("Resource_5gu0m"), SubResource("Resource_xjra7"), SubResource("Resource_3h585"), SubResource("Resource_snop0"), SubResource("Resource_e4jbx")])
+actors = Array[ExtResource("3_hlha4")]([SubResource("Resource_jcr4o"), SubResource("Resource_5wku4"), SubResource("Resource_wshbf"), SubResource("Resource_tr406")])
+player_position = Vector3(-1.1, 0, 0)
+player_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_ckmut"]
+script = ExtResource("2_5v0ka")
+type = 6
+text = "Listen to Kamalam."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_sma8t")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_wps6i"]
+script = ExtResource("6_ywyxq")
+position = Vector3(-64, 0.15, -59)
+yaw_degrees = 225.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_b20se"]
+script = ExtResource("6_ywyxq")
+position = Vector3(-60, 0.15, -57)
+yaw_degrees = 225.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_o5my0"]
+script = ExtResource("6_ywyxq")
+position = Vector3(-66, 0.15, -55)
+yaw_degrees = 225.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_xvsw0"]
+script = ExtResource("6_ywyxq")
+position = Vector3(-80, 0.15, -55)
+yaw_degrees = 90.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_lfb8x"]
+script = ExtResource("6_ywyxq")
+position = Vector3(-76, 0.15, -57)
+yaw_degrees = 90.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_d7n04"]
+script = ExtResource("2_5v0ka")
+type = 7
+text = "Clear Periyasamy's men out of the market."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("6_ywyxq")]([SubResource("Resource_wps6i"), SubResource("Resource_b20se"), SubResource("Resource_o5my0"), SubResource("Resource_xvsw0"), SubResource("Resource_lfb8x")])
+aggro_range = 30.0
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_uy3be"]
+script = ExtResource("2_5v0ka")
+text = "Go to the clinic on the west gopuram road to see Durai."
+position = Vector3(-125.7, 0.15, -7.3999996)
+radius = 4.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_f7gxf"]
+script = ExtResource("2_5v0ka")
+type = 1
+text = "Talk to Durai."
+alternatives = PackedVector3Array()
+contact = &"durai_clinic"
+lines = PackedStringArray("DURAI: Two broken ribs. I\'ve had worse from my wife.", "DURAI: Listen. They didn\'t come for the stalls. They came to see who would stand up. Now Periyasamy knows it\'s you.", "DURAI: Whatever you do next, do it before he does.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[resource]
+script = ExtResource("7_t7fol")
+id = &"fire"
+title = "Fire in the Lanes"
+description = "Something has happened at the flower market."
+prerequisites = Array[StringName]([&"detective"])
+start_position = Vector3(-74, 0.15, -69.5)
+giver = SubResource("Resource_iw65g")
+objectives = Array[ExtResource("2_5v0ka")]([SubResource("Resource_ckmut"), SubResource("Resource_d7n04"), SubResource("Resource_uy3be"), SubResource("Resource_f7gxf")])
+contacts = Array[ExtResource("1_kp15o")]([SubResource("Resource_wx2es")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 4000

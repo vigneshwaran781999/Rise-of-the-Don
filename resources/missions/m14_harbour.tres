@@ -1,0 +1,259 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_ehm2a"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_uivco"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="3_os7lk"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="4_wt85k"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="5_6jtk3"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="6_k117f"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_5hc4s"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_tv7mh"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="9_566qj"]
+
+[sub_resource type="Resource" id="Resource_cauow"]
+script = ExtResource("1_ehm2a")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_xdo47"]
+script = ExtResource("2_uivco")
+type = 1
+text = "Talk to Kamalam."
+alternatives = PackedVector3Array()
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: Periyasamy is back at the container yard with every man he has left.", "KAMALAM: Go tonight. Take my car. And Vetri: come back.")
+scene = true
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_h7rxx"]
+script = ExtResource("2_uivco")
+type = 2
+text = "Take Kamalam's car."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+vehicle = &"car"
+
+[sub_resource type="Resource" id="Resource_oetq3"]
+script = ExtResource("2_uivco")
+text = "Drive to the container yard at the harbour."
+position = Vector3(530, 0.15, -500)
+radius = 10.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_x4g15"]
+script = ExtResource("3_os7lk")
+position = Vector3(538, 0.15, -496)
+yaw_degrees = 90.0
+top_color = Color(0.23921569, 0.3529412, 0.22745098, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_keylt"]
+script = ExtResource("3_os7lk")
+position = Vector3(542, 0.15, -502)
+yaw_degrees = 90.0
+top_color = Color(0.23921569, 0.3529412, 0.22745098, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_qwu63"]
+script = ExtResource("3_os7lk")
+position = Vector3(540, 0.15, -511)
+yaw_degrees = 90.0
+top_color = Color(0.23921569, 0.3529412, 0.22745098, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_560ea"]
+script = ExtResource("3_os7lk")
+position = Vector3(544, 0.15, -490)
+yaw_degrees = 90.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_wm6fl"]
+script = ExtResource("2_uivco")
+type = 7
+text = "Fight your way into the yard."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("3_os7lk")]([SubResource("Resource_x4g15"), SubResource("Resource_keylt"), SubResource("Resource_qwu63"), SubResource("Resource_560ea")])
+aggro_range = 24.0
+choices = PackedStringArray()
+checkpoint = true
+checkpoint_position = Vector3(532, 0.15, -500)
+checkpoint_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_dd18h"]
+script = ExtResource("3_os7lk")
+position = Vector3(580, 0.15, -511)
+yaw_degrees = 90.0
+top_color = Color(0.10980392, 0.10980392, 0.12156863, 1)
+bottom_color = Color(0.22745098, 0.22745098, 0.2509804, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+health = 160.0
+
+[sub_resource type="Resource" id="Resource_cdo0i"]
+script = ExtResource("3_os7lk")
+position = Vector3(586, 0.15, -510)
+yaw_degrees = 90.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_ibtud"]
+script = ExtResource("2_uivco")
+type = 7
+text = "Beat Bala."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("3_os7lk")]([SubResource("Resource_dd18h"), SubResource("Resource_cdo0i")])
+aggro_range = 34.0
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_2cc03"]
+script = ExtResource("4_wt85k")
+speaker = "Periyasamy"
+look = 2
+top_color = Color(0.9411765, 0.9254902, 0.8784314, 1)
+bottom_color = Color(0.95686275, 0.94509804, 0.9098039, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(1.1, 0, 0, 1.1, 0, 0, 7, 0, 4)
+times = PackedFloat32Array(0, 15.5, 22)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_ewh26"]
+script = ExtResource("6_k117f")
+seconds = 3.5
+camera_from = Vector3(5, 3.2, -9)
+camera_to = Vector3(3.5, 2.6, -7.5)
+look_from = Vector3(0, 1.3, 0)
+look_to = Vector3(0, 1.3, 0)
+fov_from = 55.0
+caption = "THE HARBOUR"
+
+[sub_resource type="Resource" id="Resource_evksa"]
+script = ExtResource("6_k117f")
+seconds = 4.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "PERIYASAMY: Bala was the best man I had. You walked through him like smoke."
+
+[sub_resource type="Resource" id="Resource_1c57h"]
+script = ExtResource("6_k117f")
+seconds = 3.5
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: It's finished, Periyasamy. The harbour, the lanes, all of it."
+
+[sub_resource type="Resource" id="Resource_gaqah"]
+script = ExtResource("6_k117f")
+seconds = 5.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "PERIYASAMY: Finished? You think Varadhan lets anybody keep anything? He'll use you the way he used me."
+
+[sub_resource type="Resource" id="Resource_asgmf"]
+script = ExtResource("6_k117f")
+seconds = 4.0
+camera_from = Vector3(0.3, 1.66, -1.7)
+camera_to = Vector3(0.35, 1.66, -1.5)
+look_from = Vector3(1.1, 1.6, 0)
+look_to = Vector3(1.1, 1.6, 0)
+fov_from = 38.0
+fov_to = 38.0
+line = "PERIYASAMY: Take it, then. Take the harbour. See how it sits on you."
+
+[sub_resource type="Resource" id="Resource_ir6qw"]
+script = ExtResource("6_k117f")
+camera_from = Vector3(-3, 2, -5)
+camera_to = Vector3(-3.2, 2.2, -5.5)
+look_from = Vector3(-1.1, 1.5, 0)
+look_to = Vector3(-1.1, 1.5, 0)
+fov_from = 45.0
+fov_to = 45.0
+line = "VETRI: Sirens. Time to go."
+
+[sub_resource type="Resource" id="Resource_g3te5"]
+script = ExtResource("5_6jtk3")
+id = &"c14_periyasamy"
+anchor = Vector3(612, 0.15, -511)
+anchor_yaw_degrees = -90.0
+shots = Array[ExtResource("6_k117f")]([SubResource("Resource_ewh26"), SubResource("Resource_evksa"), SubResource("Resource_1c57h"), SubResource("Resource_gaqah"), SubResource("Resource_asgmf"), SubResource("Resource_ir6qw")])
+actors = Array[ExtResource("4_wt85k")]([SubResource("Resource_2cc03")])
+player_position = Vector3(-1.1, 0, 0)
+player_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_381ee"]
+script = ExtResource("2_uivco")
+type = 6
+text = "Face Periyasamy."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_g3te5")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_imvrm"]
+script = ExtResource("2_uivco")
+type = 9
+text = "Get out of the harbour before the police arrive."
+position = Vector3(612, 0.15, -511)
+radius = 160.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+wanted_level = 3
+
+[sub_resource type="Resource" id="Resource_3quwu"]
+script = ExtResource("8_tv7mh")
+id = &"car"
+label = "Kamalam's car"
+scene = ExtResource("9_566qj")
+position = Vector3(-50, 0, -40)
+paint = Color(0.47843137, 0.12156863, 0.17254902, 1)
+must_survive = false
+
+[resource]
+script = ExtResource("7_5hc4s")
+id = &"harbour"
+title = "Harbour Lights"
+description = "Kamalam says it's time to take the harbour."
+prerequisites = Array[StringName]([&"mansion"])
+start_position = Vector3(-74, 0.15, -69.5)
+giver = SubResource("Resource_cauow")
+objectives = Array[ExtResource("2_uivco")]([SubResource("Resource_xdo47"), SubResource("Resource_h7rxx"), SubResource("Resource_oetq3"), SubResource("Resource_wm6fl"), SubResource("Resource_ibtud"), SubResource("Resource_381ee"), SubResource("Resource_imvrm")])
+vehicles = Array[ExtResource("8_tv7mh")]([SubResource("Resource_3quwu")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 6000

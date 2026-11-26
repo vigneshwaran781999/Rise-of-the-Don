@@ -233,7 +233,7 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
   - Walking in with less than ₹6,000 says it needs ₹6,000 and doesn't start. Do side jobs until you have it, then walk in again.
   - Durai talks, then "Buy the verandah house." Buy it at the door: "MISSION PASSED +₹1,000". The house is now your save point and pays rent.
 
-## M7 — Expansion (in progress)
+## M7 — Expansion
 
 ### Downtown and the city (step 1)
 - [ ] **Old Town is unchanged:** the bus stand, shops, police station, garage and the house are where they were, and missions 1–5 play the same.
@@ -338,3 +338,29 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] People in the cutscene walk naturally (legs in time with their speed), turn the way they walk, and gesture while talking.
 - [ ] **E** skips to the next shot; at the end the camera is back behind you and you can move.
 - [ ] **Esc** pauses a cutscene; resuming carries on from the same moment.
+
+### Story objectives and missions 6-15 (step 12)
+`tests/objective_test.tscn` checks the new kinds of objective and `tests/campaign_test.tscn` plays every mission through. These checks are about how the story plays and looks. Play on from mission 5 (a save from just after it lets you replay them); there is no mission-select menu.
+- [ ] **Cutscenes** (missions 6, 7, 8, 10, 11, 12, 13, 14, 15):
+  - shots frame the people speaking (nobody cut off or hidden behind someone);
+  - nobody stands inside a wall or a market stall;
+  - the camera never sits inside a building;
+  - faces read at night (a soft light rides with the cutscene camera).
+- [ ] **Fights** (6, 8, 9, 10, 12, 14):
+  - the thugs wait until you come close, then come at you;
+  - the red triangles on the map and the "(n left)" count help;
+  - Bala (missions 8 and 14) takes more punches;
+  - is four punches per thug about right?
+- [ ] **Tailing** (7 on the motorbike, 11 in Nandini's car):
+  - the van and the SUV set off when you're near and keep to their lane;
+  - "Too close!" / "Don't lose them!" warn you in time;
+  - is it possible to keep up and still stay back?
+  - Do they get stuck in traffic?
+- [ ] **Escapes** (9, 11, 14): the red circle on the map; the chasers on foot; the police in 9 and 14.
+- [ ] **The ledger** (9): the clerk at the office door, then the escape. Does it feel like a heist?
+- [ ] **Mission 15:**
+  - the choice card holds the game until you answer;
+  - each answer plays its own ending, with *THE HONEST ROAD* or *THE DON OF VELANAGAR* over the last shot;
+  - save afterwards and load: the game remembers.
+- [ ] **Story:** do the lines read naturally? Are any too long to read before the shot changes? (E skips on.)
+- [ ] **Retry:** failing missions 7, 8, 9, 10, 11 and 14 after their checkpoints restarts you at the fight or the tail, not from the very beginning.

@@ -79,14 +79,17 @@ func wanted_chunks(pos: Vector3) -> Array[Vector2i]:
 
 ## Loads every chunk wanted around pos right now, blocking (new game, teleports).
 func load_around_now(pos: Vector3) -> void:
+	# Background loads finish first (waiting for them): loading chunks on this thread while a
+	# worker is loading others (with the same kit meshes) can initialise a renderer resource twice
+	# ("Initializing already initialized RID", an engine race seen on teleports).
+	for c: Vector2i in _requested.keys():
+		var path: String = _requested[c]
+		_requested.erase(c)
+		var scene := ResourceLoader.load_threaded_get(path) as PackedScene
+		if city.distance_to_chunk(pos, c) <= load_distance:
+			_add_chunk(c, scene)
 	for c: Vector2i in wanted_chunks(pos):
-		if _loaded.has(c):
-			continue
-		if _requested.has(c):
-			var path: String = _requested[c]
-			_requested.erase(c)
-			_add_chunk(c, ResourceLoader.load_threaded_get(path) as PackedScene)
-		else:
+		if not _loaded.has(c):
 			_add_chunk(c, load(city.chunk_path(c)) as PackedScene)
 	_unload_far(pos)
 	_update_frozen_vehicles()
@@ -99,13 +102,22 @@ func _process(delta: float) -> void:
 		return
 	_timer = update_interval
 	var pos: Vector3 = focus.global_position
+	_request_next(pos)
+	_unload_far(pos)
+	_update_frozen_vehicles()
+
+
+## Starts the background load of the nearest wanted chunk, one at a time: two loader threads
+## creating meshes at once can initialise a renderer resource twice (an engine race).
+func _request_next(pos: Vector3) -> void:
+	if not _requested.is_empty():
+		return
 	for c: Vector2i in wanted_chunks(pos):
-		if not _loaded.has(c) and not _requested.has(c):
+		if not _loaded.has(c):
 			var path: String = city.chunk_path(c)
 			if ResourceLoader.load_threaded_request(path, "PackedScene") == OK:
 				_requested[c] = path
-	_unload_far(pos)
-	_update_frozen_vehicles()
+			return
 
 
 ## Adds at most one chunk whose background load has finished (spreads the cost over frames).
@@ -122,6 +134,8 @@ func _finish_one_request() -> void:
 			return
 		if focus == null or city.distance_to_chunk(focus.global_position, c) <= unload_distance:
 			_add_chunk(c, scene)
+		if focus != null:
+			_request_next(focus.global_position)       # on to the next one straight away
 		return
 
 

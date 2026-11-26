@@ -1,0 +1,220 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_6y1wb"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_5q0b6"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="3_vfifu"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="4_0vy2l"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="5_x2xkm"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="6_r38t6"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_r6giq"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_2b6fl"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="9_2miic"]
+
+[sub_resource type="Resource" id="Resource_i7l5j"]
+script = ExtResource("1_6y1wb")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_ldvxf"]
+script = ExtResource("1_6y1wb")
+id = &"suresh"
+display_name = "Suresh"
+top_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+bottom_color = Color(0.16470589, 0.1764706, 0.2, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+position = Vector3(57, 0.15, 144)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_8mv70"]
+script = ExtResource("2_5q0b6")
+type = 1
+text = "Talk to the man in the suit."
+alternatives = PackedVector3Array()
+contact = &"suresh"
+lines = PackedStringArray("SURESH: Mr Varadhan would like you to come for tea. The estate, in the Luxury District.", "SURESH: He has sent a car. He doesn\'t like to wait.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_i3df7"]
+script = ExtResource("2_5q0b6")
+type = 2
+text = "Get into Mr Varadhan's car."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+vehicle = &"car"
+
+[sub_resource type="Resource" id="Resource_qhq51"]
+script = ExtResource("2_5q0b6")
+text = "Drive to the estate in the Luxury District."
+hint = "Press {map}: the estate is north-west, past Downtown."
+position = Vector3(-512, 0.15, -519)
+radius = 9.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_7523h"]
+script = ExtResource("4_0vy2l")
+speaker = "Varadhan"
+look = 2
+top_color = Color(0.12156863, 0.19215687, 0.34117648, 1)
+bottom_color = Color(0.3529412, 0.3647059, 0.4, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(1.1, 0, 0)
+times = PackedFloat32Array(0)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_rij75"]
+script = ExtResource("4_0vy2l")
+speaker = "Suresh"
+top_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+bottom_color = Color(0.16470589, 0.1764706, 0.2, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(2.6, 0, 1.2)
+times = PackedFloat32Array(0)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_mrofb"]
+script = ExtResource("6_r38t6")
+seconds = 4.0
+camera_from = Vector3(6, 5.5, -10)
+camera_to = Vector3(4.5, 4.5, -8.5)
+look_from = Vector3(0, 2, 4)
+look_to = Vector3(0, 1.4, 1)
+fov_from = 55.0
+caption = "THE ESTATE"
+
+[sub_resource type="Resource" id="Resource_r3g66"]
+script = ExtResource("6_r38t6")
+seconds = 3.5
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VARADHAN: The boy from the bus stand. Sit, sit. Suresh, tea."
+
+[sub_resource type="Resource" id="Resource_fqbh4"]
+script = ExtResource("6_r38t6")
+seconds = 4.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VARADHAN: Kamalam pays me. Periyasamy pays me. Raghavan pays me most of all."
+
+[sub_resource type="Resource" id="Resource_5qrvp"]
+script = ExtResource("6_r38t6")
+seconds = 3.5
+camera_from = Vector3(0.3, 1.66, -1.7)
+camera_to = Vector3(0.35, 1.66, -1.5)
+look_from = Vector3(1.1, 1.6, 0)
+look_to = Vector3(1.1, 1.6, 0)
+fov_from = 38.0
+fov_to = 38.0
+line = "VARADHAN: Velanagar is a garden, Vetri. I am only the gardener."
+
+[sub_resource type="Resource" id="Resource_f0y8u"]
+script = ExtResource("6_r38t6")
+seconds = 2.5
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: And what am I?"
+
+[sub_resource type="Resource" id="Resource_ga13l"]
+script = ExtResource("6_r38t6")
+seconds = 5.5
+camera_from = Vector3(0.3, 1.66, -1.7)
+camera_to = Vector3(0.35, 1.66, -1.5)
+look_from = Vector3(1.1, 1.6, 0)
+look_to = Vector3(1.1, 1.6, 0)
+fov_from = 38.0
+fov_to = 38.0
+line = "VARADHAN: A new shoot. Periyasamy has grown too tall. Cut him back, and the harbour is yours. Under me, of course."
+
+[sub_resource type="Resource" id="Resource_5rphp"]
+script = ExtResource("6_r38t6")
+seconds = 2.5
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Of course."
+
+[sub_resource type="Resource" id="Resource_cl82l"]
+script = ExtResource("5_x2xkm")
+id = &"c13_varadhan"
+anchor = Vector3(-512, 0.15, -530)
+anchor_yaw_degrees = 180.0
+shots = Array[ExtResource("6_r38t6")]([SubResource("Resource_mrofb"), SubResource("Resource_r3g66"), SubResource("Resource_fqbh4"), SubResource("Resource_5qrvp"), SubResource("Resource_f0y8u"), SubResource("Resource_ga13l"), SubResource("Resource_5rphp")])
+actors = Array[ExtResource("4_0vy2l")]([SubResource("Resource_7523h"), SubResource("Resource_rij75")])
+player_position = Vector3(-1.1, 0, 0)
+player_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_iwwxo"]
+script = ExtResource("2_5q0b6")
+type = 6
+text = "Meet Varadhan."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_cl82l")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ydqcg"]
+script = ExtResource("2_5q0b6")
+type = 1
+text = "Tell Kamalam about Varadhan."
+alternatives = PackedVector3Array()
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: Varadhan. Of course it\'s Varadhan. Thirty years he\'s sat on that hill, and we all paid him for the view.", "KAMALAM: Do what he says, for now. Take the harbour from Periyasamy.", "KAMALAM: Then we\'ll see whose garden this is.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_5rtsx"]
+script = ExtResource("8_2b6fl")
+id = &"car"
+label = "Mr Varadhan's car"
+scene = ExtResource("9_2miic")
+position = Vector3(50, 0, 150)
+yaw_degrees = 90.0
+paint = Color(0.0627451, 0.0627451, 0.078431375, 1)
+must_survive = false
+
+[resource]
+script = ExtResource("7_r6giq")
+id = &"mansion"
+title = "The Man in the Mansion"
+description = "A man in a good suit is waiting at your house."
+prerequisites = Array[StringName]([&"fire"])
+start_position = Vector3(55.5, 0.15, 144.2)
+start_yaw_degrees = 90.0
+giver = SubResource("Resource_ldvxf")
+objectives = Array[ExtResource("2_5q0b6")]([SubResource("Resource_8mv70"), SubResource("Resource_i3df7"), SubResource("Resource_qhq51"), SubResource("Resource_iwwxo"), SubResource("Resource_ydqcg")])
+contacts = Array[ExtResource("1_6y1wb")]([SubResource("Resource_i7l5j")])
+vehicles = Array[ExtResource("8_2b6fl")]([SubResource("Resource_5rtsx")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 3000

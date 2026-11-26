@@ -5,7 +5,8 @@ extends Node3D
 ## paths, and plays it on an AnimationPlayer driving a camera rig and the actors' figures. The
 ## letterbox slides in with each shot's subtitle and caption; the player stands where the
 ## cutscene puts them, held still; the game camera comes back at the end. Interact skips to the
-## next shot. MissionDirector plays one for CUTSCENE objectives.
+## next shot. A soft fill light rides with the camera. MissionDirector plays one for CUTSCENE
+## objectives.
 
 signal started(data: CutsceneData)
 ## The cutscene ran to its end (or was skipped through); not emitted by stop().
@@ -18,12 +19,15 @@ signal line_shown(speaker: String, text: String)
 const ANIMATION: StringName = &"cutscene"
 ## Keys this long before a shot's end hold its last frame; the next shot cuts in after them.
 const CUT_SECONDS: float = 0.001
+## The fill light's strength (it barely shows by day, and lifts faces out of the dark at night).
+const FILL_ENERGY: float = 0.9
 
 ## Models by look (man, woman, older man); MissionDirector hands over its own.
 var looks: Array[PackedScene] = []
 
 var _animator: AnimationPlayer
 var _camera: Camera3D
+var _fill: OmniLight3D
 var _target: Node3D
 var _actors: Node3D
 var _letterbox: Letterbox
@@ -43,6 +47,17 @@ func _ready() -> void:
 	_camera.far = 1500.0
 	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # moved every frame by the animation
 	add_child(_camera)
+	# A soft fill light riding with the camera, so faces read at night too (on only while playing).
+	_fill = OmniLight3D.new()
+	_fill.name = "FillLight"
+	_fill.light_energy = FILL_ENERGY
+	_fill.omni_range = 9.0
+	_fill.omni_attenuation = 1.4
+	_fill.light_color = Color(1.0, 0.93, 0.84)
+	_fill.shadow_enabled = false
+	_fill.position = Vector3(0.4, 0.5, 0.0)
+	_fill.visible = false
+	_camera.add_child(_fill)
 	_target = Node3D.new()
 	_target.name = "Target"
 	_target.top_level = true
@@ -135,6 +150,7 @@ func play(data: CutsceneData, player: PlayerController, contacts: Dictionary = {
 	_animator.advance(0.0)
 	_update(0.0)
 	_camera.make_current()
+	_fill.visible = true
 	_letterbox.set_shown(true)
 	if data.skippable:
 		_letterbox.set_skip_hint(ControlsPanel.fill_keys("{interact} skip"))
@@ -217,6 +233,7 @@ func _wrap_up() -> void:
 			node.visible = true
 	_hidden.clear()
 	_letterbox.set_shown(false)
+	_fill.visible = false
 	if _player != null and is_instance_valid(_player):
 		_player.input_locked = false
 		if not _player.is_in_vehicle():

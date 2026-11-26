@@ -1,0 +1,349 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_d81ob"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_pcsuv"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="3_4ymsy"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="4_vq5kk"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="5_1bdkj"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="6_u7nab"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_q7544"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_3d18c"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="9_rpea1"]
+
+[sub_resource type="Resource" id="Resource_u6ja1"]
+script = ExtResource("1_d81ob")
+id = &"leela"
+display_name = "Leela"
+look = 1
+top_color = Color(0.12156863, 0.56078434, 0.5411765, 1)
+bottom_color = Color(0.9372549, 0.9019608, 0.8235294, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+position = Vector3(518.6, 0.15, -78.9)
+yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_qs3ci"]
+script = ExtResource("1_d81ob")
+id = &"durai"
+display_name = "Durai"
+top_color = Color(0.165, 0.184, 0.227, 1)
+bottom_color = Color(0.231, 0.231, 0.247, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(62.8, 0.15, 144)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_fclwk"]
+script = ExtResource("3_4ymsy")
+speaker = "Nandini"
+look = 1
+top_color = Color(0.7058824, 0.6039216, 0.39215687, 1)
+bottom_color = Color(0.5411765, 0.45490196, 0.28235295, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(9, 0, 0, 9, 0, 0, 1.1, 0, 0, 1.1, 0, 0, 7, 0, -0.4)
+times = PackedFloat32Array(0, 1, 3.4, 19.5, 22)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_8al08"]
+script = ExtResource("3_4ymsy")
+speaker = "Durai"
+contact = &"durai"
+top_color = Color(1, 1, 1, 1)
+bottom_color = Color(1, 1, 1, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-2.5, 0, 0.1)
+times = PackedFloat32Array(0)
+yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_sykqb"]
+script = ExtResource("5_1bdkj")
+seconds = 3.5
+camera_from = Vector3(5, 3.2, -9)
+camera_to = Vector3(3.5, 2.6, -7.5)
+look_from = Vector3(0, 1.3, 0)
+look_to = Vector3(0, 1.3, 0)
+fov_from = 55.0
+caption = "OLD TOWN"
+
+[sub_resource type="Resource" id="Resource_n82s3"]
+script = ExtResource("5_1bdkj")
+seconds = 4.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: Vetri, isn't it? Inspector Nandini, Crime Branch."
+
+[sub_resource type="Resource" id="Resource_kj54e"]
+script = ExtResource("5_1bdkj")
+seconds = 5.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: A boy off the village bus buys a house in a month. Brawls in the flower market. Rides behind Periyasamy's van at night."
+
+[sub_resource type="Resource" id="Resource_fe31m"]
+script = ExtResource("5_1bdkj")
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Hard work isn't a crime yet, Inspector."
+
+[sub_resource type="Resource" id="Resource_bossw"]
+script = ExtResource("5_1bdkj")
+seconds = 4.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: Not yet. I'll be around for the day it becomes one."
+
+[sub_resource type="Resource" id="Resource_ci3lh"]
+script = ExtResource("5_1bdkj")
+camera_from = Vector3(-0.8, 1.65, -3.8)
+camera_to = Vector3(-0.9, 1.65, -3.6)
+look_from = Vector3(-1.8, 1.45, 0)
+look_to = Vector3(-1.8, 1.45, 0)
+fov_from = 45.0
+fov_to = 45.0
+line = "DURAI: Crime Branch. Kamalam won't like that."
+
+[sub_resource type="Resource" id="Resource_23h15"]
+script = ExtResource("5_1bdkj")
+seconds = 5.0
+camera_from = Vector3(-0.9, 1.65, -3.6)
+camera_to = Vector3(-1, 1.65, -3.4)
+look_from = Vector3(-1.8, 1.45, 0)
+look_to = Vector3(-1.8, 1.45, 0)
+fov_from = 45.0
+fov_to = 45.0
+line = "DURAI: Never mind her. Leela at the Sea Breeze owes Kamalam money, and Kamalam wants you to ask nicely."
+
+[sub_resource type="Resource" id="Resource_3h8wk"]
+script = ExtResource("4_vq5kk")
+id = &"c08_inspector"
+anchor = Vector3(60.3, 0.15, 144.2)
+anchor_yaw_degrees = 180.0
+shots = Array[ExtResource("5_1bdkj")]([SubResource("Resource_sykqb"), SubResource("Resource_n82s3"), SubResource("Resource_kj54e"), SubResource("Resource_fe31m"), SubResource("Resource_bossw"), SubResource("Resource_ci3lh"), SubResource("Resource_23h15")])
+actors = Array[ExtResource("3_4ymsy")]([SubResource("Resource_fclwk"), SubResource("Resource_8al08")])
+player_position = Vector3(-1.1, 0, 0)
+player_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_cy7js"]
+script = ExtResource("2_pcsuv")
+type = 6
+text = "Someone's waiting for you."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_3h8wk")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_2jd14"]
+script = ExtResource("2_pcsuv")
+type = 2
+text = "Take Durai's car."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+vehicle = &"car"
+
+[sub_resource type="Resource" id="Resource_pmvfh"]
+script = ExtResource("2_pcsuv")
+text = "Drive to the Sea Breeze resort on Vela Beach."
+hint = "Press {map} for the map: the Sea Breeze is on the coast road."
+position = Vector3(521, 0.15, -81)
+radius = 8.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_32rsx"]
+script = ExtResource("3_4ymsy")
+speaker = "Leela"
+contact = &"leela"
+look = 1
+top_color = Color(1, 1, 1, 1)
+bottom_color = Color(1, 1, 1, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(1.1, 0, 0)
+times = PackedFloat32Array(0)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_60ulu"]
+script = ExtResource("5_1bdkj")
+seconds = 3.5
+camera_from = Vector3(5, 3.2, -9)
+camera_to = Vector3(3.5, 2.6, -7.5)
+look_from = Vector3(0, 1.3, 0)
+look_to = Vector3(0, 1.3, 0)
+fov_from = 55.0
+caption = "VELA BEACH"
+
+[sub_resource type="Resource" id="Resource_n0jnm"]
+script = ExtResource("5_1bdkj")
+seconds = 3.5
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "LEELA: You're Kamalam's new boy. She sent you about the money."
+
+[sub_resource type="Resource" id="Resource_s5fbd"]
+script = ExtResource("5_1bdkj")
+seconds = 3.5
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: She did. She says the Sea Breeze is three months behind."
+
+[sub_resource type="Resource" id="Resource_vyovp"]
+script = ExtResource("5_1bdkj")
+seconds = 4.5
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "LEELA: Because Periyasamy's men take it first. Every month, at that gate, Bala and his friends."
+
+[sub_resource type="Resource" id="Resource_db0ay"]
+script = ExtResource("5_1bdkj")
+seconds = 4.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "LEELA: They're due any minute. Stop them, and I pay Kamalam, not the harbour."
+
+[sub_resource type="Resource" id="Resource_r4xyb"]
+script = ExtResource("5_1bdkj")
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Then put the kettle on. This won't take long."
+
+[sub_resource type="Resource" id="Resource_k3ddc"]
+script = ExtResource("4_vq5kk")
+id = &"c08_leela"
+anchor = Vector3(518.6, 0.15, -80)
+anchor_yaw_degrees = -90.0
+shots = Array[ExtResource("5_1bdkj")]([SubResource("Resource_60ulu"), SubResource("Resource_n0jnm"), SubResource("Resource_s5fbd"), SubResource("Resource_vyovp"), SubResource("Resource_db0ay"), SubResource("Resource_r4xyb")])
+actors = Array[ExtResource("3_4ymsy")]([SubResource("Resource_32rsx")])
+player_position = Vector3(-1.1, 0, 0)
+player_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_rei5x"]
+script = ExtResource("2_pcsuv")
+type = 6
+text = "Talk to Leela."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_k3ddc")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_i8p3v"]
+script = ExtResource("6_u7nab")
+position = Vector3(520, 0.15, -100)
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_0l7vl"]
+script = ExtResource("6_u7nab")
+position = Vector3(520.5, 0.15, -103)
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_aoema"]
+script = ExtResource("6_u7nab")
+position = Vector3(519.5, 0.15, -105)
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_h5ecl"]
+script = ExtResource("6_u7nab")
+position = Vector3(521, 0.15, -107)
+top_color = Color(0.10980392, 0.10980392, 0.12156863, 1)
+bottom_color = Color(0.22745098, 0.22745098, 0.2509804, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+health = 100.0
+
+[sub_resource type="Resource" id="Resource_pcvqj"]
+script = ExtResource("2_pcsuv")
+type = 7
+text = "Stop Periyasamy's collectors."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("6_u7nab")]([SubResource("Resource_i8p3v"), SubResource("Resource_0l7vl"), SubResource("Resource_aoema"), SubResource("Resource_h5ecl")])
+aggro_range = 26.0
+choices = PackedStringArray()
+checkpoint = true
+checkpoint_position = Vector3(518.6, 0.15, -84)
+checkpoint_yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_ds3m5"]
+script = ExtResource("2_pcsuv")
+type = 1
+text = "Talk to Leela."
+alternatives = PackedVector3Array()
+contact = &"leela"
+lines = PackedStringArray("LEELA: Well. The harbour will feel that.", "LEELA: Tell Kamalam the Sea Breeze pays her now. And tell her to keep her new boy away from my pool.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_kgmll"]
+script = ExtResource("8_3d18c")
+id = &"car"
+label = "Durai's car"
+scene = ExtResource("9_rpea1")
+position = Vector3(52, 0, 150)
+yaw_degrees = 90.0
+paint = Color(0.41960785, 0.43529412, 0.47058824, 1)
+must_survive = false
+
+[resource]
+script = ExtResource("7_q7544")
+id = &"inspector"
+title = "The Inspector"
+description = "Durai has a job at the beach, and someone is waiting outside your house."
+prerequisites = Array[StringName]([&"night_van"])
+start_position = Vector3(58, 0.15, 144.2)
+start_yaw_degrees = 90.0
+giver = SubResource("Resource_qs3ci")
+objectives = Array[ExtResource("2_pcsuv")]([SubResource("Resource_cy7js"), SubResource("Resource_2jd14"), SubResource("Resource_pmvfh"), SubResource("Resource_rei5x"), SubResource("Resource_pcvqj"), SubResource("Resource_ds3m5")])
+contacts = Array[ExtResource("1_d81ob")]([SubResource("Resource_u6ja1")])
+vehicles = Array[ExtResource("8_3d18c")]([SubResource("Resource_kgmll")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 3500

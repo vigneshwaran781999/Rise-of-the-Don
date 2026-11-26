@@ -1,0 +1,218 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_o1mhh"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_0nrah"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="3_nphpa"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="4_da08s"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="5_taf0r"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="6_48j5x"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_50kgh"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_wx278"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/motorbike.tscn" id="9_564sl"]
+
+[sub_resource type="Resource" id="Resource_d5yv3"]
+script = ExtResource("1_o1mhh")
+id = &"ravi_home"
+display_name = "Ravi"
+top_color = Color(0.8784314, 0.69411767, 0.22745098, 1)
+bottom_color = Color(0.41568628, 0.2901961, 0.18039216, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+position = Vector3(-597.5, 0.15, -7.5)
+
+[sub_resource type="Resource" id="Resource_abql2"]
+script = ExtResource("1_o1mhh")
+id = &"ravi"
+display_name = "Ravi"
+top_color = Color(0.8784314, 0.69411767, 0.22745098, 1)
+bottom_color = Color(0.41568628, 0.2901961, 0.18039216, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+position = Vector3(89.9, 0.15, -9)
+yaw_degrees = 270.0
+
+[sub_resource type="Resource" id="Resource_5k6je"]
+script = ExtResource("3_nphpa")
+speaker = "Ravi"
+contact = &"ravi"
+top_color = Color(1, 1, 1, 1)
+bottom_color = Color(1, 1, 1, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(1.1, 0, 0)
+times = PackedFloat32Array(0)
+yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_q7x0n"]
+script = ExtResource("5_taf0r")
+seconds = 3.5
+camera_from = Vector3(5, 3.2, -9)
+camera_to = Vector3(3.5, 2.6, -7.5)
+look_from = Vector3(0, 1.3, 0)
+look_to = Vector3(0, 1.3, 0)
+fov_from = 55.0
+caption = "THE BUS STAND"
+
+[sub_resource type="Resource" id="Resource_edikm"]
+script = ExtResource("5_taf0r")
+seconds = 4.5
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "RAVI: Vetri! I knew it. Amma said you'd be at the bus stand, eating Selvi's vadai."
+
+[sub_resource type="Resource" id="Resource_pea6s"]
+script = ExtResource("5_taf0r")
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Ravi? What are you doing in the city?"
+
+[sub_resource type="Resource" id="Resource_wcmtd"]
+script = ExtResource("5_taf0r")
+seconds = 5.0
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "RAVI: Appa borrowed from a lender in town. Twenty thousand. Now the lender's men come to the village every week."
+
+[sub_resource type="Resource" id="Resource_h4jij"]
+script = ExtResource("5_taf0r")
+seconds = 3.5
+camera_from = Vector3(-2.1, 1.78, -0.75)
+camera_to = Vector3(-2, 1.78, -0.8)
+look_from = Vector3(1.1, 1.55, 0)
+look_to = Vector3(1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "RAVI: They say the money goes to someone at the harbour. Periyasamy."
+
+[sub_resource type="Resource" id="Resource_88d2d"]
+script = ExtResource("5_taf0r")
+camera_from = Vector3(2.1, 1.78, -0.75)
+camera_to = Vector3(2, 1.78, -0.8)
+look_from = Vector3(-1.1, 1.55, 0)
+look_to = Vector3(-1.1, 1.55, 0)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Go home, Ravi. I'll meet them there."
+
+[sub_resource type="Resource" id="Resource_7ramp"]
+script = ExtResource("4_da08s")
+id = &"c10_ravi"
+anchor = Vector3(91, 0.15, -9)
+anchor_yaw_degrees = 180.0
+shots = Array[ExtResource("5_taf0r")]([SubResource("Resource_q7x0n"), SubResource("Resource_edikm"), SubResource("Resource_pea6s"), SubResource("Resource_wcmtd"), SubResource("Resource_h4jij"), SubResource("Resource_88d2d")])
+actors = Array[ExtResource("3_nphpa")]([SubResource("Resource_5k6je")])
+player_position = Vector3(-1.1, 0, 0)
+player_yaw_degrees = -90.0
+
+[sub_resource type="Resource" id="Resource_k8ffa"]
+script = ExtResource("2_0nrah")
+type = 6
+text = "Talk to Ravi."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_7ramp")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_hiusw"]
+script = ExtResource("2_0nrah")
+type = 2
+text = "Take Selvi's scooter."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+vehicle = &"bike"
+
+[sub_resource type="Resource" id="Resource_s4p8l"]
+script = ExtResource("2_0nrah")
+text = "Ride to Ravi's village, west of Old Town."
+hint = "Press {map}: the village is in the Countryside, west along the main road."
+position = Vector3(-593.5, 0.15, -6.5)
+radius = 8.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_6o37j"]
+script = ExtResource("6_48j5x")
+position = Vector3(-604, 0.15, -8)
+top_color = Color(0.41960785, 0.14117648, 0.1882353, 1)
+bottom_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_63sby"]
+script = ExtResource("6_48j5x")
+position = Vector3(-607, 0.15, -7)
+top_color = Color(0.41960785, 0.14117648, 0.1882353, 1)
+bottom_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_ig1m7"]
+script = ExtResource("6_48j5x")
+position = Vector3(-610, 0.15, -8.5)
+top_color = Color(0.41960785, 0.14117648, 0.1882353, 1)
+bottom_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_mugri"]
+script = ExtResource("2_0nrah")
+type = 7
+text = "Chase off the lender's men."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("6_48j5x")]([SubResource("Resource_6o37j"), SubResource("Resource_63sby"), SubResource("Resource_ig1m7")])
+choices = PackedStringArray()
+checkpoint = true
+checkpoint_position = Vector3(-589.5, 0.15, -7)
+checkpoint_yaw_degrees = 90.0
+
+[sub_resource type="Resource" id="Resource_1ymlh"]
+script = ExtResource("2_0nrah")
+type = 1
+text = "Talk to Ravi."
+alternatives = PackedVector3Array()
+contact = &"ravi_home"
+lines = PackedStringArray("RAVI: You fight like you did behind the school, Vetri. Only now nobody\'s father comes to pull you off.", "RAVI: Come home. Amma\'s tired of lying to the neighbours about what you do.", "VETRI: Not yet. When I come home, it\'ll be with enough that nobody here borrows from Periyasamy again.", "RAVI: That\'s what he said once too, you know. Periyasamy.")
+scene = true
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_prcoy"]
+script = ExtResource("8_wx278")
+id = &"bike"
+label = "Selvi's scooter"
+scene = ExtResource("9_564sl")
+position = Vector3(76, 0, -4.5)
+yaw_degrees = -90.0
+paint = Color(0.8235294, 0.22745098, 0.3529412, 1)
+must_survive = false
+
+[resource]
+script = ExtResource("7_50kgh")
+id = &"old_friends"
+title = "Old Friends"
+description = "Someone from home is looking for you at the bus stand."
+prerequisites = Array[StringName]([&"ledger"])
+start_position = Vector3(92.5, 0.15, -6.5)
+giver = SubResource("Resource_abql2")
+objectives = Array[ExtResource("2_0nrah")]([SubResource("Resource_k8ffa"), SubResource("Resource_hiusw"), SubResource("Resource_s4p8l"), SubResource("Resource_mugri"), SubResource("Resource_1ymlh")])
+contacts = Array[ExtResource("1_o1mhh")]([SubResource("Resource_d5yv3")])
+vehicles = Array[ExtResource("8_wx278")]([SubResource("Resource_prcoy")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 2000

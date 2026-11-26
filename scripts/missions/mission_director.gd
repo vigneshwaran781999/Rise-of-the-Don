@@ -167,10 +167,11 @@ func get_goal_position() -> Vector3:
 	return _goal_position
 
 
-## Whether a mission action has the interact key now (a talk or hand-over prompt, or dialogue
-## playing): other things the player could do with it wait.
+## Whether a mission action has the interact key now (a talk or hand-over prompt, dialogue
+## playing, or a cutscene, which it skips through): other things the player could do with it wait.
 func has_prompt() -> bool:
-	return _prompt_action != "" or (dialogue != null and dialogue.is_playing())
+	return _prompt_action != "" or (dialogue != null and dialogue.is_playing()) \
+		or (_cutscene != null and _cutscene.is_playing())
 
 
 func get_offer_giver(mission: MissionData) -> MissionContactNPC:
@@ -727,6 +728,12 @@ func _check_offers() -> void:
 # --------------------------------------------------------------------------- world helpers
 
 func _spawn_contact(contact: MissionContact) -> MissionContactNPC:
+	# The same person still lingering from the last mission steps out: never two of anyone.
+	for node: Node3D in _lingering.duplicate():
+		if is_instance_valid(node) and node is MissionContactNPC \
+				and (node as MissionContactNPC).data.display_name == contact.display_name:
+			_lingering.erase(node)
+			node.queue_free()
 	var npc := MissionContactNPC.new()
 	npc.setup(contact, looks[clampi(contact.look, 0, looks.size() - 1)])
 	npc.watch = _player

@@ -1,0 +1,338 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_dv15w"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_0y2jj"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="3_kvghp"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_actor.gd" id="4_ojqbw"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_data.gd" id="5_qcvg8"]
+[ext_resource type="Script" path="res://scripts/cutscenes/cutscene_shot.gd" id="6_ni4s0"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="7_br3lq"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="8_tba6q"]
+
+[sub_resource type="Resource" id="Resource_fm71s"]
+script = ExtResource("1_dv15w")
+id = &"durai"
+display_name = "Durai"
+top_color = Color(0.165, 0.184, 0.227, 1)
+bottom_color = Color(0.231, 0.231, 0.247, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.102, 0.078, 0.071, 1)
+position = Vector3(62.8, 0.15, 144)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_rbpc0"]
+script = ExtResource("2_0y2jj")
+type = 1
+text = "Talk to Durai."
+alternatives = PackedVector3Array()
+contact = &"durai"
+lines = PackedStringArray("DURAI: Two people want you at the temple tank tonight. One wears khaki. One wears Varadhan\'s colours.", "DURAI: Whatever you choose, Vetri, choose it like you\'ll have to live with it. Because you will.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ffmaq"]
+script = ExtResource("2_0y2jj")
+text = "Go to the temple tank."
+position = Vector3(80, 0.15, 52.5)
+radius = 6.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_pok57"]
+script = ExtResource("4_ojqbw")
+speaker = "Nandini"
+look = 1
+top_color = Color(0.7058824, 0.6039216, 0.39215687, 1)
+bottom_color = Color(0.5411765, 0.45490196, 0.28235295, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-2.2, 0, -0.4)
+times = PackedFloat32Array(0)
+yaw_degrees = -60.0
+
+[sub_resource type="Resource" id="Resource_sm3hw"]
+script = ExtResource("4_ojqbw")
+speaker = "Suresh"
+top_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+bottom_color = Color(0.16470589, 0.1764706, 0.2, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(2.2, 0, -0.4)
+times = PackedFloat32Array(0)
+yaw_degrees = 60.0
+
+[sub_resource type="Resource" id="Resource_1d1ix"]
+script = ExtResource("6_ni4s0")
+seconds = 4.0
+camera_from = Vector3(0, 4.5, -12)
+camera_to = Vector3(0, 3.2, -9)
+look_from = Vector3(0, 1.2, 2)
+look_to = Vector3(0, 1.3, 0)
+fov_from = 55.0
+caption = "THE TEMPLE TANK"
+
+[sub_resource type="Resource" id="Resource_r5cxv"]
+script = ExtResource("6_ni4s0")
+seconds = 5.5
+camera_from = Vector3(-1.4, 1.65, -2.6)
+camera_to = Vector3(-1.45, 1.65, -2.5)
+look_from = Vector3(-2.2, 1.6, -0.4)
+look_to = Vector3(-2.2, 1.6, -0.4)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: Give me Periyasamy's ledger, Vetri. Raghavan goes to court, Varadhan's money gets traced, and you walk away clean."
+
+[sub_resource type="Resource" id="Resource_8wy7k"]
+script = ExtResource("6_ni4s0")
+seconds = 5.0
+camera_from = Vector3(1.4, 1.65, -2.6)
+camera_to = Vector3(1.45, 1.65, -2.5)
+look_from = Vector3(2.2, 1.6, -0.4)
+look_to = Vector3(2.2, 1.6, -0.4)
+fov_from = 40.0
+fov_to = 40.0
+line = "SURESH: Mr Varadhan offers you the harbour, in your own name. The Inspector offers you a small house and a quiet life."
+
+[sub_resource type="Resource" id="Resource_dv7xc"]
+script = ExtResource("6_ni4s0")
+seconds = 4.0
+camera_from = Vector3(-1.4, 1.65, -2.6)
+camera_to = Vector3(-1.45, 1.65, -2.5)
+look_from = Vector3(-2.2, 1.6, -0.4)
+look_to = Vector3(-2.2, 1.6, -0.4)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: I'm offering you a city that doesn't belong to one old man on a hill."
+
+[sub_resource type="Resource" id="Resource_nil8q"]
+script = ExtResource("6_ni4s0")
+camera_from = Vector3(1.4, 1.65, -2.6)
+camera_to = Vector3(1.45, 1.65, -2.5)
+look_from = Vector3(2.2, 1.6, -0.4)
+look_to = Vector3(2.2, 1.6, -0.4)
+fov_from = 40.0
+fov_to = 40.0
+line = "SURESH: He's offering you the city."
+
+[sub_resource type="Resource" id="Resource_1radx"]
+script = ExtResource("6_ni4s0")
+seconds = 2.5
+camera_from = Vector3(0, 1.8, -5.5)
+camera_to = Vector3(0, 1.8, -5)
+look_from = Vector3(0, 1.4, 0)
+look_to = Vector3(0, 1.4, 0)
+fov_from = 45.0
+fov_to = 45.0
+
+[sub_resource type="Resource" id="Resource_xp1m3"]
+script = ExtResource("5_qcvg8")
+id = &"c15_tank"
+anchor = Vector3(80, 0.15, 53.5)
+shots = Array[ExtResource("6_ni4s0")]([SubResource("Resource_1d1ix"), SubResource("Resource_r5cxv"), SubResource("Resource_8wy7k"), SubResource("Resource_dv7xc"), SubResource("Resource_nil8q"), SubResource("Resource_1radx")])
+actors = Array[ExtResource("4_ojqbw")]([SubResource("Resource_pok57"), SubResource("Resource_sm3hw")])
+player_position = Vector3(0, 0, 0.6)
+
+[sub_resource type="Resource" id="Resource_y52ag"]
+script = ExtResource("2_0y2jj")
+type = 6
+text = "Meet them."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_xp1m3")
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_wxr8t"]
+script = ExtResource("2_0y2jj")
+type = 10
+text = "What will you do with Periyasamy's ledger?"
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray("Give the ledger to Inspector Nandini", "Take Varadhan\'s offer of the harbour")
+choice_id = &"ending"
+
+[sub_resource type="Resource" id="Resource_n0de7"]
+script = ExtResource("4_ojqbw")
+speaker = "Nandini"
+look = 1
+top_color = Color(0.7058824, 0.6039216, 0.39215687, 1)
+bottom_color = Color(0.5411765, 0.45490196, 0.28235295, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-2.2, 0, -0.4, -2.2, 0, -0.4, -0.9, 0, -0.2)
+times = PackedFloat32Array(0, 1, 3)
+yaw_degrees = -60.0
+
+[sub_resource type="Resource" id="Resource_pcdgr"]
+script = ExtResource("4_ojqbw")
+speaker = "Suresh"
+top_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+bottom_color = Color(0.16470589, 0.1764706, 0.2, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(2.2, 0, -0.4, 2.2, 0, -0.4, 9, 0, -3)
+times = PackedFloat32Array(0, 1.5, 6)
+yaw_degrees = 60.0
+face_player = false
+
+[sub_resource type="Resource" id="Resource_fw0jm"]
+script = ExtResource("6_ni4s0")
+seconds = 5.0
+camera_from = Vector3(0, 1.8, -5.5)
+camera_to = Vector3(0, 1.8, -5)
+look_from = Vector3(0, 1.4, 0)
+look_to = Vector3(-0.5, 1.4, 0)
+fov_from = 45.0
+fov_to = 45.0
+line = "NANDINI: Raghavan will be arrested by morning. Varadhan's lawyers will be busy for years."
+
+[sub_resource type="Resource" id="Resource_kl11b"]
+script = ExtResource("6_ni4s0")
+camera_from = Vector3(-0.6, 1.65, -2.4)
+camera_to = Vector3(-0.65, 1.65, -2.3)
+look_from = Vector3(-0.9, 1.6, -0.2)
+look_to = Vector3(-0.9, 1.6, -0.2)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: You could have had the whole city, you know."
+
+[sub_resource type="Resource" id="Resource_dd16v"]
+script = ExtResource("6_ni4s0")
+seconds = 6.0
+camera_from = Vector3(0, 1.65, -2.2)
+camera_to = Vector3(0, 1.65, -2)
+look_from = Vector3(0, 1.6, 0.6)
+look_to = Vector3(0, 1.6, 0.6)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: I have a house, a friend at the tiffin stall, and a market that pays nobody for the right to sell flowers. That's enough."
+
+[sub_resource type="Resource" id="Resource_dwl86"]
+script = ExtResource("6_ni4s0")
+seconds = 6.0
+camera_from = Vector3(0, 3, -8)
+camera_to = Vector3(0, 10, -18)
+look_to = Vector3(0, 1, 20)
+fov_to = 55.0
+caption = "THE HONEST ROAD"
+
+[sub_resource type="Resource" id="Resource_opdt4"]
+script = ExtResource("5_qcvg8")
+id = &"c15_honest"
+anchor = Vector3(80, 0.15, 53.5)
+shots = Array[ExtResource("6_ni4s0")]([SubResource("Resource_fw0jm"), SubResource("Resource_kl11b"), SubResource("Resource_dd16v"), SubResource("Resource_dwl86")])
+actors = Array[ExtResource("4_ojqbw")]([SubResource("Resource_n0de7"), SubResource("Resource_pcdgr")])
+player_position = Vector3(0, 0, 0.6)
+
+[sub_resource type="Resource" id="Resource_wb4wj"]
+script = ExtResource("2_0y2jj")
+type = 6
+text = "The honest road."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_opdt4")
+choices = PackedStringArray()
+if_choice = &"ending"
+
+[sub_resource type="Resource" id="Resource_qe8r4"]
+script = ExtResource("4_ojqbw")
+speaker = "Nandini"
+look = 1
+top_color = Color(0.7058824, 0.6039216, 0.39215687, 1)
+bottom_color = Color(0.5411765, 0.45490196, 0.28235295, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(-2.2, 0, -0.4, -2.2, 0, -0.4, -9, 0, -3)
+times = PackedFloat32Array(0, 9, 13.5)
+yaw_degrees = -60.0
+
+[sub_resource type="Resource" id="Resource_ouay0"]
+script = ExtResource("4_ojqbw")
+speaker = "Suresh"
+top_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+bottom_color = Color(0.16470589, 0.1764706, 0.2, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+path = PackedVector3Array(2.2, 0, -0.4, 2.2, 0, -0.4, 1, 0, -0.2)
+times = PackedFloat32Array(0, 0.5, 2.5)
+yaw_degrees = 60.0
+
+[sub_resource type="Resource" id="Resource_rckhl"]
+script = ExtResource("6_ni4s0")
+seconds = 3.5
+camera_from = Vector3(0, 1.8, -5.5)
+camera_to = Vector3(0, 1.8, -5)
+look_from = Vector3(0, 1.4, 0)
+look_to = Vector3(0.5, 1.4, 0)
+fov_from = 45.0
+fov_to = 45.0
+line = "SURESH: Mr Varadhan says: welcome to the family."
+
+[sub_resource type="Resource" id="Resource_rd6hv"]
+script = ExtResource("6_ni4s0")
+seconds = 5.5
+camera_from = Vector3(-1.4, 1.65, -2.6)
+camera_to = Vector3(-1.45, 1.65, -2.5)
+look_from = Vector3(-2.2, 1.6, -0.4)
+look_to = Vector3(-2.2, 1.6, -0.4)
+fov_from = 40.0
+fov_to = 40.0
+line = "NANDINI: Enjoy it, Vetri. Every don in this city ends up the same way. I'll be there when you do."
+
+[sub_resource type="Resource" id="Resource_h4j2i"]
+script = ExtResource("6_ni4s0")
+seconds = 3.5
+camera_from = Vector3(0, 1.65, -2.2)
+camera_to = Vector3(0, 1.65, -2)
+look_from = Vector3(0, 1.6, 0.6)
+look_to = Vector3(0, 1.6, 0.6)
+fov_from = 40.0
+fov_to = 40.0
+line = "VETRI: Then you'll be waiting a long time, Inspector."
+
+[sub_resource type="Resource" id="Resource_tjmsj"]
+script = ExtResource("6_ni4s0")
+seconds = 6.0
+camera_from = Vector3(0, 3, -8)
+camera_to = Vector3(0, 10, -18)
+look_to = Vector3(0, 1, 20)
+fov_to = 55.0
+caption = "THE DON OF VELANAGAR"
+
+[sub_resource type="Resource" id="Resource_4en2j"]
+script = ExtResource("5_qcvg8")
+id = &"c15_don"
+anchor = Vector3(80, 0.15, 53.5)
+shots = Array[ExtResource("6_ni4s0")]([SubResource("Resource_rckhl"), SubResource("Resource_rd6hv"), SubResource("Resource_h4j2i"), SubResource("Resource_tjmsj")])
+actors = Array[ExtResource("4_ojqbw")]([SubResource("Resource_qe8r4"), SubResource("Resource_ouay0")])
+player_position = Vector3(0, 0, 0.6)
+
+[sub_resource type="Resource" id="Resource_54ifj"]
+script = ExtResource("2_0y2jj")
+type = 6
+text = "The don of Velanagar."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+cutscene = SubResource("Resource_4en2j")
+choices = PackedStringArray()
+if_choice = &"ending"
+if_answer = 1
+
+[resource]
+script = ExtResource("7_br3lq")
+id = &"rise_of_the_don"
+title = "Rise of the Don"
+description = "Durai says two people want you at the temple tank."
+prerequisites = Array[StringName]([&"harbour"])
+start_position = Vector3(58, 0.15, 144.2)
+start_yaw_degrees = 90.0
+giver = SubResource("Resource_fm71s")
+objectives = Array[ExtResource("2_0y2jj")]([SubResource("Resource_rbpc0"), SubResource("Resource_ffmaq"), SubResource("Resource_y52ag"), SubResource("Resource_wxr8t"), SubResource("Resource_wb4wj"), SubResource("Resource_54ifj")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 10000

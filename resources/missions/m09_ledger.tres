@@ -1,0 +1,170 @@
+[gd_resource type="Resource" script_class="MissionData" format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_contact.gd" id="1_qbet5"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_3ws2y"]
+[ext_resource type="Script" path="res://scripts/missions/fighter_spec.gd" id="3_feota"]
+[ext_resource type="Script" path="res://scripts/missions/mission_data.gd" id="4_hkw5o"]
+[ext_resource type="Script" path="res://scripts/missions/mission_vehicle.gd" id="5_hk5gx"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/sedan.tscn" id="6_lskia"]
+
+[sub_resource type="Resource" id="Resource_cxw7r"]
+script = ExtResource("1_qbet5")
+id = &"murali"
+display_name = "Murali"
+look = 2
+top_color = Color(0.6039216, 0.6039216, 0.57254905, 1)
+bottom_color = Color(0.2901961, 0.2901961, 0.3137255, 1)
+skin_color = Color(0.47843137, 0.2901961, 0.1882353, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+position = Vector3(511.8, 0.15, -441)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_42f5j"]
+script = ExtResource("1_qbet5")
+id = &"kamalam"
+display_name = "Kamalam"
+look = 1
+top_color = Color(0.482, 0.122, 0.173, 1)
+bottom_color = Color(0.788, 0.635, 0.153, 1)
+skin_color = Color(0.478, 0.29, 0.18, 1)
+hair_color = Color(0.165, 0.149, 0.141, 1)
+position = Vector3(-72, 0.15, -71)
+yaw_degrees = 180.0
+
+[sub_resource type="Resource" id="Resource_e4inw"]
+script = ExtResource("2_3ws2y")
+type = 1
+text = "Talk to Kamalam."
+alternatives = PackedVector3Array()
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: Periyasamy writes down every rupee he pays Raghavan. Old habit: he trusts paper more than people.", "KAMALAM: The ledger is in his site office, by the container yard. Bring it to me and Raghavan belongs to us, not him.", "VETRI: And his men?", "KAMALAM: Will be unhappy. Take my car, and be quick.")
+scene = true
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_flint"]
+script = ExtResource("2_3ws2y")
+type = 2
+text = "Take Kamalam's car."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+vehicle = &"car"
+
+[sub_resource type="Resource" id="Resource_gv6tc"]
+script = ExtResource("2_3ws2y")
+text = "Drive to Periyasamy's site office in the Industrial Zone."
+position = Vector3(511.8, 0.15, -436.4)
+radius = 9.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_xmg7e"]
+script = ExtResource("3_feota")
+position = Vector3(500, 0.15, -440.5)
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_jd20y"]
+script = ExtResource("3_feota")
+position = Vector3(507, 0.15, -441)
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_6cp7h"]
+script = ExtResource("3_feota")
+position = Vector3(518, 0.15, -440.8)
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_av6a7"]
+script = ExtResource("2_3ws2y")
+type = 7
+text = "Deal with the guards."
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("3_feota")]([SubResource("Resource_xmg7e"), SubResource("Resource_jd20y"), SubResource("Resource_6cp7h")])
+aggro_range = 24.0
+choices = PackedStringArray()
+checkpoint = true
+checkpoint_position = Vector3(511.8, 0.15, -431.4)
+
+[sub_resource type="Resource" id="Resource_m2xoo"]
+script = ExtResource("2_3ws2y")
+type = 1
+text = "Get the ledger from the clerk."
+alternatives = PackedVector3Array()
+contact = &"murali"
+lines = PackedStringArray("MURALI: Don\'t hurt me! I only keep the books!", "VETRI: Then you won\'t miss this one.", "MURALI: Bala will kill me. Run. Run!")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_40ji0"]
+script = ExtResource("3_feota")
+position = Vector3(530, 0.15, -434)
+yaw_degrees = 90.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_r40e3"]
+script = ExtResource("3_feota")
+position = Vector3(534, 0.15, -436)
+yaw_degrees = 90.0
+top_color = Color(0.1764706, 0.30980393, 0.4862745, 1)
+bottom_color = Color(0.5411765, 0.47843137, 0.3529412, 1)
+hair_color = Color(0.09019608, 0.07058824, 0.05882353, 1)
+
+[sub_resource type="Resource" id="Resource_xdjkb"]
+script = ExtResource("2_3ws2y")
+type = 9
+text = "Get away from the harbour."
+position = Vector3(511.8, 0.15, -440.4)
+radius = 150.0
+alternatives = PackedVector3Array()
+lines = PackedStringArray()
+checkpoints = PackedVector3Array()
+fighters = Array[ExtResource("3_feota")]([SubResource("Resource_40ji0"), SubResource("Resource_r40e3")])
+choices = PackedStringArray()
+wanted_level = 2
+
+[sub_resource type="Resource" id="Resource_n1qcb"]
+script = ExtResource("2_3ws2y")
+type = 1
+text = "Bring the ledger to Kamalam."
+alternatives = PackedVector3Array()
+contact = &"kamalam"
+lines = PackedStringArray("KAMALAM: Every payment, every date, in his own hand. Raghavan\'s whole career in one notebook.", "KAMALAM: Keep it hidden in your house. If anything happens to me, it goes to the newspapers.", "VETRI: Nothing is going to happen to you.", "KAMALAM: Everyone says that, right up until it does.")
+checkpoints = PackedVector3Array()
+choices = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_extjr"]
+script = ExtResource("5_hk5gx")
+id = &"car"
+label = "Kamalam's car"
+scene = ExtResource("6_lskia")
+position = Vector3(-50, 0, -40)
+paint = Color(0.47843137, 0.12156863, 0.17254902, 1)
+must_survive = false
+
+[resource]
+script = ExtResource("4_hkw5o")
+id = &"ledger"
+title = "The Ledger"
+description = "Kamalam wants Periyasamy's book of payments."
+prerequisites = Array[StringName]([&"inspector"])
+start_position = Vector3(-74, 0.15, -69.5)
+giver = SubResource("Resource_42f5j")
+objectives = Array[ExtResource("2_3ws2y")]([SubResource("Resource_e4inw"), SubResource("Resource_flint"), SubResource("Resource_gv6tc"), SubResource("Resource_av6a7"), SubResource("Resource_m2xoo"), SubResource("Resource_xdjkb"), SubResource("Resource_n1qcb")])
+contacts = Array[ExtResource("1_qbet5")]([SubResource("Resource_cxw7r")])
+vehicles = Array[ExtResource("5_hk5gx")]([SubResource("Resource_extjr")])
+intro_lines = PackedStringArray()
+outro_lines = PackedStringArray()
+reward_cash = 4000

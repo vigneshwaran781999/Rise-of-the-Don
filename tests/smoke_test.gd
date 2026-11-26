@@ -518,6 +518,15 @@ func _check_punch() -> String:
 		return "the mission director should have a cutscene player (AnimationPlayer and letterbox)"
 	if cutscene.is_playing():
 		return "no cutscene should be playing in free roam"
+	# The M7 story: missions 6-15 follow Building an Empire (tests/campaign_test.tscn plays them).
+	var story_ids: Array[StringName] = []
+	for mission: MissionData in MissionManager.story.missions:
+		story_ids.append(mission.id)
+	var after: int = story_ids.find(&"building_empire")
+	if after < 0 or story_ids.slice(after + 1, after + 11) != [&"thorns", &"night_van", &"inspector", &"ledger", &"old_friends",
+			&"detective", &"fire", &"mansion", &"harbour", &"rise_of_the_don"]:
+		return "story missions 6-15 should follow Building an Empire (story: %s)" % [story_ids]
+	print("  ok  the cutscene player is in place; story missions 6-15 follow Building an Empire")
 	return ""
 
 

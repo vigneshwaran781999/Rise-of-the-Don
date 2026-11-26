@@ -204,3 +204,20 @@ Same machine and settings. The whole city: seven 512 m cells, six districts, 112
 - **Rain costs nothing measurable** on this machine: the particles are small and unlit, and wet surfaces are two extra lines in the palette shader.
 - **Clouds:** the first version drew the cloud texture in every weather and rewrote its tint every half second, which made the sky recompute its light each time. The sky-only row fell from 63 to 54 FPS (+2.6 ms on every frame). Clear weather now has no cloud texture at all, and the tint is only written when it changes; the sky-only row is back to 62 FPS.
 - The new parked vehicles near the spawn add about 10 draw calls.
+
+## End of M7: fists, cutscenes, the story (2026-11-26)
+
+Same machine and method (`tests/perf_baseline.tscn`). Nothing in steps 10-12 shows up in the free-roam numbers:
+
+| Viewpoint | FPS | avg ms | 1% worst ms | draw calls |
+|---|---:|---:|---:|---:|
+| Spawn street, day | 35 | 28.61 | 33.44 | 313 |
+| Spawn street, night 21:30 | 28 | 35.62 | 40.69 | 287 |
+| Downtown: Central Plaza | 36 | 27.46 | 31.70 | 183 |
+| Industrial Zone: the quay, container yard and cranes | 35 | 28.47 | 32.41 | 38 |
+
+Video memory is 333 MB (unchanged).
+
+- **Streaming one chunk at a time:** to avoid an engine race in the headless test renderer (see DEVELOPMENT_LOG, step 12b), background chunk loads now run one after another instead of all at once. The streaming drive along Ring B at 72 km/h still loaded all 10 chunks it needed in time: 35 FPS average, 1% worst frame 32.9 ms, worst frame 33.8 ms (step 9: 35 FPS, 1% worst 33 ms). Watch for pop-in at higher speeds, for example on the motorcycle at full speed between districts.
+- **Cutscene fill light:** one omni light without shadows, switched on only while a cutscene plays.
+- **City life** (physics including all NPC scripts): 7.4 ms per step at High, as at step 9.
