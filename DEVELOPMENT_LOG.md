@@ -596,6 +596,21 @@ Dated entries: what was built, what broke, how it was fixed.
     - the mission objective with a contact's stand-in, and a failure mid-cutscene.
 
     The smoke test checks that the cutscene player is in place.
+- **Step 12a, story objectives:**
+  - **FIGHT:** the objective's fighters (`FighterSpec`: position, look, colours, health) appear and come for the player once within its range. They show as red triangles on the map ("enemy" blips) with a diamond over the nearest, and the objective counts down "(n left)". When all are knocked out they stand down and leave once out of sight.
+  - **FOLLOW:**
+    - The mission car waits until the player is within sight, then a `RouteDriver` drives it through the objective's stops along the lanes.
+    - Its arrival completes the objective. More than `follow_far` away loses it ("You lost them."); within `follow_near` for longer than `spotted_seconds`, they spot you.
+    - The HUD warns "Too close!" or "Don't lose them!".
+    - The car being tailed counts as occupied, so you can't get into it.
+  - **ESCAPE:** get `radius` metres from a point. The circle shows on the map, the objective counts the metres to go, and the objective's fighters chase you at once.
+  - **CHOICE:** a `ChoiceCard` holds the game with one button per answer. `GameState.choices` keeps the answer and it is saved. Objectives with `if_choice` / `if_answer` run only on that branch; MissionManager skips the others when moving on and when restarting at a checkpoint.
+  - **RoadDriver:** police cars and mission cars now share one base for following roads, steering and backing out.
+  - **Tests:** new `tests/objective_test.tscn`:
+    - FIGHT: the wait, then they come; the countdown; standing down;
+    - FOLLOW: waiting for the player, keeping left round a corner, arrival, spotted, lost;
+    - ESCAPE: the circle, the chaser, getting out;
+    - CHOICE: the card, the branch, the saved answer.
 
 **Broke and fixed**
 - **Step 1:**
@@ -634,3 +649,9 @@ Dated entries: what was built, what broke, how it was fixed.
     - Starting the welcome mission moved the player to the bus stand, across the road from the fighter. The player is moved back.
     - The first navmesh query came before the map's first sync; the test now waits for it.
 - **Step 11:** no failures; the cutscene test passed on its first run.
+- **Step 12a:**
+  - **Tailing test, van wouldn't move:** I started it at x = 40 on the gopuram road, which is inside the temple compound (the road starts at its gateway), so it spawned inside the gateway's geometry and stuck. It now starts east of the temple.
+  - **Tailing test, van went round the block:** cars change lanes only at junctions, and left turns go from the kerb lane. With stops in the inner lane, the van looped round a block to reach that lane, and again to make its left turn. Stops now go in the lane the car should use, and the FOLLOW objective's documentation says so.
+  - **Fixes to the test itself:**
+    - the player started within sight of the van, so it set off at once;
+    - the escape check read the chaser after it had been cleaned up out of sight.

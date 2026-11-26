@@ -5,6 +5,7 @@ extends RefCounted
 ##   mission  - a mission to start (magenta ring)       objective - where the mission goes (cyan diamond)
 ##   waypoint - the player's own waypoint (yellow pin)  shop / property - a letter in a badge ("letter")
 ##   police   - a police unit (flashing red/blue)        zone - a search area (translucent, "radius" m)
+##   enemy    - someone a mission has you fight (red)
 
 const MISSION := Color("ff2bd6")
 const OBJECTIVE := Color("22e6ff")
@@ -13,11 +14,12 @@ const SHOP := Color("38d27a")
 const PROPERTY := Color("ff9a2e")
 const POLICE_RED := Color("ff3b4e")
 const POLICE_BLUE := Color("3b7bff")
+const ENEMY := Color("ff4a2e")
 const OUTLINE := Color(0.03, 0.03, 0.06, 0.95)
 ## The full map's legend: [kind, text].
 const LEGEND: Array = [
 	[&"player", "You"], [&"mission", "Mission"], [&"objective", "Objective"], [&"waypoint", "Waypoint"],
-	[&"shop", "Shop"], [&"property", "Property"], [&"police", "Police"],
+	[&"shop", "Shop"], [&"property", "Property"], [&"police", "Police"], [&"enemy", "Enemy"],
 ]
 
 
@@ -35,6 +37,8 @@ static func colour(kind: StringName, blip: Dictionary = {}) -> Color:
 			return blip.get("colour", PROPERTY)
 		&"police":
 			return POLICE_RED if int(Time.get_ticks_msec() / 250) % 2 == 0 else POLICE_BLUE
+		&"enemy":
+			return ENEMY
 		&"zone":
 			return Color(1.0, 0.25, 0.3, 0.22)
 	return Color.WHITE
@@ -80,6 +84,12 @@ static func draw(canvas: CanvasItem, kind: StringName, at: Vector2, scale: float
 		&"police":
 			canvas.draw_circle(at, 6.5 * scale, OUTLINE)
 			canvas.draw_circle(at, 5.0 * scale, c)
+		&"enemy":
+			var t := PackedVector2Array([at + Vector2(0, 6), at + Vector2(-6, -5), at + Vector2(6, -5)])
+			for i: int in t.size():
+				t[i] = at + (t[i] - at) * scale
+			canvas.draw_colored_polygon(_grow(t, at, 2.5 * scale), OUTLINE)
+			canvas.draw_colored_polygon(t, c)
 		&"player":
 			draw_player(canvas, at, 0.0, scale)
 		_:

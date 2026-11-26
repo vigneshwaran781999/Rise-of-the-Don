@@ -29,6 +29,7 @@ const DOWN_SECONDS: float = 1.5
 @onready var police: PoliceManager = $Police
 @onready var busted_screen: BustedScreen = $Busted
 @onready var hospital_screen: HospitalScreen = $Hospital
+@onready var choice_card: ChoiceCard = $Choice
 @onready var places: PlaceDirector = $Places
 @onready var shop_menu: ShopMenu = $ShopMenu
 @onready var regions: RegionWatcher = $Regions
@@ -82,6 +83,8 @@ func _ready() -> void:
 	player.died.connect(_on_player_died)
 	missions.setup(player, world)
 	missions.get_cutscene().playing_changed.connect(_on_cutscene_playing)
+	missions.choice_requested.connect(choice_card.ask)
+	choice_card.chosen.connect(missions.answer_choice)
 	hud.bind_missions(missions, player)
 	places.menu = shop_menu
 	places.pause_menu = pause_menu

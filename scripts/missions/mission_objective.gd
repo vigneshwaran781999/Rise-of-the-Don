@@ -10,9 +10,17 @@ extends Resource
 ## - LOSE_WANTED: get the wanted level back to 0 (lose the police, or a respray).
 ## - BUY_PROPERTY: own property `property` (bought at its door; `position` marks the door).
 ## - CUTSCENE: watch `cutscene` (the player is put in it, on foot); it ends the objective.
-## Any objective can raise the wanted level when it starts (`wanted_level`).
+## - FIGHT: knock out everyone in `fighters` (they come for the player once close).
+## - FOLLOW: tail mission vehicle `vehicle` as it drives through `checkpoints` (its route) to the
+##   last one, staying within `follow_far` m (further loses it) and not within `follow_near` m for
+##   more than `spotted_seconds` (they spot you). Put each stop in the lane the car should be in
+##   (cars change lanes only at junctions; turning left, the kerb lane).
+## - ESCAPE: get `radius` m away from `position`; any `fighters` chase you at once.
+## - CHOICE: pick one of `choices`; the answer is kept under `choice_id` (GameState).
+## Any objective can raise the wanted level when it starts (`wanted_level`), and runs only when an
+## earlier choice `if_choice` was answered `if_answer` (if set: the story's branches).
 
-enum Type { GO_TO, TALK_TO, ENTER_VEHICLE, CHECKPOINTS, LOSE_WANTED, BUY_PROPERTY, CUTSCENE }
+enum Type { GO_TO, TALK_TO, ENTER_VEHICLE, CHECKPOINTS, LOSE_WANTED, BUY_PROPERTY, CUTSCENE, FIGHT, FOLLOW, ESCAPE, CHOICE }
 ## How the player must arrive at a GO_TO point.
 enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 
@@ -46,6 +54,29 @@ enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 @export_group("Cutscene")
 @export var cutscene: CutsceneData
 
+@export_group("Fight and escape")
+## FIGHT: the people to knock out; ESCAPE: people chasing you.
+@export var fighters: Array[FighterSpec] = []
+## FIGHT: they come for the player once this close.
+@export var aggro_range: float = 22.0
+
+@export_group("Follow")
+@export var follow_near: float = 10.0
+@export var follow_far: float = 80.0
+@export var spotted_seconds: float = 4.0
+## How fast the car being tailed drives.
+@export var route_speed_kmh: float = 40.0
+
+@export_group("Choice")
+## The answers (button texts), in order.
+@export var choices: PackedStringArray = PackedStringArray()
+@export var choice_id: StringName
+
+@export_group("Branch")
+## Run this objective only if choice `if_choice` was answered `if_answer` (empty: always).
+@export var if_choice: StringName
+@export var if_answer: int = 0
+
 @export_group("Property and police")
 ## BUY_PROPERTY: the PropertyData id to own.
 @export var property: StringName
@@ -70,3 +101,8 @@ enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 ## Where a GO_TO goes this time: `position`, or one of `alternatives` at random.
 func pick_position(rng: RandomNumberGenerator) -> Vector3:
 	return position if alternatives.is_empty() else alternatives[rng.randi() % alternatives.size()]
+
+
+## Whether it runs, given the story's choices so far (GameState).
+func applies() -> bool:
+	return if_choice == &"" or GameState.get_choice(if_choice) == if_answer

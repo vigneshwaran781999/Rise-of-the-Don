@@ -120,7 +120,7 @@ func start_auto_missions() -> void:
 func complete_objective() -> void:
 	if _active == null or _failed:
 		return
-	var next: int = _index + 1
+	var next: int = _next_applying(_index + 1)
 	if next >= _active.objectives.size():
 		_pass()
 		return
@@ -191,9 +191,21 @@ func resume() -> void:
 
 
 func _begin_at_checkpoint() -> void:
-	_index = _checkpoint
+	_index = _next_applying(_checkpoint)
 	mission_started.emit(_active, _checkpoint)
+	if _index >= _active.objectives.size():
+		_pass()
+		return
 	objective_started.emit(_active, _index)
+
+
+## The first objective from `from` on that runs given the story's choices (objectives.size() if
+## none does).
+func _next_applying(from: int) -> int:
+	var index: int = from
+	while index < _active.objectives.size() and not _active.objectives[index].applies():
+		index += 1
+	return index
 
 
 func _pass() -> void:

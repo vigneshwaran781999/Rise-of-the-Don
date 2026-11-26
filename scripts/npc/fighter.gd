@@ -35,8 +35,13 @@ const WINDUP_TWIST: float = 0.4
 @export var bottom_color: Color = Color("22252b")
 @export var skin_color: Color = Color("7a4a30")
 @export var hair_color: Color = Color("15110e")
-## Fighting `target`; otherwise standing about until provoked.
+## Fighting `target`; otherwise standing about until provoked (or `target` comes within
+## `aggro_range`).
 @export var hostile: bool = false
+## Not hostile yet, they start fighting `target` once it is this close (0: only when provoked).
+@export var aggro_range: float = 0.0
+## Health (0: the tuning's).
+@export var max_health: float = 0.0
 
 ## Who they fight (the player; whoever punches them, if no one was set).
 var target: Node3D
@@ -62,7 +67,7 @@ func _ready() -> void:
 	add_to_group(GROUP)
 	add_to_group(HITTABLE_GROUP)
 	_gravity = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
-	_health = tuning.health
+	_health = max_health if max_health > 0.0 else tuning.health
 	_rng.randomize()
 	_cooldown = _rng.randf_range(0.2, tuning.cooldown_min)    # not everyone swings at once
 	if look != null:
@@ -132,6 +137,8 @@ func _physics_process(delta: float) -> void:
 	var step := Vector3.ZERO
 	match state:
 		State.IDLE:
+			if not hostile and aggro_range > 0.0 and _target_near(aggro_range) and _can_fight():
+				hostile = true
 			if hostile and _can_fight():
 				state = State.CHASE
 			elif _target_near(8.0):

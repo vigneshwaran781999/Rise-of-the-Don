@@ -17,6 +17,10 @@ signal prompt_changed(action: String, text: String)
 signal waypoint_changed(target: Node3D)
 ## Seconds left on the objective's clock (negative = no clock).
 signal timer_changed(seconds_left: float)
+## A CHOICE objective asks the player (the game session puts up the ChoiceCard; answer_choice()).
+signal choice_requested(question: String, answers: PackedStringArray)
+
+const FIGHTER_SCENE: PackedScene = preload("res://scenes/npc/fighter.tscn")
 
 const TALK_REACH: float = 2.6
 const START_RADIUS: float = 1.6
@@ -45,6 +49,10 @@ var _goal_position := Vector3.ZERO     # where the running GO_TO goes (its posit
 var _checkpoint_index: int = 0         # CHECKPOINTS: the next one to pass
 var _scene: DialogueScene
 var _cutscene: CutscenePlayer
+var _fighters: Array[Fighter] = []      # FIGHT / ESCAPE: the running objective's
+var _follow_driver: RouteDriver         # FOLLOW: drives the car being tailed
+var _too_close: float = 0.0
+var _router: RoadRouter
 var _rng := RandomNumberGenerator.new()
 var _time_left: float = -1.0
 var _talking_to: MissionContactNPC
@@ -77,6 +85,7 @@ func _ready() -> void:
 func setup(player: PlayerController, world: CityWorld) -> void:
 	_player = player
 	_world = world
+	_router = RoadRouter.for_graph(world.get_lane_graph())
 	MissionManager.mission_started.connect(_on_mission_started)
 	MissionManager.objective_started.connect(_on_objective_started)
 	MissionManager.mission_failed.connect(_on_mission_failed)
@@ -131,6 +140,28 @@ func get_cutscene() -> CutscenePlayer:
 	return _cutscene
 
 
+## The running FIGHT or ESCAPE objective's fighters.
+func get_fighters() -> Array[Fighter]:
+	var result: Array[Fighter] = []
+	for fighter: Fighter in _fighters:
+		if is_instance_valid(fighter):
+			result.append(fighter)
+	return result
+
+
+## The driver of the car being tailed (FOLLOW), or null.
+func get_follow_driver() -> RouteDriver:
+	return _follow_driver if _follow_driver != null and is_instance_valid(_follow_driver) else null
+
+
+## Answers the running CHOICE objective (the ChoiceCard's buttons).
+func answer_choice(answer: int) -> void:
+	if _objective == null or _objective.type != MissionObjective.Type.CHOICE or MissionManager.is_failed():
+		return
+	GameState.set_choice(_objective.choice_id, clampi(answer, 0, _objective.choices.size() - 1))
+	_complete()
+
+
 ## Where the running GO_TO objective goes (its position, or the address picked this time).
 func get_goal_position() -> Vector3:
 	return _goal_position
@@ -158,6 +189,11 @@ func get_map_blips() -> Array[Dictionary]:
 		blips.append({"position": mission.start_position, "kind": &"mission", "label": mission.title})
 	if _mission != null and _waypoint != null and is_instance_valid(_waypoint) and _waypoint.is_inside_tree():
 		blips.append({"position": _waypoint.global_position, "kind": &"objective", "label": _mission.title})
+	for fighter: Fighter in get_fighters():
+		if not fighter.is_down():
+			blips.append({"position": fighter.global_position, "kind": &"enemy"})
+	if _objective != null and _objective.type == MissionObjective.Type.ESCAPE and not MissionManager.is_failed():
+		blips.append({"position": _objective.position, "kind": &"zone", "radius": _objective.radius})
 	return blips
 
 
@@ -201,6 +237,12 @@ func _physics_process(delta: float) -> void:
 			_update_lose_wanted()
 		MissionObjective.Type.BUY_PROPERTY:
 			_update_buy_property()
+		MissionObjective.Type.FIGHT:
+			_update_fight()
+		MissionObjective.Type.FOLLOW:
+			_update_follow(delta)
+		MissionObjective.Type.ESCAPE:
+			_update_escape()
 
 
 # --------------------------------------------------------------------------- objectives
@@ -373,6 +415,7 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 	_time_left = _objective.time_limit if _objective.time_limit > 0.0 else -1.0
 	timer_changed.emit(_time_left)
 	_talking_to = null
+	_release_fighters()
 	if _goal != null:
 		_goal.queue_free()
 		_goal = null
@@ -388,6 +431,18 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 		MissionObjective.Type.CUTSCENE:
 			marked = false
 			_play_cutscene.call_deferred(_objective)
+		MissionObjective.Type.FIGHT:
+			marked = false
+			_spawn_fighters(_objective, false)
+		MissionObjective.Type.ESCAPE:
+			marked = false
+			_spawn_fighters(_objective, true)
+		MissionObjective.Type.FOLLOW:
+			marked = false
+			_too_close = 0.0
+		MissionObjective.Type.CHOICE:
+			marked = false
+			_ask_choice.call_deferred(_objective)
 		_:
 			marked = false
 	if marked:
@@ -430,10 +485,119 @@ func _on_cutscene_finished(data: CutsceneData) -> void:
 		_complete()
 
 
+## FIGHT: people who come for the player once close; ESCAPE (`chasing`): people after them at once.
+func _spawn_fighters(objective: MissionObjective, chasing: bool) -> void:
+	for spec: FighterSpec in objective.fighters:
+		var fighter := FIGHTER_SCENE.instantiate() as Fighter
+		fighter.name = "Fighter%d" % _fighters.size()
+		fighter.look = looks[clampi(spec.look, 0, looks.size() - 1)]
+		fighter.top_color = spec.top_color
+		fighter.bottom_color = spec.bottom_color
+		fighter.skin_color = spec.skin_color
+		fighter.hair_color = spec.hair_color
+		fighter.max_health = spec.health
+		fighter.target = _player
+		fighter.aggro_range = objective.aggro_range
+		fighter.hostile = chasing
+		if _world != null:
+			_world.streamer.load_around_now(spec.position)
+		add_child(fighter)
+		fighter.global_position = spec.position + Vector3.UP * 0.05
+		fighter.rotation.y = deg_to_rad(spec.yaw_degrees) + PI      # yaw 0 faces north; the model faces +Z
+		fighter.reset_physics_interpolation()
+		_fighters.append(fighter)
+
+
+## The last objective's fighters stop fighting and leave once out of sight (the knocked out too).
+func _release_fighters() -> void:
+	for fighter: Fighter in get_fighters():
+		fighter.hostile = false
+		fighter.aggro_range = 0.0
+		fighter.target = null
+		fighter.state = Fighter.State.DOWN if fighter.is_down() else Fighter.State.IDLE
+		_lingering.append(fighter)
+	_fighters.clear()
+
+
+func _update_fight() -> void:
+	var standing: int = 0
+	var nearest: Fighter = null
+	var nearest_d: float = INF
+	for fighter: Fighter in get_fighters():
+		if fighter.is_down():
+			continue
+		standing += 1
+		var d: float = _flat(fighter.global_position).distance_to(_flat(_player.global_position))
+		if d < nearest_d:
+			nearest_d = d
+			nearest = fighter
+	if standing == 0:
+		_complete()
+		return
+	_show("%s (%d left)" % [_objective.text, standing], _target_marker(nearest))
+
+
+## FOLLOW: the car sets off once the player is close enough to see it; too far loses it, too close
+## for too long and they spot you; its arrival completes the objective.
+func _update_follow(delta: float) -> void:
+	var car: VehicleController = get_vehicle(_objective.vehicle)
+	if car == null:
+		return
+	var me: Vector3 = _player.vehicle.global_position if _player.is_in_vehicle() and _player.vehicle != null else _player.global_position
+	var distance: float = _flat(me).distance_to(_flat(car.global_position))
+	var driver: RouteDriver = get_follow_driver()
+	if driver == null or driver.get_parent() != car:
+		if distance > _objective.follow_far * 0.8:
+			_show(_objective.text, _car_marker(car))
+			return
+		driver = RouteDriver.new()
+		driver.name = "RouteDriver"
+		car.add_child(driver)
+		driver.start(car, _router, _objective.checkpoints, _objective.route_speed_kmh)
+		_follow_driver = driver
+	if driver.has_arrived():
+		_complete()
+		return
+	if distance > _objective.follow_far:
+		MissionManager.fail("You lost them.")
+		return
+	_too_close = _too_close + delta if distance < _objective.follow_near else maxf(0.0, _too_close - delta * 0.5)
+	if _too_close > _objective.spotted_seconds:
+		MissionManager.fail("They spotted you.")
+		return
+	var warning: String = ""
+	if _too_close > 0.5:
+		warning = " Too close!"
+	elif distance > _objective.follow_far * 0.75:
+		warning = " Don't lose them!"
+	_show(_objective.text + warning, _car_marker(car))
+
+
+## ESCAPE: out of the circle completes it.
+func _update_escape() -> void:
+	var distance: float = _flat(_player.global_position).distance_to(_flat(_objective.position))
+	if distance >= _objective.radius:
+		_complete()
+		return
+	_show("%s (%d m to go)" % [_objective.text, ceili(_objective.radius - distance)], null)
+
+
+func _ask_choice(objective: MissionObjective) -> void:
+	if objective != _objective or MissionManager.is_failed():
+		return
+	_show(objective.text, null)
+	choice_requested.emit(objective.text, objective.choices)
+
+
 func _on_mission_failed(_mission_data: MissionData, _reason: String) -> void:
 	dialogue.stop()
 	_scene.stop()
 	_cutscene.stop()
+	for fighter: Fighter in get_fighters():       # the fight is over
+		fighter.hostile = false
+		fighter.target = null
+	if get_follow_driver() != null:
+		get_follow_driver().halt()
 	_talking_to = null
 	_set_prompt("", "")
 	timer_changed.emit(-1.0)
@@ -464,6 +628,18 @@ func _on_mission_ended(_mission_data: MissionData) -> void:
 ## gets out first, as on a retry; after a pass the borrowed car stays where it is), and its people
 ## at once, or once out of sight if `linger`.
 func _clear_running(remove_vehicles: bool, linger: bool) -> void:
+	if linger:
+		_release_fighters()
+	else:
+		for fighter: Fighter in get_fighters():
+			fighter.queue_free()
+		_fighters.clear()
+	if _follow_driver != null and is_instance_valid(_follow_driver):
+		var tailed := _follow_driver.get_parent() as VehicleController
+		if tailed != null and tailed.get_driver() == _follow_driver:
+			tailed.set_driver(null)
+		_follow_driver.queue_free()
+	_follow_driver = null
 	for npc: MissionContactNPC in _contacts.values():
 		if not is_instance_valid(npc):
 			continue
