@@ -20,8 +20,15 @@ const TIPS: PackedStringArray = [
 const SETTLE_FRAMES: int = 20
 const FADE_SECONDS: float = 0.4
 
+## True while a scene is loading on the background thread (quitting waits for it).
+static var _loading: bool = false
+
 var _root: Control
 var _bar: ProgressBar
+
+
+static func is_loading() -> bool:
+	return _loading
 
 
 ## Shows the card and switches the game to the scene at `path` behind it.
@@ -45,7 +52,9 @@ func get_progress() -> float:
 func _load(path: String) -> void:
 	await get_tree().process_frame            # the card is on screen before the work starts
 	await get_tree().process_frame
+	_loading = true
 	if ResourceLoader.load_threaded_request(path, "PackedScene") != OK:
+		_loading = false
 		push_error("LoadingCard: could not start loading %s" % path)
 		get_tree().change_scene_to_file(path)
 	else:
@@ -54,6 +63,7 @@ func _load(path: String) -> void:
 			_bar.value = float(progress[0]) * 0.8 if not progress.is_empty() else _bar.value
 			await get_tree().process_frame
 		var scene := ResourceLoader.load_threaded_get(path) as PackedScene
+		_loading = false
 		if scene == null:
 			push_error("LoadingCard: could not load %s" % path)
 			queue_free()

@@ -24,10 +24,13 @@ var _ambience: Dictionary = {}  # layer StringName -> AudioStreamPlayer
 var _ambience_wanted: Dictionary = {}   # layer -> level asked for before its loop was ready
 var _ambience_task: int = -1
 var _ambience_streams: Dictionary = {}  # written by the worker thread, read once the task completes
+var _quitting: bool = false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Closing the window quits the same careful way as the Exit buttons (quit_game).
+	get_tree().auto_accept_quit = false
 	_streams[&"ui_move"] = AudioSynth.blips(PackedFloat32Array([1320.0]), 0.035, 0.16)
 	_streams[&"ui_accept"] = AudioSynth.blips(PackedFloat32Array([880.0, 1320.0]), 0.045, 0.24)
 	_streams[&"ui_back"] = AudioSynth.blips(PackedFloat32Array([1320.0, 880.0]), 0.045, 0.2)
@@ -84,7 +87,19 @@ func _exit_tree() -> void:
 ## while a sound plays makes Godot report the playing stream as leaked at exit. The game is
 ## paused first so nothing (a running car engine, for one) starts a sound again meanwhile.
 func quit_game(exit_code: int = 0) -> void:
+	if _quitting:
+		return
+	_quitting = true
 	get_tree().paused = true
+	# Let background work finish first (a game loading behind the loading card, sound loops being
+	# synthesised): quitting in the middle leaves half-built objects behind.
+	var waited: int = 0
+	while LoadingCard.is_loading() and waited < 1200:
+		await get_tree().process_frame
+		waited += 1
+	for task: int in [_pad_task, _ambience_task]:
+		if task >= 0 and not WorkerThreadPool.is_task_completed(task):
+			WorkerThreadPool.wait_for_task_completion(task)
 	_silence()
 	for node: Node in get_tree().root.find_children("*", "AudioStreamPlayer3D", true, false):
 		(node as AudioStreamPlayer3D).stop()
@@ -216,3 +231,8 @@ func _build_ambience() -> void:
 		&"amb_birds": AudioSynth.birds_loop(),
 		&"amb_crickets": AudioSynth.crickets_loop(),
 	}
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		quit_game(0)

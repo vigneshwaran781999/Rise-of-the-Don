@@ -626,8 +626,8 @@ func _on_mission_ended(_mission_data: MissionData) -> void:
 
 
 ## Removes what the running mission put in the world: vehicles too if `remove_vehicles` (the player
-## gets out first, as on a retry; after a pass the borrowed car stays where it is), and its people
-## at once, or once out of sight if `linger`.
+## gets out first, as on a retry; after a pass a borrowed car stays until the player has left it
+## behind out of sight), and its people at once, or once out of sight if `linger`.
 func _clear_running(remove_vehicles: bool, linger: bool) -> void:
 	if linger:
 		_release_fighters()
@@ -662,6 +662,8 @@ func _clear_running(remove_vehicles: bool, linger: bool) -> void:
 			if _player.vehicle == car:
 				_player.exit_vehicle(_player.get_node("VehicleInteractor").find_exit_position(car))
 			car.queue_free()
+		elif linger:
+			_lingering.append(car)        # a lent car goes once the player has left it behind
 	_vehicles.clear()
 	if _goal != null:
 		_goal.queue_free()
@@ -873,6 +875,8 @@ func _update_lingering() -> void:
 		var distance: float = _flat(node.global_position).distance_to(_flat(_player.global_position))
 		var seen: bool = camera != null and camera.is_position_in_frustum(node.global_position + Vector3.UP)
 		var speaking: bool = node is MissionContactNPC and (node as MissionContactNPC).talking
+		if node == _player.vehicle:
+			continue                     # never the car the player is in
 		if not speaking and (distance > LINGER_DISTANCE or (not seen and distance > 12.0)):
 			_lingering.erase(node)
 			node.queue_free()

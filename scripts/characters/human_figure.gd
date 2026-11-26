@@ -171,7 +171,7 @@ static func _shared_tree() -> AnimationNodeBlendTree:
 	loco.max_space = 8.0
 	loco.sync = true
 	for point: Array in [[&"idle", IDLE_SPEED], [&"walk", WALK_SPEED], [&"run", RUN_SPEED], [&"sprint", SPRINT_SPEED]]:
-		loco.add_blend_point(_clip(point[0]), point[1])
+		loco.add_blend_point(_clip(point[0]), point[1], -1, point[0])
 	tree.add_node(&"loco", loco)
 	tree.add_node(&"pace", AnimationNodeTimeScale.new())
 	tree.connect_node(&"pace", 0, &"loco")

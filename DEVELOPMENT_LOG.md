@@ -767,3 +767,12 @@ Dated entries: what was built, what broke, how it was fixed.
     - the 3D scale and FSR.
 
     VSync and fullscreen can only be seen in a real window (TESTING.md).
+- **Step 6, bug pass:**
+  - **Closing the window:** the close button used to quit at once, so whatever sound was playing (or a sound loop still being synthesised, or a game loading behind the loading card) could be left half torn down. A few runs reported "leaked instances" at exit. It now goes through the same careful quit as the Exit buttons (`AudioManager.quit_game`), which:
+    - waits for a background load and the sound-synthesis tasks;
+    - silences everything, then quits.
+
+    A probe sent the close request mid-game three times: each exit was clean, with nothing leaked.
+  - **Lent cars piling up:** cars lent by missions stayed in the world for ever after the mission passed (since M5). They now linger like the mission's people and go once the player has left them out of sight; never the car the player is in.
+  - **Animation warning:** the shared animation tree's speed blend points now have names (Godot was warning that unnamed points will be deprecated).
+  - **Soak run:** the game scene ran for two minutes of game time headless with traffic and crowds; no other warnings or errors.
