@@ -6,7 +6,7 @@ Automated coverage lives in `tests/smoke_test.tscn` (run it first; it must print
 
 ## M0 — Project setup
 
-- [ ] The project opens in the Godot 4.7.2 editor without errors in the Output panel. (The .NET editor build prints `.NET Sdk not found` once; that's expected and harmless.)
+- [ ] The project opens in the Godot 4.7.2 editor without errors in the Output panel.
 - [ ] `assets/models/test/prop_test_cube.glb` opens in the editor and shows an orange 1 m cube sitting on the ground plane (pivot at its base).
 
 ## M1 — Playable prototype

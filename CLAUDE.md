@@ -6,20 +6,24 @@
 - **Everything is original.** Use no GTA (or other game) names, characters, maps, missions, logos, music, or UI layouts. Don't copy real brands onto vehicles, shops, or signs.
 - Design reference: `docs/GAME_DESIGN.md`. Read only the sections the current task needs.
 
-## Machine setup (confirmed 2026-11-24)
-- Godot console executable (4.7.2 stable, .NET build — used for GDScript only):
-  `C:\Users\ADMIN\Downloads\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe`
-- Godot editor executable (same folder): `Godot_v4.7.2-stable_mono_win64.exe`
+## Machine setup (confirmed 2026-11-24; standard Godot build since M8, 2026-11-26)
+- Godot console executable (4.7.2 stable, standard build):
+  `C:\Users\ADMIN\Downloads\Godot_v4.7.2-stable_win64\Godot_v4.7.2-stable_win64_console.exe`
+- Godot editor executable (same folder): `Godot_v4.7.2-stable_win64.exe`
+- Export templates for 4.7.2 (Windows x86_64) are installed in `%APPDATA%\Godot\export_templates\4.7.2.stable\`.
+  Export: `"$GODOT" --headless --path . --export-release "Windows Desktop" build/windows/RiseOfTheDon.exe`
+  (preset in `export_presets.cfg`; `build/` is git-ignored).
+- The earlier .NET build (`Godot_v4.7.2-stable_mono_win64`) is still in Downloads but no longer used.
 - Blender executable (4.0.2): `C:\Program Files\Blender Foundation\Blender 4.0\blender.exe`
 - Project root: `D:\project\RISE OF THE DON` (this folder — the path contains spaces, always quote it)
 - Shell: Claude Code on Windows runs Git Bash. Quote paths that contain spaces.
 - Git Bash variables used in the commands below:
   ```bash
-  GODOT="/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64_console.exe"
+  GODOT="/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_win64/Godot_v4.7.2-stable_win64_console.exe"
   BLENDER="/c/Program Files/Blender Foundation/Blender 4.0/blender.exe"
   ```
 - Physics engine: Jolt Physics (built into Godot 4.4+), set in `project.godot`.
-- **Known, accepted message:** because the installed editor is the .NET build and no .NET SDK is installed, editor-mode runs (`--import`, opening the editor) print `ERROR: .NET Sdk not found. The required version is '8.0.29'.` It is about C# support, which this project does not use, and it never appears when the game itself runs. Ignore exactly that line; treat every other `ERROR:` as a failure. Switching to the standard (non-.NET) Godot 4.7.2 build removes it.
+- Treat every `ERROR:` as a failure. (The `.NET Sdk not found` message of the old .NET editor no longer appears.)
 
 ## How to validate work (you cannot see the screen, so these are your eyes)
 1. **Import / parse check:** `"$GODOT" --headless --path . --import` (re-imports assets and reports script parse errors).

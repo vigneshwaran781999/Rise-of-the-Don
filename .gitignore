@@ -2,7 +2,7 @@
 .godot/
 /android/
 
-# .NET build artefacts (this project is GDScript-only, but the editor is the .NET build)
+# .NET build artefacts (in case the project is opened with the .NET editor; it uses no C#)
 .mono/
 data_*/
 mono_crash.*.json

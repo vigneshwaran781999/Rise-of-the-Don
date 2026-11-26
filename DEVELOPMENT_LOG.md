@@ -697,3 +697,16 @@ Dated entries: what was built, what broke, how it was fixed.
 - Fighters with no navmesh path run straight at the player.
 - Video memory: 333 MB, of which only the map (19 MB) is accounted for (from step 1).
 - The headless "already initialized RID" engine race is mitigated, not proven gone.
+
+## 2026-11-26 — M8: polish and ship
+
+**Scope agreed with the user:**
+- **Character:** an original rigged character built by a Blender script.
+- **Performance:** tune on this PC (UHD 730) as a stand-in for the GTX 1650 target: 60 FPS at 1080p on Low, at least 40 on Medium.
+- **Toolchain:** switch to the standard Godot build for exporting.
+
+**Built**
+- **Step 1, the standard Godot build and the Windows export:**
+  - Downloaded the standard Godot 4.7.2 editor and export templates from the official GitHub release, after checking them against the release's SHA-512 sums. Installed the Windows x86_64 templates and switched the project, `CLAUDE.md` and the README to the standard editor. It is the same engine commit as the .NET build, the project imports with no errors, and the ".NET Sdk not found" message is gone.
+  - `export_presets.cfg`: a "Windows Desktop" preset (x86_64; tests, tools and docs left out; the game data in `RiseOfTheDon.pck` beside the `.exe`).
+  - The first export is 109 MB of `.exe` plus 24 MB of `.pck`. The exported game reaches its main menu, and the game scene runs 1500 frames from the exported pack, both with no errors.

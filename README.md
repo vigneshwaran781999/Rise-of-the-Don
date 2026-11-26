@@ -31,7 +31,8 @@ You can walk, run, sprint and jump, or get into a parked vehicle and drive (chas
 
 | Tool | Version | Needed for |
 |---|---|---|
-| Godot | 4.7.2 stable (standard or .NET build; the project uses no C#) | Opening and running the game |
+| Godot | 4.7.2 stable (the standard build; the project uses no C#) | Opening, running and exporting the game |
+| Godot export templates | 4.7.2 (Windows x86_64) | Only to export a Windows build (Editor > Manage Export Templates) |
 | Blender | 4.0 or newer | Only to regenerate the 3D assets (the GLBs are already in the repo) |
 
 ## Open and run
@@ -42,11 +43,22 @@ You can walk, run, sprint and jump, or get into a parked vehicle and drive (chas
 From the command line (Git Bash), without opening the editor:
 
 ```bash
-GODOT="/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64.exe"
+GODOT="/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_win64/Godot_v4.7.2-stable_win64.exe"
 "$GODOT" --path .
 ```
 
 The window opens at 1600×900; the game renders at a 1920×1080 base resolution and scales to the window.
+
+## Build a Windows version
+
+With the Godot 4.7.2 export templates installed:
+
+```bash
+GODOT="/c/Users/ADMIN/Downloads/Godot_v4.7.2-stable_win64/Godot_v4.7.2-stable_win64_console.exe"
+"$GODOT" --headless --path . --export-release "Windows Desktop" build/windows/RiseOfTheDon.exe
+```
+
+This writes `build/windows/RiseOfTheDon.exe` and `RiseOfTheDon.pck`. Keep the two files together; copy that folder to another PC and run the `.exe`. The preset is in `export_presets.cfg` (tests, tools and docs are left out of the build).
 
 ## Controls
 
