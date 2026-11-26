@@ -858,3 +858,9 @@ The user picked this next. Their choices (all the recommended options):
 - **Screenshot tool:** `--story_passed` marks the whole story passed, so `--pause --press=MissionsButton` shows the full list.
 
 **Known:** mission 5's "buy the house" step passes at once in a replay (the house is already yours).
+
+**Approved** by the user on 2026-11-26 and released as **1.0.2**:
+- **Version 1.0.2:** set in `setup_project.gd` (re-run) and in the export preset's file and product versions.
+- **The release export:** `build/windows/` holds the new `.exe` (109 MB) and `.pck` (24 MB). Windows reads the file properties back as "Rise of the Don", file and product version 1.0.2.0.
+- **Checks on the exported pack:** the main menu and 1500 frames of the game scene run with no errors. The smoke and save tests pass.
+- **Leak warning with `--quit-after`:** `--verbose` shows the cut-off game scene's leaks are all sounds still playing (15 playbacks this run), the same test-only path as before.
