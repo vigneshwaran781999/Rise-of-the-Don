@@ -108,7 +108,7 @@ func load_game(slot: int) -> Error:
 		return ERR_FILE_UNRECOGNIZED if data["error"] == "version" else ERR_FILE_CORRUPT
 	_pending = data["state"]
 	get_tree().paused = false
-	get_tree().change_scene_to_file(GAME_SCENE)
+	LoadingCard.change_to(get_tree(), GAME_SCENE)
 	return OK
 
 

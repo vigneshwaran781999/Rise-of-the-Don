@@ -740,3 +740,9 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Tests:**
     - the smoke test checks each rigged model bakes to one skinned surface with its skin and all 17 clips, walking looping and a punch not;
     - the pedestrian and cutscene tests read colours and states from the figure.
+- **Step 4, the visual pass:** I screenshotted the main menu and eight views (every district; day, dusk, night, rain) and fixed what stood out:
+  - **Floating lines in the container yard:** one-pixel lines of paint hung in the air beside the container stacks. The containers' dark end frames were exactly flush with their painted ends (z-fighting), so at some distances the paint showed through. The frames now stand 2 cm proud; regenerated and rebuilt into the city.
+  - **The first frame of a new game:** the spawn was mid-sidewalk, so the chase camera sat 2 m from the shop fronts and a wall filled a third of the opening view. The spawn (and the opening mission's start) moved 1 m towards the kerb.
+  - **Loading:** New Game, Continue and Load used to freeze the menu while the city loaded. A `LoadingCard` now shows VELANAGAR, a progress bar and a gameplay tip. The game scene loads on a background thread behind it, and the card fades once the city has streamed in. Tests now wait for the game scene by the clock, and the smoke test checks the card appears and goes.
+  - **Main menu footer:** it said "Milestone 6"; it now shows just the version and the controls.
+  - **Checked and left alone:** the 9 am beach is bright (white sand in low sun) but reads as morning; every other view was fine.

@@ -91,8 +91,8 @@ func _build() -> void:
 	column.add_child(filler)
 	var footer := Label.new()
 	footer.name = "Footer"
-	footer.text = "v%s  ·  Milestone 6: open-world systems      Enter / A select   ·   Esc / B back" % \
-			str(ProjectSettings.get_setting("application/config/version", "0.6.0"))
+	footer.text = "v%s      Enter / A select   ·   Esc / B back" % \
+			str(ProjectSettings.get_setting("application/config/version", "1.0.0"))
 	footer.add_theme_font_size_override("font_size", 18)
 	footer.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
 	column.add_child(footer)
@@ -173,7 +173,7 @@ func _start_new_game() -> void:
 	for button: Button in _menu_buttons:
 		button.disabled = true
 	AudioManager.stop_music(0.6)
-	get_tree().change_scene_to_file(GAME_SCENE)
+	LoadingCard.change_to(get_tree(), GAME_SCENE)
 
 
 ## Loads the most recent save (manual or autosave).

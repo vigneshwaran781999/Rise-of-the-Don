@@ -316,7 +316,16 @@ func _check_main_menu() -> String:
 func _check_new_game() -> String:
 	var menu: Node = get_tree().current_scene
 	(_find(menu, "NewGameButton") as Button).pressed.emit()
+	await get_tree().process_frame
+	var card_shown: bool = get_tree().root.has_node("LoadingCard")
 	var game: Node = await _wait_for_scene(GAME)
+	if not card_shown:
+		return "New Game should show the loading card while the city loads"
+	var card_started: int = Time.get_ticks_msec()
+	while get_tree().root.has_node("LoadingCard") and Time.get_ticks_msec() - card_started < 10000:
+		await get_tree().process_frame
+	if get_tree().root.has_node("LoadingCard"):
+		return "the loading card should fade once the game is running"
 	if game == null:
 		return "New Game did not load the game scene"
 	if _player() == null:
@@ -1639,8 +1648,11 @@ func _process_frames(count: int) -> void:
 		await get_tree().process_frame
 
 
-func _wait_for_scene(path: String, max_frames: int = 600) -> Node:
-	for i: int in max_frames:
+## Waits for the scene at `path` to be current and ready: by the clock (it loads on a background
+## thread behind the loading card, and frames can run faster than real time here).
+func _wait_for_scene(path: String, max_seconds: float = 30.0) -> Node:
+	var started: int = Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < int(max_seconds * 1000.0):
 		var scene: Node = get_tree().current_scene
 		if scene != null and scene.scene_file_path == path and scene.is_node_ready():
 			return scene

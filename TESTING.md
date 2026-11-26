@@ -380,3 +380,8 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Police officers** running after you; **fighters** squaring up, winding up (the arm drawn back) and punching.
 - [ ] **Cutscene people** walking in, gesturing while they speak.
 - [ ] **Motorcycle:** the rider sits with hands on the bars and leans with the bike.
+
+### Visual pass (step 4)
+- [ ] **New Game, Continue and Load:** the loading card (VELANAGAR, a progress bar, a tip) shows while the city loads and fades into the game. No frozen menu.
+- [ ] **The opening view:** the temple's gopuram straight ahead, the street clear on both sides.
+- [ ] **The container yard** (Industrial Zone): no thin coloured lines floating beside the container stacks.

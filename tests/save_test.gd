@@ -284,8 +284,11 @@ func _open_scene(path: String) -> Node:
 	return await _wait_for_scene(path)
 
 
-func _wait_for_scene(path: String, max_frames: int = 900) -> Node:
-	for i: int in max_frames:
+## Waits for the scene at `path` to be current and ready: by the clock (it loads on a background
+## thread behind the loading card, and frames can run faster than real time here).
+func _wait_for_scene(path: String, max_seconds: float = 30.0) -> Node:
+	var started: int = Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < int(max_seconds * 1000.0):
 		var scene: Node = get_tree().current_scene
 		if scene != null and scene.scene_file_path == path and scene.is_node_ready():
 			return scene

@@ -28,7 +28,7 @@ city = ExtResource("2_data")
 [node name="Landmarks" parent="." instance=ExtResource("6_landmarks")]
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
-position = Vector3(86.5, 0.2, 8)
+position = Vector3(86.5, 0.2, 7)
 rotation = Vector3(0, 1.5708, 0)
 
 [node name="Vehicles" type="Node3D" parent="."]

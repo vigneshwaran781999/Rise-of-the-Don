@@ -246,8 +246,9 @@ def container(name: str, paint: str) -> None:
         x = x0 + i * (x1 - x0) / 9
         mb.box(x - 0.12, y0 - 0.04, 0.1, x + 0.12, y0, h - 0.1, rib, skip=("back", "top", "bottom"))
         mb.box(x - 0.12, y1, 0.1, x + 0.12, y1 + 0.04, h - 0.1, rib, skip=("front", "top", "bottom"))
-    for x in (x0, x1 - 0.12):
-        mb.box(x, y0 - 0.02, 0.0, x + 0.12, y1 + 0.02, h, dark)
+    # The end frames stand 2 cm proud of the body (flush, the body showed through in thin lines).
+    for a, b in ((x0 - 0.02, x0 + 0.12), (x1 - 0.12, x1 + 0.02)):
+        mb.box(a, y0 - 0.02, 0.0, b, y1 + 0.02, h, dark)
     mb.box(x1 - 0.02, -0.06, 0.3, x1 + 0.03, 0.06, h - 0.3, dark)
     mb.build(name)
     collide(name, [(x0, y0, 0.0, x1, y1, h)])
