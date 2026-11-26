@@ -3,16 +3,19 @@ extends CharacterBody3D
 ## Someone on Old Town's sidewalks (GDD §6). Walks the pedestrian navmesh with a
 ## NavigationAgent3D (with avoidance, so people steer round each other) and:
 ##   wanders, stops to stand, chats with someone nearby, sits on a free bench,
-##   flees from crashes, horns and people being hit, is knocked down by cars,
+##   flees from crashes, horns, fights and people being hit, is knocked down by cars,
+##   reels from punches (take_hit) and goes down when out of health,
 ##   and steps aside when the player walks into them.
 ## Looks and the walk cycle come from shaders/character.gdshader (per-person colours, legs and
 ## arms swung in the vertex shader). PedestrianManager spawns, removes and coordinates them.
 
 signal state_changed(previous: State, current: State)
 
-enum State { WALK, IDLE, TALK, SIT, FLEE, STEP_ASIDE, KNOCKED }
+enum State { WALK, IDLE, TALK, SIT, FLEE, STEP_ASIDE, KNOCKED, STAGGER }
 
 const GROUP: StringName = &"pedestrians"
+## People the player can punch (PlayerFists).
+const HITTABLE_GROUP: StringName = &"hittable"
 ## A seated figure's feet sit this far below the bench's base (see OldTownLayout._bench).
 const SEAT_DROP: float = 0.41
 
@@ -37,12 +40,15 @@ var _seat: Node3D
 var _danger: Vector3 = Vector3.ZERO
 var _hit_by: Node3D                    # the car that knocked them down (they run from where it is now)
 var _bump_cooldown: float = 0.0
+var _health: float = 40.0
 var _gravity: float = 9.8
 var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
 	add_to_group(GROUP)
+	add_to_group(HITTABLE_GROUP)
+	_health = tuning.health
 	_gravity = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 	agent.velocity_computed.connect(_on_velocity_computed)
 
@@ -71,7 +77,7 @@ func get_seat() -> Node3D:
 
 ## Busy people don't start chatting or go to sit down.
 func is_busy() -> bool:
-	return state in [State.TALK, State.SIT, State.FLEE, State.STEP_ASIDE, State.KNOCKED] or _seat != null
+	return state in [State.TALK, State.SIT, State.FLEE, State.STEP_ASIDE, State.KNOCKED, State.STAGGER] or _seat != null
 
 
 # --------------------------------------------------------------------------- commands
@@ -134,24 +140,62 @@ func hit_by_vehicle(vehicle: VehicleController, speed: float) -> void:
 	if speed < tuning.knock_speed:
 		flee_from(vehicle.global_position, false)
 		return
+	_knock_down(vehicle)
+	if manager != null:
+		manager.alert(global_position, 15.0, true, self)
+		manager.report_knockdown(self, vehicle)
+
+
+## A punch from `attacker` standing at `from` (PlayerFists, a fighter): costs health; at none
+## left the person goes down, otherwise they reel back and then run. People nearby run too, and
+## the player punching someone is reported (an assault).
+func take_hit(damage: float, from: Vector3, attacker: Node3D = null) -> void:
+	if state == State.KNOCKED:
+		return
+	_health -= damage
+	if _health <= 0.0:
+		_health = tuning.health        # back on their feet with their strength back
+		_knock_down(attacker, from)
+	else:
+		_leave_seat()
+		_end_talk()
+		_danger = from
+		_hit_by = attacker
+		_halt()
+		var push: Vector3 = _flat3(global_position - from)
+		push = push.normalized() if push.length_squared() > 0.0001 else -global_basis.z
+		velocity = push * tuning.hit_knockback
+		rotation.y = atan2(-push.x, -push.z)        # turned to face the attacker
+		_timer = tuning.hit_stagger_time
+		_set_state(State.STAGGER)
+	if manager != null:
+		manager.alert(global_position, tuning.fight_alert_radius, true, self)
+		manager.report_assault(self, attacker)
+
+
+func is_down() -> bool:
+	return state == State.KNOCKED
+
+
+## Falls flat on their back, away from `by` (the car or the attacker; `from` where a blow came
+## from), and lies there for a while (then gets up and runs).
+func _knock_down(by: Node3D, from: Vector3 = Vector3.INF) -> void:
 	_leave_seat()
 	_end_talk()
-	_danger = vehicle.global_position
-	_hit_by = vehicle
-	_shape.set_deferred(&"disabled", true)   # the car rolls on instead of stopping dead
+	var origin: Vector3 = from if from != Vector3.INF else (by.global_position if by != null else global_position)
+	_danger = origin
+	_hit_by = by
+	_shape.set_deferred(&"disabled", true)   # a car rolls on instead of stopping dead
 	velocity = Vector3.ZERO
 	_halt()
-	# Fall backwards onto the road, lying along the way the car pushed.
-	var push: Vector3 = _flat3(global_position - vehicle.global_position)
+	# Fall backwards, lying along the way they were pushed.
+	var push: Vector3 = _flat3(global_position - origin)
 	if push.length_squared() > 0.01:
 		rotation.y = atan2(-push.x, -push.z)
 	model.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
 	model.position = Vector3(0.0, 0.12, 0.0)
 	_timer = tuning.knocked_time
 	_set_state(State.KNOCKED)
-	if manager != null:
-		manager.alert(global_position, 15.0, true, self)
-		manager.report_knockdown(self, vehicle)
 
 
 # --------------------------------------------------------------------------- per frame
@@ -181,9 +225,16 @@ func _physics_process(delta: float) -> void:
 			_timer -= delta
 			if _timer <= 0.0:
 				_get_up()
+		State.STAGGER:
+			_timer -= delta
+			if _timer <= 0.0:
+				state = State.IDLE
+				flee_from(_hit_by.global_position if is_instance_valid(_hit_by) else _danger, true)
 	if state != State.SIT and state != State.KNOCKED:
 		var moving: bool = state in [State.WALK, State.FLEE, State.STEP_ASIDE]
 		var v: Vector3 = _safe_velocity if moving else Vector3.ZERO
+		if state == State.STAGGER:          # reeling back from a blow, slowing down
+			v = velocity.move_toward(Vector3.ZERO, 8.0 * delta)
 		velocity.x = v.x
 		velocity.z = v.z
 		velocity.y = -0.5 if is_on_floor() else velocity.y - _gravity * delta

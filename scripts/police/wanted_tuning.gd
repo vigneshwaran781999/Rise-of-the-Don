@@ -5,6 +5,8 @@ extends Resource
 @export_group("Crimes and heat")
 ## Heat each crime adds; the wanted level is the highest level whose threshold the heat reaches.
 @export var knockdown_heat: float = 1.0
+## Each punch the player lands on someone in the street (two make wanted level 1).
+@export var assault_heat: float = 0.5
 @export var hit_police_heat: float = 3.0
 @export var assault_officer_heat: float = 3.0
 ## Heat needed for each level 0-5.
@@ -43,6 +45,8 @@ extends Resource
 ## How fast police cars drive when chasing, km/h.
 @export var chase_speed_kmh: float = 95.0
 @export var officer_run_speed: float = 5.6
+## An officer on foot's health against punches (the player's punch does 20: three blows floor one).
+@export var officer_health: float = 60.0
 
 @export_group("Busted")
 ## An officer this close to you on foot for this long arrests you...

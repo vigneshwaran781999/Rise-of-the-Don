@@ -2,8 +2,8 @@ class_name PoliceOfficer
 extends CharacterBody3D
 ## A police officer on foot (GDD §7): runs after the player along the sidewalks (navmesh) and
 ## straight at them when close; searches around where they were last seen; walks off when the
-## player is clear. A car can knock them down (assaulting an officer is a crime). Built in code:
-## a capsule, the pedestrian man model in khaki, a NavigationAgent3D.
+## player is clear. A car or the player's fists can knock them down (assaulting an officer is a
+## crime). Built in code: a capsule, the pedestrian man model in khaki, a NavigationAgent3D.
 
 enum State { CHASE, SEARCH, KNOCKED, LEAVE }
 
@@ -12,11 +12,18 @@ const KHAKI := Color("b49a64")
 const DARK_KHAKI := Color("8a7448")
 const DIRECT_RANGE: float = 6.0
 const KNOCKED_SECONDS: float = 3.5
+## People the player can punch (PlayerFists).
+const HITTABLE_GROUP: StringName = &"hittable"
+## A punch that doesn't floor the officer pushes them back this hard (m/s) for this long.
+const HIT_KNOCKBACK: float = 2.5
+const HIT_STAGGER_SECONDS: float = 0.6
 
 var state: State = State.CHASE
 ## Where to go (the player, or where they were last seen).
 var target := Vector3.ZERO
 var run_speed: float = 5.6
+## Health against punches (set from WantedTuning.officer_health).
+var max_health: float = 60.0
 var manager: Node
 
 var model: MeshInstance3D
@@ -28,6 +35,9 @@ var _phase: float = 0.0
 var _swing: float = 0.0
 var _timer: float = 0.0
 var _repath: float = 0.0
+var _health: float = 60.0
+var _stagger_left: float = 0.0
+var _punched: bool = false             # punched before (only the first blow is the serious crime)
 
 
 func setup(look: PackedScene, skin: Color) -> void:
@@ -59,6 +69,8 @@ func setup(look: PackedScene, skin: Color) -> void:
 
 func _ready() -> void:
 	add_to_group(GROUP)
+	add_to_group(HITTABLE_GROUP)
+	_health = max_health
 	_gravity = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 
 
@@ -74,18 +86,44 @@ func get_state_name() -> String:
 func hit_by_vehicle(vehicle: VehicleController, speed: float) -> void:
 	if state == State.KNOCKED or speed < 2.0:
 		return
+	_knock_down(vehicle.global_position)
+	if manager != null and manager.has_method(&"officer_hit"):
+		manager.call(&"officer_hit", self, vehicle)
+
+
+## A punch from `attacker` at `from` (PlayerFists): costs health and pushes the officer back for a
+## moment; at none left they go down. Punching an officer is a crime.
+func take_hit(damage: float, from: Vector3, attacker: Node3D = null) -> void:
+	if state == State.KNOCKED:
+		return
+	_health -= damage
+	if _health <= 0.0:
+		_knock_down(from)
+	else:
+		var push := Vector3(global_position.x - from.x, 0.0, global_position.z - from.z)
+		push = push.normalized() if push.length_squared() > 0.0001 else -global_basis.z
+		velocity.x = push.x * HIT_KNOCKBACK
+		velocity.z = push.z * HIT_KNOCKBACK
+		_stagger_left = HIT_STAGGER_SECONDS
+	if manager != null and manager.has_method(&"officer_punched"):
+		manager.call(&"officer_punched", self, attacker, not _punched)
+	_punched = true
+
+
+## Falls flat on their back away from `from`, gets up a few seconds later at full strength.
+func _knock_down(from: Vector3) -> void:
 	_shape.set_deferred(&"disabled", true)
 	velocity = Vector3.ZERO
-	var push: Vector3 = global_position - vehicle.global_position
+	_stagger_left = 0.0
+	var push: Vector3 = global_position - from
 	push.y = 0.0
 	if push.length_squared() > 0.01:
 		rotation.y = atan2(-push.x, -push.z)
 	model.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
 	model.position = Vector3(0.0, 0.12, 0.0)
 	_timer = KNOCKED_SECONDS
+	_health = max_health
 	state = State.KNOCKED
-	if manager != null and manager.has_method(&"officer_hit"):
-		manager.call(&"officer_hit", self, vehicle)
 
 
 func _physics_process(delta: float) -> void:
@@ -100,7 +138,12 @@ func _physics_process(delta: float) -> void:
 			_animate(delta, 0.0)
 			return
 		State.CHASE, State.SEARCH, State.LEAVE:
-			_move_towards(target, run_speed if state != State.SEARCH else 2.6, delta)
+			if _stagger_left > 0.0:          # reeling from a punch
+				_stagger_left -= delta
+				velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
+				velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
+			else:
+				_move_towards(target, run_speed if state != State.SEARCH else 2.6, delta)
 	velocity.y = -0.5 if is_on_floor() else velocity.y - _gravity * delta
 	move_and_slide()
 	_animate(delta, Vector2(velocity.x, velocity.z).length())

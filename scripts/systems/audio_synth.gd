@@ -54,6 +54,25 @@ static func thump(seconds: float, brightness: float, thump_hz: float, volume: fl
 	return to_wav(out)
 
 
+## A swish of air (a punch thrown): noise swelling and fading over `seconds`, brightest in the
+## middle of the swing.
+static func whoosh(seconds: float, volume: float, seed_value: int) -> AudioStreamWAV:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var count: int = int(seconds * RATE)
+	var out := PackedFloat32Array()
+	out.resize(count)
+	var low: float = 0.0
+	var lower: float = 0.0
+	for i: int in count:
+		var x: float = float(i) / count
+		var env: float = pow(sin(PI * x), 2.0)
+		low += (rng.randf_range(-1.0, 1.0) - low) * (0.05 + 0.25 * env)
+		lower += (low - lower) * 0.08
+		out[i] = (low - lower) * env * volume * 3.0          # band-passed: no rumble, no hiss
+	return to_wav(out)
+
+
 ## Engine speed the engine loop is recorded at. Playing it at pitch_scale = rpm / ENGINE_LOOP_RPM
 ## gives that engine speed.
 const ENGINE_LOOP_RPM: float = 2000.0

@@ -19,13 +19,14 @@ const CLEARABLE: Array[StringName] = [&"prop_streetlight", &"prop_bollard", &"pr
 ## Special buildings (M6, see DistrictLayout._special_buildings). The police station is on Ring B;
 ## the tiffin stall faces the bus stand across the east gopuram road; the garage is further east
 ## on that road (cars drive in, so the lamp posts in front go); the clothes shop is on Ring B
-## west; the house for sale is north of Ring B east.
+## west; the house for sale is north of Ring B east; the clinic (M7) faces the west gopuram road.
 const SPECIAL_BUILDINGS: Array = [
 	[&"police_station", &"bld_ot_shop_04", Vector3(-40.0, 0.0, 115.0), &"bld_ot_police_station", 7.6],
 	[&"tiffin", &"bld_ot_shop_04", Vector3(91.0, 0.0, -16.0), &"bld_ot_tiffin", 7.6],
 	[&"garage", &"bld_ot_shop_04", Vector3(160.0, 0.0, -16.0), &"bld_ot_garage", 7.6, 6.0],
 	[&"textiles", &"bld_ot_shop_02", Vector3(-58.0, 0.0, 127.0), &"bld_ot_textiles", 7.6],
 	[&"house", &"bld_ot_house_05", Vector3(60.0, 0.0, 137.0), &"bld_ot_house_05", 7.6],
+	[&"hospital_old_town", &"bld_ot_shop_04", Vector3(-91.0, 0.0, 16.0), &"bld_ot_clinic", 7.6],
 ]
 const SEED: int = 7031
 ## Street lines, the same on both axes: [position, class].
@@ -140,6 +141,8 @@ func _after_blocks() -> void:
 	_special_buildings(SPECIAL_BUILDINGS, CLEARABLE)
 	map_labels = MAP_LABELS.duplicate()
 	map_labels.append(["POLICE", Vector2(police_station.origin.x, police_station.origin.z)])
+	for hospital: Transform3D in hospitals:
+		map_labels.append(["CLINIC", Vector2(hospital.origin.x, hospital.origin.z)])
 
 
 ## The bus stand on the south kerb of the east gopuram road, where New Game begins (M5): the

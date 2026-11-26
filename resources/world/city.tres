@@ -11,9 +11,12 @@ chunks = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector
 chunk_path_format = "res://scenes/world/chunks/city/chunk_%d_%d.scn"
 lane_graph = ExtResource("1_ua5i3")
 police_stations = Array[Transform3D]([Transform3D(1, 0, 8.742277e-08, 0, 1, 0, -8.742277e-08, 0, 1, -21.8, 0.15, 119.4), Transform3D(1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, 1, -131.5, 0.15, -503.6), Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 412, 0.15, -120.4), Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 329.8, 0.15, -440.4), Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -545.7879, 0.15, -8.4)])
+hospitals = Array[Transform3D]([Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -127.666664, 0.15, -8.4), Transform3D(4.371139e-08, 0, 1, 0, 1, 0, -1, 0, 4.371139e-08, 120.4, 0.15, -554)])
 places = {
 &"estate": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -512, 0.15, -520),
 &"garage": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 159.66667, 0.15, -8.4),
+&"hospital_downtown": Transform3D(4.371139e-08, 0, 1, 0, 1, 0, -1, 0, 4.371139e-08, 120.4, 0.15, -554),
+&"hospital_old_town": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -127.666664, 0.15, -8.4),
 &"house": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 60.333332, 0.15, 144.6),
 &"police_beach": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 412, 0.15, -120.4),
 &"police_countryside": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -545.7879, 0.15, -8.4),
@@ -27,6 +30,6 @@ region_ids = PackedStringArray("old_town", "downtown", "beach", "industrial", "l
 region_names = PackedStringArray("Old Town", "Downtown", "Beach District", "Industrial Zone", "Luxury District", "Countryside", "Countryside")
 region_rects = Array[Rect2]([Rect2(-256, -256, 512, 512), Rect2(-256, -768, 512, 512), Rect2(256, -256, 512, 512), Rect2(256, -768, 512, 512), Rect2(-768, -768, 512, 512), Rect2(-768, -256, 512, 512), Rect2(-768, 256, 512, 512)])
 map_texture_path = "res://assets/world/maps/city_map.png"
-map_label_texts = PackedStringArray("TEMPLE", "TEMPLE TANK", "FLOWER MARKET", "PARK", "PARK", "BUS STAND", "POLICE", "CENTRAL PLAZA", "VELA MALL", "POLICE HQ", "VELA BEACH", "PIER", "LIGHTHOUSE", "SEA BREEZE", "SEA BREEZE", "POLICE", "HARBOUR", "CONTAINER YARD", "FISHING HARBOUR", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "POLICE", "THE ESTATE", "SANDALWOOD PARK", "VILLAGE", "LAKE", "POLICE", "VILLAGE", "RESERVOIR")
-map_label_positions = PackedVector2Array(0, 0, 80, 80, -80, -80, -130, 130, 166, -130, 97, 14, -21.8, 119.4, -80, -552, 80, -472, -131.5, -503.6, 590, -20, 632, 68, 622, 216, 488, -80, 488, 80, 412, -120.4, 602, -607, 580, -502, 582, -307, 400, -454, 275, -410, 326, -602, 326, -566, 426, -720, 410, -534, 400, -410, 400, -326, 488, -326, 329.8, -440.4, -512, -552, -428, -472, -504, -56, -696, 56, -545.7879, -8.4, -504, 444, -504, 700)
+map_label_texts = PackedStringArray("TEMPLE", "TEMPLE TANK", "FLOWER MARKET", "PARK", "PARK", "BUS STAND", "POLICE", "CLINIC", "CENTRAL PLAZA", "VELA MALL", "POLICE HQ", "HOSPITAL", "VELA BEACH", "PIER", "LIGHTHOUSE", "SEA BREEZE", "SEA BREEZE", "POLICE", "HARBOUR", "CONTAINER YARD", "FISHING HARBOUR", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "FACTORY", "POLICE", "THE ESTATE", "SANDALWOOD PARK", "VILLAGE", "LAKE", "POLICE", "VILLAGE", "RESERVOIR")
+map_label_positions = PackedVector2Array(0, 0, 80, 80, -80, -80, -130, 130, 166, -130, 97, 14, -21.8, 119.4, -127.666664, -8.4, -80, -552, 80, -472, -131.5, -503.6, 120.4, -554, 590, -20, 632, 68, 622, 216, 488, -80, 488, 80, 412, -120.4, 602, -607, 580, -502, 582, -307, 400, -454, 275, -410, 326, -602, 326, -566, 426, -720, 410, -534, 400, -410, 400, -326, 488, -326, 329.8, -440.4, -512, -552, -428, -472, -504, -56, -696, 56, -545.7879, -8.4, -504, 444, -504, 700)
 surface_map_path = "res://assets/world/maps/city_surfaces.res"

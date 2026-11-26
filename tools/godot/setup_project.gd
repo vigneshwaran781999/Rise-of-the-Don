@@ -86,6 +86,8 @@ func _setup_input_map() -> void:
 	# Interaction
 	_action("vehicle_enter_exit", MOVE_DEADZONE, [_key(KEY_F), _button(JOY_BUTTON_Y)])
 	_action("interact", MOVE_DEADZONE, [_key(KEY_E), _button(JOY_BUTTON_X)])
+	# Fists (M7): left mouse button, or B on a gamepad.
+	_action("attack", MOVE_DEADZONE, [_mouse(MOUSE_BUTTON_LEFT), _button(JOY_BUTTON_B)])
 
 	# Driving (only read while the player is in a vehicle; arrow keys work as well as WASD)
 	_action("vehicle_accelerate", TRIGGER_DEADZONE, [_key(KEY_W), _key(KEY_UP), _axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
@@ -116,6 +118,13 @@ func _key(physical_keycode: Key) -> InputEventKey:
 	var ev := InputEventKey.new()
 	ev.device = -1
 	ev.physical_keycode = physical_keycode
+	return ev
+
+
+func _mouse(button: MouseButton) -> InputEventMouseButton:
+	var ev := InputEventMouseButton.new()
+	ev.device = -1
+	ev.button_index = button
 	return ev
 
 

@@ -26,6 +26,7 @@
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="24_map"]
 [ext_resource type="Script" path="res://scripts/police/police_manager.gd" id="25_police"]
 [ext_resource type="Script" path="res://scripts/ui/busted_screen.gd" id="26_busted"]
+[ext_resource type="Script" path="res://scripts/ui/hospital_screen.gd" id="40_hospital"]
 [ext_resource type="Script" path="res://scripts/shops/place_director.gd" id="27_places"]
 [ext_resource type="Resource" path="res://resources/shops/tiffin.tres" id="28_tiffin"]
 [ext_resource type="Resource" path="res://resources/shops/textiles.tres" id="29_textiles"]
@@ -118,6 +119,10 @@ script = ExtResource("24_map")
 [node name="Busted" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("26_busted")
+
+[node name="Hospital" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("40_hospital")
 
 [node name="ShopMenu" type="CanvasLayer" parent="."]
 process_mode = 3

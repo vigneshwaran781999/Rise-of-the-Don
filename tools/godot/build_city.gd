@@ -124,6 +124,7 @@ func _run() -> void:
 	city.map_texture_path = MAP_PATH
 	city.surface_map_path = SURFACE_MAP_PATH
 	city.police_stations = _layout.police_stations.duplicate()
+	city.hospitals = _layout.hospitals.duplicate()
 	city.places = _layout.places.duplicate()
 	for label: Array in _layout.map_labels:
 		city.map_label_texts.append(label[0])
@@ -151,9 +152,9 @@ func _run() -> void:
 	print("build_city: districts %s, %d roads between them" % [", ".join(names), _layout.through_count])
 	print("build_city: %d chunks, %d buildings, %d props, %d ground tiles, %d collision shapes, %d navmesh polygons, %d skyline stand-ins" % [
 		chunks.size(), _stats["buildings"], _stats["props"], _stats["ground"], _stats["shapes"], _stats["nav_polys"], _stats["skyline"]])
-	print("build_city: %d junctions (%d with traffic lights), %d crossings, lane graph %d nodes (%d disconnected), %d kit meshes, %d police stations" % [
+	print("build_city: %d junctions (%d with traffic lights), %d crossings, lane graph %d nodes (%d disconnected), %d kit meshes, %d police stations, %d hospitals" % [
 		_layout.junction_count, _stats["signals"], _layout.crossings.size(), lanes.size(), lanes.count_disconnected(), _kit.size(),
-		_layout.police_stations.size()])
+		_layout.police_stations.size(), _layout.hospitals.size()])
 	print("build_city: done in %.1f s" % ((Time.get_ticks_msec() - started) / 1000.0))
 	quit(0)
 

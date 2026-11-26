@@ -27,12 +27,14 @@ var _outside: float = 0.0
 var _dispatch: float = 0.0     # seconds the police still know where you are after a crime
 
 
-## Adds a crime's heat at `where` (knockdown, hit_police, assault_officer).
+## Adds a crime's heat at `where` (knockdown, assault, hit_police, assault_officer).
 func report_crime(crime: StringName, where: Vector3) -> void:
 	var added: float = 0.0
 	match crime:
 		&"knockdown":
 			added = tuning.knockdown_heat
+		&"assault":
+			added = tuning.assault_heat
 		&"hit_police":
 			added = tuning.hit_police_heat
 		&"assault_officer":

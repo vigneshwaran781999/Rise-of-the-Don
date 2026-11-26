@@ -2,8 +2,9 @@ class_name PlayerFigure
 extends MeshInstance3D
 ## The player's body (GDD §4): a low-poly character baked by CharacterBaker and animated by
 ## shaders/character.gdshader, like the pedestrians: legs and arms swing with walking speed
-## (wider when running), a stride pose in the air. Wears the outfit in GameState.outfit, looked
-## up in the clothes shop's list (`wardrobe`); the first outfit there is what the player arrived in.
+## (wider when running), a stride pose in the air, fists up and the right arm thrown out to
+## punch. Wears the outfit in GameState.outfit, looked up in the clothes shop's list
+## (`wardrobe`); the first outfit there is what the player arrived in.
 ## A child of the player's Model node (which faces -Z); the character model faces +Z, so this
 ## node is turned round.
 
@@ -16,10 +17,14 @@ extends MeshInstance3D
 @export var step_sprint: float = 1.5
 @export var swing_walk: float = 0.45
 @export var swing_sprint: float = 0.8
+## Fists stay up this long after a punch (seconds).
+@export var guard_hold: float = 1.5
 
 var _player: PlayerController
 var _phase: float = 0.0
 var _swing: float = 0.0
+var _guard: float = 0.0
+var _guard_left: float = 0.0
 var _outfit: Outfit
 
 
@@ -66,3 +71,9 @@ func _process(delta: float) -> void:
 	_swing = lerpf(_swing, target, 1.0 - exp(-10.0 * delta))
 	set_instance_shader_parameter(&"walk_phase", _phase)
 	set_instance_shader_parameter(&"swing", _swing)
+	# Fists: up while punching and for a moment after, the right arm thrown out with the blow.
+	var progress: float = _player.get_punch_progress()
+	_guard_left = guard_hold if progress >= 0.0 else maxf(0.0, _guard_left - delta)
+	_guard = move_toward(_guard, 1.0 if _guard_left > 0.0 and not _player.is_down() else 0.0, delta * 5.0)
+	set_instance_shader_parameter(&"guard", _guard)
+	set_instance_shader_parameter(&"punch", FightPose.arm_out(progress, _player.tuning.punch_hit_at / _player.tuning.punch_time))

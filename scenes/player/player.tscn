@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_figure.gd" id="9_figure"]
 [ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_man.glb" id="10_look"]
 [ext_resource type="Resource" path="res://resources/shops/textiles.tres" id="11_wardrobe"]
+[ext_resource type="Script" path="res://scripts/player/player_fists.gd" id="12_fists"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -43,6 +44,9 @@ script = ExtResource("4_audio")
 
 [node name="VehicleInteractor" type="Node" parent="."]
 script = ExtResource("7_interact")
+
+[node name="Fists" type="Node" parent="."]
+script = ExtResource("12_fists")
 
 [node name="DrivingInput" type="Node" parent="."]
 script = ExtResource("8_drive")

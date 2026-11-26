@@ -12,6 +12,7 @@ const ROWS: Array = [
 	["Walk (hold)", ["walk"], "", "Tilt stick gently"],
 	["Sprint (hold)", ["sprint"], "", ""],
 	["Jump", ["jump"], "", ""],
+	["Punch", ["attack"], "", ""],
 	["Get in / out of a vehicle", ["vehicle_enter_exit"], "", ""],
 	["Talk, hand over, skip a line", ["interact"], "", ""],
 	["DRIVING"],

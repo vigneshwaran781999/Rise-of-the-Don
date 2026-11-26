@@ -4,12 +4,16 @@ extends CanvasLayer
 ## loaded chunks and how many traffic cars and pedestrians are about), the interaction prompt
 ## ("get in" near a vehicle, or a mission action such as "talk"), the mission read-outs
 ## (MissionHud), and while driving a speedometer with gear, revs and the car's health, plus a
-## short reminder of the driving controls when you first get in.
+## short reminder of the driving controls when you first get in, and a red flash round the screen
+## when the player is hurt.
 
 const EXHAUSTED_COLOUR := Color(0.25, 0.42, 0.48)
 const CAR_HEALTH_COLOUR := Color("ffb02e")
 const HINT_SECONDS: float = 7.0
 const AREA_TITLE_SECONDS: float = 3.5
+## The hurt flash starts this strong and fades over this long.
+const HURT_FLASH_ALPHA: float = 0.4
+const HURT_FLASH_SECONDS: float = 0.45
 ## [actions, label] for the driving reminder.
 const DRIVING_HINTS: Array = [
 	[["vehicle_accelerate"], "accelerate"], [["vehicle_brake"], "brake / reverse"],
@@ -47,6 +51,9 @@ var _minimap: Minimap
 var _vehicle_target: VehicleController
 var _mission_prompt: Array = ["", ""]   # [action, text]
 var _place_prompt: Array = ["", ""]     # [action, text] from shops and properties
+var _hurt_flash: Control
+var _hurt_tween: Tween
+var _shown_health: float = -1.0
 
 
 func _ready() -> void:
@@ -212,6 +219,22 @@ func _process(_delta: float) -> void:
 func _on_health_changed(current: float, maximum: float) -> void:
 	_health_bar.max_value = maximum
 	_health_bar.value = current
+	if _shown_health >= 0.0 and current < _shown_health - 0.01:
+		_flash_hurt()
+	_shown_health = current
+
+
+## Strength of the hurt flash now (0 when not showing).
+func get_hurt_flash() -> float:
+	return _hurt_flash.modulate.a
+
+
+func _flash_hurt() -> void:
+	if _hurt_tween != null:
+		_hurt_tween.kill()
+	_hurt_flash.modulate.a = HURT_FLASH_ALPHA
+	_hurt_tween = create_tween()
+	_hurt_tween.tween_property(_hurt_flash, "modulate:a", 0.0, HURT_FLASH_SECONDS)
 
 
 func _on_stamina_changed(current: float, maximum: float) -> void:
@@ -285,6 +308,7 @@ func _build() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_build_hurt_flash(root)
 
 	var margin := MarginContainer.new()
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -372,6 +396,33 @@ func _build() -> void:
 	_hint.offset_top = -64.0
 	_hint.offset_bottom = -34.0
 	_hint.hide()
+
+
+## Red round the edges of the screen, clear in the middle; shown for a moment when hurt.
+func _build_hurt_flash(root: Control) -> void:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.55, 1.0])
+	gradient.colors = PackedColorArray([Color(0.75, 0.02, 0.02, 0.0), Color(0.75, 0.02, 0.02, 0.9)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(0.5, 1.2)
+	texture.width = 128
+	texture.height = 128
+	_hurt_flash = Control.new()
+	_hurt_flash.name = "HurtFlash"
+	_hurt_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hurt_flash.modulate.a = 0.0
+	var picture := TextureRect.new()
+	picture.texture = texture
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_SCALE
+	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_hurt_flash)
+	_hurt_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_hurt_flash.add_child(picture)
+	picture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
 func _build_prompt(root: Control) -> void:

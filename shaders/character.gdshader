@@ -6,7 +6,8 @@ shader_type spatial;
 //   UV2.y       tint channel: 0 none, 1 top, 2 bottom, 3 skin, 4 hair
 //   CUSTOM0     xyz = the part's joint (hip or shoulder), w = roughness
 // The model faces +Z. Legs and arms swing about their joints (walk cycle); sitting folds the
-// legs forwards.
+// legs forwards; a fighting stance raises both arms (guard) and a punch throws the right arm
+// straight out in front.
 render_mode cull_back, depth_draw_opaque;
 
 instance uniform vec4 top_color : source_color = vec4(1.0);
@@ -18,6 +19,9 @@ instance uniform float walk_phase = 0.0;
 instance uniform float swing = 0.0;
 // 0 standing, 1 seated.
 instance uniform float sit = 0.0;
+// 0 arms down, 1 fists up (a fighting stance); 0-1 how far the right arm is thrown out.
+instance uniform float guard = 0.0;
+instance uniform float punch = 0.0;
 
 varying float v_tint;
 varying float v_roughness;
@@ -39,7 +43,10 @@ void vertex() {
 			angle = sin(walk_phase) * swing * side - sit * 0.85;
 		} else {
 			float side = part < 3.5 ? -1.0 : 1.0;
-			angle = sin(walk_phase) * swing * 0.8 * side - sit * 0.3;
+			angle = sin(walk_phase) * swing * 0.8 * side * (1.0 - guard * 0.7) - sit * 0.3 - guard * 0.75;
+			if (part > 3.5) {
+				angle -= punch * (1.55 - guard * 0.75);
+			}
 		}
 		vec3 pivot = CUSTOM0.xyz;
 		VERTEX = rotate_x(VERTEX - pivot, angle) + pivot;

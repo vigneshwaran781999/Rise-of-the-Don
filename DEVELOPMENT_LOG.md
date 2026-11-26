@@ -538,6 +538,40 @@ Dated entries: what was built, what broke, how it was fixed.
     - footsteps on sand, in the sea and on the road;
     - each district's ambience;
     - night in the Countryside.
+- **Step 10, fists, knock-outs and the hospital (GDD §4):**
+  - **The punch:**
+    - A new Attack input (left mouse, gamepad B; in `setup_project.gd` and the controls panel) and PUNCH and DOWN player states.
+    - `PlayerFists` throws the punch, turns you to the nearest person in front (within 2.6 m and 70°), and lands the blow 0.16 s in, on whoever is in a sphere in front: anything in the `hittable` group with `take_hit()`.
+    - The character shader gained `guard` (both fists up) and `punch` (the right arm thrown out). `FightPose` shapes the swing for the player and fighters.
+    - Synthesised swish and thud sounds.
+  - **Taking hits:**
+    - Pedestrians have health (two punches). A blow staggers them for 0.6 s, then they run. At no health they go down, using the car knockdown, now shared code. People within 12 m run.
+    - Punching someone is a new `assault` crime (0.5 heat: two punches, one star).
+    - Officers take three punches. The first is `assault_officer`; later blows on the same officer are assaults.
+  - **Fighters:** `Fighter` (`scenes/npc/fighter.tscn`, `resources/characters/fighter.tres`) is the opponent for story fights:
+    - chases along the navmesh and stands off in front of you with fists up;
+    - a visible wind-up (arm back, shoulders turned), then the punch (10 damage);
+    - a punch mid-wind-up breaks it; four punches knock one out for good (`defeated`);
+    - leaves you alone when you're down or in a vehicle;
+    - a fighter who isn't hostile fights back if punched (`provoked`).
+  - **Getting hurt:** blows push the player back, cost health and flash the HUD's edges red.
+  - **Knocked out:**
+    - At no health the player goes down. The game session waits 1.5 s, shows the **HOSPITALISED** card (`HospitalScreen`, the busted card with other words and colours), charges a bill (10% of cash, at least ₹100), clears the police and the wanted level, wakes the player at the nearest hospital at full health, and fails a running mission.
+    - The police can't arrest a player who is down.
+  - **Hospitals:**
+    - `bld_ot_clinic` replaces a shop on Old Town's west gopuram road (this changes Old Town's layout fingerprint, as intended). It has CLINIC on the roof and a green cross on a sign standing out from the front.
+    - `bld_dt_hospital` replaces an office east of Central Plaza. It has a green cross up the front and HOSPITAL on the roof.
+    - The crosses are green, never red, and glow at night.
+    - Place ids starting with `hospital` become `CityData.hospitals`; `nearest_hospital()` finds the closest. Both are labelled on the map.
+  - **Tests:** new `tests/fight_test.tscn` checks:
+    - the punch;
+    - pedestrians (stagger, floor, bystanders, crimes);
+    - officers;
+    - a fighter (wind-up, hit and red flash, broken wind-up, knock-out);
+    - the hospital trip;
+    - each district's nearest hospital.
+
+    The smoke test checks left mouse punches, both hospitals and the card.
 
 **Broke and fixed**
 - **Step 1:**
@@ -567,3 +601,11 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Class cache:** the setup script reported a compile error until the new classes were registered by an import (expected for new `class_name` scripts).
   - **Cloud cost:** the performance baseline showed the sky costing 2.6 ms more per frame. The cloud texture was drawn in every weather, and its tint was rewritten every half second, so the sky kept recomputing its light. Clear weather now has no clouds at all, and the tint is only set when it changes; the cost is gone.
 - **Step 9:** no failures; the audio test passed on its first run.
+- **Step 10:**
+  - **A second punch could never land:** a pedestrian reeled for 0.35 s, but the player's next blow could only land 0.58 s after the first. They were always running by then. The stagger is now 0.6 s (officers too), so a quick second punch floors them.
+  - **Officer crimes stacked up:** every blow on an officer counted as assaulting an officer (3 heat each), so three punches went from one star to four. Only the first blow on an officer is that crime now; later ones are assaults.
+  - **Fight test setup (no game bugs):**
+    - At level 0 the test officer was already walking away. The check now starts at one star, as in the game.
+    - Health was set straight to 8, which skips the regeneration delay, so it regenerated before the fighter's blow. It is now set by damage.
+    - Starting the welcome mission moved the player to the bus stand, across the road from the fighter. The player is moved back.
+    - The first navmesh query came before the map's first sync; the test now waits for it.

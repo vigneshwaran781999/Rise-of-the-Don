@@ -5,11 +5,13 @@ extends Node3D
 ## player where they saved, a running mission resumes at its checkpoint). Streams the city in
 ## around the player and runs its day and night, starts traffic and pedestrians, hooks the HUD up
 ## to the player and the missions, hands the view between the on-foot and vehicle cameras when
-## the player gets in or out, captures the mouse for camera look, and gives SaveManager the
-## player's state.
+## the player gets in or out, takes a knocked-out player to hospital (M7), captures the mouse for
+## camera look, and gives SaveManager the player's state.
 
 const ENTER_BLEND_SECONDS: float = 0.6
 const EXIT_BLEND_SECONDS: float = 0.45
+## Knocked out, the player lies on the ground this long before the HOSPITALISED card.
+const DOWN_SECONDS: float = 1.5
 
 @onready var world: CityWorld = $World
 @onready var player: PlayerController = $Player
@@ -26,6 +28,7 @@ const EXIT_BLEND_SECONDS: float = 0.45
 @onready var map_screen: MapScreen = $MapScreen
 @onready var police: PoliceManager = $Police
 @onready var busted_screen: BustedScreen = $Busted
+@onready var hospital_screen: HospitalScreen = $Hospital
 @onready var places: PlaceDirector = $Places
 @onready var shop_menu: ShopMenu = $ShopMenu
 @onready var regions: RegionWatcher = $Regions
@@ -76,6 +79,7 @@ func _ready() -> void:
 	pedestrians.setup(player, world.streamer)
 	police.setup(player, world.streamer, world.get_lane_graph(), pedestrians)
 	WantedSystem.busted.connect(_on_busted)
+	player.died.connect(_on_player_died)
 	missions.setup(player, world)
 	hud.bind_missions(missions, player)
 	places.menu = shop_menu
@@ -125,6 +129,24 @@ func _on_busted() -> void:
 	EconomyManager.try_spend(fine, &"fine")
 	if mission_running and MissionManager.is_active():
 		MissionManager.fail("You were busted.")
+
+
+## Knocked out (M7): a moment on the ground, the HOSPITALISED card and a bill, then awake at the
+## nearest hospital or clinic at full health with the police gone and the record clean; a mission
+## that was running fails.
+func _on_player_died() -> void:
+	var tuning: PlayerTuning = player.tuning
+	var fee: int = mini(EconomyManager.cash, maxi(tuning.hospital_fee_min, int(EconomyManager.cash * tuning.hospital_fee_share)))
+	var mission_running: bool = MissionManager.is_active() and not MissionManager.is_failed()
+	await get_tree().create_timer(DOWN_SECONDS).timeout
+	await hospital_screen.play(fee)
+	police.clear_all()
+	WantedSystem.clear()
+	place_player(world.data.nearest_hospital(player.global_position))
+	player.revive()
+	EconomyManager.try_spend(fee, &"hospital")
+	if mission_running and MissionManager.is_active():
+		MissionManager.fail("You were hospitalised.")
 
 
 ## Puts the player (on foot) at `xform`'s position, facing its -Z, camera behind them.

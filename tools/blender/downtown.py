@@ -16,6 +16,7 @@ window_glass (home windows, warm), neon_* (signs and lobby glass: glow at night 
   bld_dt_hotel         24 x 18 m hotel, 45 m, balconies, HOTEL in neon on the roof
   bld_dt_mall          44 x 48 m shopping mall, 18 m, glass atrium, VELA MALL in neon
   bld_dt_police        16 x 16 m police headquarters, 15 m, POLICE on the roof
+  bld_dt_hospital      16 x 16 m hospital, 18 m, a green cross on the front, HOSPITAL on the roof
   prop_dt_fountain     6 m round fountain for the plaza
 
 Run:  "$BLENDER" --background --factory-startup --python tools/blender/downtown.py [-- names...]
@@ -369,6 +370,44 @@ def police() -> None:
     rm.export_glb("buildings", name)
 
 
+def hospital() -> None:
+    """Velanagar General Hospital (M7): a white six-storey block with ribbons of glass, a glowing
+    lobby under a green canopy, a tall white pier up the front with a green cross on it (it glows
+    at night; never a red cross), and HOSPITAL on a rooftop board. The player wakes here after
+    being knocked out nearby."""
+    name = "bld_dt_hospital"
+    rm.clear_scene()
+    wall = rm.material("dt_hospital_white", "#eef0ec", roughness=0.75)
+    green = rm.material("hospital_green", "#1f8a5a", roughness=0.6)
+    glass = rm.material("office_glass_blue", "#35597a", roughness=0.12, metallic=0.5)
+    lobby_glow = rm.material("neon_lobby", "#c9b48a", roughness=0.2, emission="#ffd9a0", emission_strength=0.5)
+    cross = rm.material("neon_cross_green", "#22b866", roughness=0.3, emission="#14d45a", emission_strength=0.6)
+    bars = rm.material("window_bars", "#2c2e33", roughness=0.5, metallic=0.5)
+    mb = rm.MeshBuilder()
+    x0, y0, x1, y1 = -8.0, -8.0, 8.0, 8.0
+    top = 18.0
+    mb.box(x0, y0, 0.0, x1, y1, top, wall, skip=("bottom",))
+    mb.box(-4.0, y0 - 0.05, 0.0, 4.0, y0, 2.8, lobby_glow, skip=("back",))
+    mb.box(-5.0, y0 - 2.4, 3.0, 5.0, y0, 3.35, green)
+    for k in range(1, 6):
+        zb = k * FH
+        mb.box(x0 - 0.05, y0 - 0.05, zb + 0.9, x1 + 0.05, y1 + 0.05, zb + 2.4, glass, skip=("top", "bottom"))
+    # The pier up the front and the cross on it (arms 3.2 m across, 1 m thick).
+    pier_y = y0 - 0.3
+    mb.box(-2.0, pier_y, 3.35, 2.0, y0, top, wall, skip=("back",))
+    mb.box(-0.5, pier_y - 0.08, 10.4, 0.5, pier_y, 13.6, cross, skip=("back",))
+    mb.box(-1.6, pier_y - 0.08, 11.5, -0.5, pier_y, 12.5, cross, skip=("back",))
+    mb.box(0.5, pier_y - 0.08, 11.5, 1.6, pier_y, 12.5, cross, skip=("back",))
+    mb.box(x0, y0, top, x1, y1, top + 0.8, green, skip=("bottom",))
+    for px in (x0 + 1.0, x1 - 1.15):
+        mb.box(px, y0 + 0.4, top + 0.8, px + 0.15, y0 + 0.55, top + 4.0, bars)
+    mb.box(x0 + 0.6, y0 + 0.3, top + 1.6, x1 - 0.6, y0 + 0.4, top + 4.2, wall)
+    rm.pixel_text(mb, "HOSPITAL", 0.0, y0 + 0.3, top + 2.3, 0.25, green)
+    mb.build(name)
+    collide(name, [(x0, y0, 0.0, x1, y1, top + 0.8)])
+    rm.export_glb("buildings", name)
+
+
 def fountain() -> None:
     """Plaza fountain: a 6 m stone basin of water with a stepped column in the middle."""
     name = "prop_dt_fountain"
@@ -406,6 +445,7 @@ BUILDERS = {
     "bld_dt_hotel": hotel,
     "bld_dt_mall": mall,
     "bld_dt_police": police,
+    "bld_dt_hospital": hospital,
     "prop_dt_fountain": fountain,
 }
 

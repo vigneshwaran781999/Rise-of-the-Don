@@ -40,9 +40,11 @@ const LANE_FRONT: Array = [
 	[&"bld_dt_office_a", 16.0, 16.0, 1.0], [&"bld_dt_tower_c", 18.0, 18.0, 0.5],
 ]
 ## The police headquarters takes the place of the mid-rise office nearest this point, just west
-## of Central Plaza (door spot 9.6 m in front of its centre: half its depth plus the sidewalk).
+## of Central Plaza (door spot 9.6 m in front of its centre: half its depth plus the sidewalk); the
+## hospital (M7) takes the one nearest a point east of the plaza.
 const SPECIAL_BUILDINGS: Array = [
 	[&"police_downtown", &"bld_dt_office_a", Vector3(-130.0, 0.0, 40.0), &"bld_dt_police", 9.6],
+	[&"hospital_downtown", &"bld_dt_office_a", Vector3(130.0, 0.0, -40.0), &"bld_dt_hospital", 9.6],
 ]
 const CLEARABLE: Array[StringName] = [&"prop_streetlight", &"prop_neem_tree", &"prop_palm_tree"]
 
@@ -126,6 +128,8 @@ func _after_blocks() -> void:
 	map_labels = [["CENTRAL PLAZA", plaza], ["VELA MALL", mall]]
 	if has_police_station:
 		map_labels.append(["POLICE HQ", Vector2(police_station.origin.x, police_station.origin.z)])
+	for hospital: Transform3D in hospitals:
+		map_labels.append(["HOSPITAL", Vector2(hospital.origin.x, hospital.origin.z)])
 
 
 ## Central Plaza: paving, the fountain in the middle, a ring of palms, benches facing it and

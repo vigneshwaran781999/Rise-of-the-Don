@@ -19,7 +19,8 @@ runtime), prop_market_stall_a/b, prop_flower_stall, prop_handcart, prop_bollard,
 prop_bench (people sit on it, M4), prop_bus_shelter (the bus stand where the story starts, M5).
 
 Buildings (pivot at the base centre, front facing Blender -Y): a family of Old Town row houses
-and shops (bld_ot_house_*, bld_ot_shop_*, bld_ot_lodge_01), bld_ot_market_hall,
+and shops (bld_ot_house_*, bld_ot_shop_*, bld_ot_lodge_01), the special buildings (police station,
+tiffin stall, garage, textiles; bld_ot_clinic, M7), bld_ot_market_hall,
 bld_ot_mandapam, bld_ot_vimana and bld_ot_tank. Collision is separate convex pieces (rm.CollisionSet).
 
 Run:  "$BLENDER" --background --factory-startup --python tools/blender/old_town.py [-- names...]
@@ -420,11 +421,14 @@ H0, FH = 3.4, 3.0   # ground-floor and upper-floor heights
 def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: str, ground: str,
                 roof: str, balcony: bool = False, awning: str | None = None, sign: str | None = None,
                 pillars: int = 0, rooftop_sign: str | None = None, rooftop_text: str | None = None,
-                tank: bool = False, sign_text: str | None = None, sign_letters: str = "#f4f1e8") -> None:
+                tank: bool = False, sign_text: str | None = None, sign_letters: str = "#f4f1e8",
+                cross: str | None = None) -> None:
     """Old Town row building. ground: 'shop', 'house' or 'verandah' (set-back front with pillars
     and raised thinnai seats); roof: 'flat' (parapet terrace) or 'tile' (pitched clay tiles).
     rooftop_sign: colour of a board on poles above the roof; rooftop_text: white block letters on it.
-    sign: colour of the shopfront board; sign_text: block letters on it (a taller board), in sign_letters."""
+    sign: colour of the shopfront board; sign_text: block letters on it (a taller board), in sign_letters.
+    cross: colour of a cross on a sign standing out from the front at the first floor (a clinic), seen
+    from along the street; it glows at night."""
     rm.clear_scene()
     wall = rm.material(name + "_wall", paint, roughness=0.9)
     trim_m = rm.material(name + "_trim", trim, roughness=0.85)
@@ -556,6 +560,18 @@ def ot_building(name: str, w: float, d: float, floors: int, paint: str, trim: st
             letters = rm.material("sign_letters", "#f4f1e8", roughness=0.6)
             pixel = 0.2
             rm.pixel_text(mb, rooftop_text, 0.0, y0 + 0.3, top + 2.4 - 2.5 * pixel, pixel, letters)
+    if cross:
+        # A white sign standing out from the right-hand corner, a cross on each face.
+        board = rm.material("clinic_sign_white", "#f4f6f2", roughness=0.6)
+        glow = rm.material("neon_cross_" + cross.lstrip("#"), cross, roughness=0.3, emission=cross, emission_strength=0.8)
+        xs0, xs1 = x1 - 0.24, x1 - 0.08
+        yc, zc = y0 - 0.85, H0 + 2.0
+        mb.box(xs0, yc - 0.7, zc - 0.7, xs1, yc + 0.7, zc + 0.7, board)
+        mb.box(xs0 + 0.03, yc - 0.7, zc + 0.7, xs1 - 0.03, y0, zc + 0.8, bars)       # the bracket
+        for x_a, x_b in ((xs0 - 0.04, xs0), (xs1, xs1 + 0.04)):
+            mb.box(x_a, yc - 0.15, zc - 0.5, x_b, yc + 0.15, zc + 0.5, glow)
+            mb.box(x_a, yc - 0.5, zc - 0.15, x_b, yc - 0.15, zc + 0.15, glow)
+            mb.box(x_a, yc + 0.15, zc - 0.15, x_b, yc + 0.5, zc + 0.15, glow)
     mb.build(name)
     box_collision(name, collide)
     rm.export_glb("buildings", name)
@@ -581,6 +597,10 @@ OT_BUILDINGS = {
     # the police station (M6): white with blue trim; the layout puts it in place of one shop
     "bld_ot_police_station": dict(w=10, d=12, floors=2, paint="#eceae4", trim="#1f4fa0", ground="house", roof="flat", balcony=True,
                                   rooftop_sign="#1f4fa0", rooftop_text="POLICE"),
+    # the clinic (M7): where you wake after being knocked out in Old Town; white and green, a green
+    # cross (never a red one) on a sign standing out from the front
+    "bld_ot_clinic": dict(w=10, d=12, floors=2, paint="#f2f4ef", trim="#1f8a5a", ground="house", roof="flat", balcony=True,
+                          rooftop_sign="#1f8a5a", rooftop_text="CLINIC", cross="#22b866"),
     # shops you can use (M6): the tiffin stall (food) and the clothes shop, named on their boards
     "bld_ot_tiffin": dict(w=10, d=12, floors=2, paint="#f3efe3", trim="#2f7d4f", ground="shop", roof="flat", awning="#2f7d4f",
                           sign="#2f7d4f", sign_text="TIFFIN", balcony=True),

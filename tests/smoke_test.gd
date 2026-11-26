@@ -25,7 +25,7 @@ const REQUIRED_ACTIONS: PackedStringArray = [
 	"vehicle_enter_exit", "interact", "pause", "toggle_fps",
 	"vehicle_accelerate", "vehicle_brake", "vehicle_steer_left", "vehicle_steer_right",
 	"vehicle_handbrake", "vehicle_horn", "vehicle_headlights", "vehicle_camera", "toggle_lane_debug",
-	"map", "map_zoom_in", "map_zoom_out",
+	"map", "map_zoom_in", "map_zoom_out", "attack",
 ]
 ## Vehicle models: visuals only, no static '-colonly' body (a car is a moving rigid body).
 const VEHICLE_ASSETS: PackedStringArray = [
@@ -49,6 +49,7 @@ const KIT_MESHES: PackedStringArray = [
 	"bld_in_crane", "bld_in_ship", "bld_in_fish_shed", "prop_in_container_a", "prop_streetlight_sodium",
 	"bld_lx_villa_a", "bld_lx_villa_b", "bld_lx_villa_c", "bld_lx_mansion", "prop_lx_guard_booth", "prop_lx_hedge",
 	"lot_paddy", "bld_cs_hut", "bld_cs_farmhouse", "bld_cs_teastall", "prop_cs_well", "prop_cs_haystack", "prop_cs_paddy",
+	"bld_ot_clinic", "bld_dt_hospital",
 ]
 const SEDAN_PATH: String = "World/Vehicles/Sedan"
 ## Open stretch of Ring B (the main road along z = 112) between the junctions at x = -44 and -6;
@@ -67,6 +68,7 @@ const COLLIDABLE_ASSETS: PackedStringArray = [
 	"buildings/bld_dt_tower_a", "buildings/bld_dt_tower_b", "buildings/bld_dt_tower_c", "buildings/bld_dt_office_a",
 	"buildings/bld_dt_office_b", "buildings/bld_dt_retail_a", "buildings/bld_dt_retail_b", "buildings/bld_dt_hotel",
 	"buildings/bld_dt_mall", "buildings/bld_dt_police", "props/prop_dt_fountain",
+	"buildings/bld_ot_clinic", "buildings/bld_dt_hospital",
 	"buildings/bld_bh_resort", "buildings/bld_bh_hotel", "buildings/bld_bh_seafood", "buildings/bld_bh_police",
 	"buildings/bld_bh_shop_a", "buildings/bld_bh_shop_b", "buildings/bld_bh_cottage", "buildings/bld_bh_lighthouse",
 	"buildings/bld_bh_pier", "props/prop_bh_umbrella", "props/prop_bh_boat", "props/prop_bh_lifeguard", "props/prop_bh_kiosk",
@@ -113,7 +115,7 @@ func _run_checks() -> String:
 		_check_asset_collisions, _check_main_menu, _check_new_game, _check_city_life, _check_spawn,
 		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury, _check_countryside, _check_fleet,
 		_check_traffic_signals, _check_lane_graph, _check_navmesh,
-		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up,
+		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up, _check_punch,
 		_check_camera, _check_hud,
 		_check_vehicle_parked, _check_enter_vehicle, _check_drive_brake_reverse, _check_steering,
 		_check_vehicle_cameras, _check_horn_and_lights, _check_crash_damage, _check_pause_in_vehicle,
@@ -481,6 +483,34 @@ func _check_kerb_step_up() -> String:
 		return "could not step south from the road onto the sidewalk over the kerb (at %s)" % player.global_position
 	await _teleport(player, Vector3(70.0, 0.1, 1.5))
 	print("  ok  stepped up the bevelled kerb from the road onto the Old Town sidewalk")
+	return ""
+
+
+## Fists (M7): the left mouse button throws a punch; the city has its hospitals, and the game its
+## HOSPITALISED card (tests/fight_test.tscn covers fighting and the hospital in full).
+func _check_punch() -> String:
+	var player: PlayerController = _player()
+	await _physics_frames(30)
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	Input.parse_input_event(click)
+	await _physics_frames(2)
+	var punching: bool = player.state == PlayerController.State.PUNCH
+	click = click.duplicate() as InputEventMouseButton
+	click.pressed = false
+	Input.parse_input_event(click)
+	await _physics_frames(40)
+	if not punching:
+		return "the left mouse button should throw a punch (state %s)" % player.get_state_name()
+	if player.state == PlayerController.State.PUNCH:
+		return "the punch should be over after 0.7 s"
+	var city: CityData = (get_tree().current_scene as GameSession).world.data
+	if city.hospitals.size() < 2:
+		return "the city should have a clinic and a hospital (%d)" % city.hospitals.size()
+	if get_tree().current_scene.get_node_or_null("Hospital") as HospitalScreen == null:
+		return "the game has no HOSPITALISED card"
+	print("  ok  left mouse throws a punch; %d hospitals in the city" % city.hospitals.size())
 	return ""
 
 

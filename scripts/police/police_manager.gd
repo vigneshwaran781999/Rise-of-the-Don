@@ -70,6 +70,7 @@ func setup(player: PlayerController, streamer: WorldStreamer, graph: LaneGraph, 
 	_streamer = streamer
 	_router = RoadRouter.for_graph(graph)
 	pedestrians.player_hit_pedestrian.connect(func(where: Vector3) -> void: WantedSystem.report_crime(&"knockdown", where))
+	pedestrians.player_punched_pedestrian.connect(func(where: Vector3) -> void: WantedSystem.report_crime(&"assault", where))
 
 
 func get_cars() -> Array[VehicleController]:
@@ -113,6 +114,13 @@ func officer_hit(officer: PoliceOfficer, vehicle: VehicleController) -> void:
 		WantedSystem.report_crime(&"assault_officer", officer.global_position)
 
 
+## An officer was punched (PoliceOfficer calls this): by the player, that's a crime: the first
+## blow is assaulting an officer, more blows on them an assault each.
+func officer_punched(officer: PoliceOfficer, attacker: Node3D, first: bool) -> void:
+	if _player != null and attacker == _player:
+		WantedSystem.report_crime(&"assault_officer" if first else &"assault", officer.global_position)
+
+
 ## Puts a police car on lane node `node` (tests and roadblocks use it too).
 func spawn_car_at(node: int, speed: float = 0.0) -> VehicleController:
 	var graph: LaneGraph = _router.graph
@@ -138,6 +146,7 @@ func spawn_officer_at(pos: Vector3) -> PoliceOfficer:
 	_serial += 1
 	officer.manager = self
 	officer.run_speed = tuning.officer_run_speed
+	officer.max_health = tuning.officer_health
 	add_child(officer)
 	officer.global_position = pos + Vector3.UP * 0.05
 	officer.reset_physics_interpolation()
@@ -432,6 +441,9 @@ func _update_helicopter(here: Vector3) -> void:
 func _check_bust(delta: float) -> void:
 	var close: bool = false
 	var seconds: float = tuning.bust_seconds
+	if _player.is_down():                 # knocked out: the hospital, not the cells
+		_bust_timer = 0.0
+		return
 	if not _player.is_in_vehicle():
 		for officer: PoliceOfficer in _officers:
 			if not officer.is_down() and _flat(officer.global_position).distance_to(_flat(_player.global_position)) < tuning.bust_distance:

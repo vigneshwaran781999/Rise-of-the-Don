@@ -8,6 +8,8 @@ extends Node3D
 
 ## The player's vehicle knocked someone down (a crime the police hear about).
 signal player_hit_pedestrian(position: Vector3)
+## The player punched someone (an assault, M7).
+signal player_punched_pedestrian(position: Vector3)
 
 const MONITOR: StringName = &"npc/pedestrians"
 const SIT_SPOTS: StringName = &"sit_spots"
@@ -275,3 +277,10 @@ func _prune() -> void:
 func report_knockdown(person: Pedestrian, vehicle: VehicleController) -> void:
 	if player != null and player.vehicle == vehicle:
 		player_hit_pedestrian.emit(person.global_position)
+
+
+## Someone was punched by `attacker` (Pedestrian calls this); if it was the player, the police
+## are told.
+func report_assault(person: Pedestrian, attacker: Node3D) -> void:
+	if player != null and attacker == player:
+		player_punched_pedestrian.emit(person.global_position)

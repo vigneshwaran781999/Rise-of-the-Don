@@ -7,6 +7,10 @@ extends CharacterBody3D
 ## Vehicles: VehicleInteractor decides when to get in or out and where to stand; this script
 ## carries it out (walk to the door, ride in the seat hidden, step out) and announces it with
 ## vehicle_entered / vehicle_exited. PlayerDrivingInput steers while the state is IN_VEHICLE.
+##
+## Fists (M7): PlayerFists starts a punch (PUNCH: slowed for a moment); blows taken push the
+## player back and cost health (take_hit). At no health the player goes DOWN (died); the game
+## session takes them to hospital and revive()s them.
 
 signal state_changed(previous: State, current: State)
 signal jumped
@@ -14,8 +18,12 @@ signal landed(impact_speed: float)
 ## Emitted as the player starts getting in (the camera hands over during the walk to the door).
 signal vehicle_entered(vehicle: VehicleController)
 signal vehicle_exited(vehicle: VehicleController)
+## A blow landed on the player (take_hit).
+signal hurt(damage: float)
+## Health ran out: the player is down.
+signal died
 
-enum State { IDLE, WALK, RUN, SPRINT, JUMP, FALL, LAND, ENTER_VEHICLE, IN_VEHICLE, EXIT_VEHICLE }
+enum State { IDLE, WALK, RUN, SPRINT, JUMP, FALL, LAND, ENTER_VEHICLE, IN_VEHICLE, EXIT_VEHICLE, PUNCH, DOWN }
 
 const ON_FOOT_STATES: Array[State] = [State.IDLE, State.WALK, State.RUN, State.SPRINT, State.LAND]
 
@@ -43,6 +51,8 @@ var _enter_from: Vector3 = Vector3.ZERO
 var _enter_door_local: Vector3 = Vector3.ZERO
 var _exit_requested: bool = false
 var _exit_wait: float = 0.0
+var _punch_left: float = 0.0
+var _stagger_left: float = 0.0
 
 
 func _ready() -> void:
@@ -138,6 +148,9 @@ func _physics_process(delta: float) -> void:
 		State.IN_VEHICLE:
 			_ride(delta)
 			return
+		State.DOWN:
+			_lie(delta)
+			return
 
 	var on_floor: bool = is_on_floor()
 	var stepping_out: bool = state == State.EXIT_VEHICLE
@@ -148,10 +161,16 @@ func _physics_process(delta: float) -> void:
 
 	if input_locked:
 		_jump_buffer_left = 0.0
-	var input: Vector2 = Vector2.ZERO if stepping_out or input_locked else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input: Vector2 = Vector2.ZERO if stepping_out or input_locked or _stagger_left > 0.0 else Input.get_vector(
+		"move_left", "move_right", "move_forward", "move_back")
+	_punch_left = maxf(0.0, _punch_left - delta)
+	_stagger_left = maxf(0.0, _stagger_left - delta)
+	if state == State.PUNCH:
+		input *= tuning.punch_move_scale
 	var strength: float = minf(input.length(), 1.0)
 	var gait: State = _choose_gait(strength)
-	_apply_horizontal(_camera_relative(input) * _gait_speed(gait), on_floor, delta)
+	if _stagger_left <= 0.0:          # reeling from a blow: the knockback carries the player
+		_apply_horizontal(_camera_relative(input) * _gait_speed(gait), on_floor, delta)
 	_apply_gravity(on_floor, delta)
 	_try_jump()
 
@@ -169,7 +188,76 @@ func _physics_process(delta: float) -> void:
 	_face_movement(delta)
 	if stepping_out and _transition_left > 0.0:
 		return
+	if state == State.PUNCH and _punch_left > 0.0:
+		return
 	_update_state(now_on_floor, gait)
+
+
+## Starts a punch (PlayerFists) when on foot and free to: true if it started.
+func start_punch() -> bool:
+	if input_locked or state not in ON_FOOT_STATES or not is_on_floor() or _punch_left > 0.0:
+		return false
+	_punch_left = tuning.punch_time
+	_set_state(State.PUNCH)
+	return true
+
+
+## How far through the current punch (0-1), or -1 when not punching.
+func get_punch_progress() -> float:
+	return 1.0 - _punch_left / tuning.punch_time if state == State.PUNCH else -1.0
+
+
+## Which way the player faces (on the ground plane).
+func get_facing() -> Vector3:
+	return -model.global_basis.z
+
+
+## A blow from someone at `from`: costs health, pushes the player back for a moment, and at no
+## health puts them down. Ignored in a vehicle or already down.
+func take_hit(damage: float, from: Vector3, _attacker: Node3D = null) -> void:
+	if state == State.DOWN or is_in_vehicle():
+		return
+	stats.apply_damage(damage)
+	var push := Vector3(global_position.x - from.x, 0.0, global_position.z - from.z)
+	if push.length_squared() > 0.0001:
+		push = push.normalized() * tuning.hit_knockback
+		velocity.x = push.x
+		velocity.z = push.z
+	_stagger_left = tuning.hit_stagger_time
+	hurt.emit(damage)
+	if stats.health <= 0.0:
+		_go_down()
+
+
+func is_down() -> bool:
+	return state == State.DOWN
+
+
+## Back on their feet after being down (the hospital): full health, facing as they were.
+func revive() -> void:
+	model.rotation.x = 0.0
+	model.position.y = 0.0
+	stats.set_health(stats.get_max_health())
+	_stagger_left = 0.0
+	_punch_left = 0.0
+	velocity = Vector3.ZERO
+	_set_state(State.IDLE)
+
+
+func _go_down() -> void:
+	_punch_left = 0.0
+	model.rotation.x = -PI * 0.5            # falls flat on their back
+	model.position.y = 0.15
+	_set_state(State.DOWN)
+	died.emit()
+
+
+## Lying down: no control, just gravity and friction.
+func _lie(delta: float) -> void:
+	var on_floor: bool = is_on_floor()
+	_apply_horizontal(Vector3.ZERO, on_floor, delta)
+	_apply_gravity(on_floor, delta)
+	move_and_slide()
 
 
 ## Walks (glides) to the door, turning to face the car, then disappears into the seat.

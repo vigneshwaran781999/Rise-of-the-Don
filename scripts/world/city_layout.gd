@@ -20,6 +20,7 @@ var signals: Array[Dictionary] = []
 var sit_spots: Array[Dictionary] = []
 var places: Dictionary = {}
 var police_stations: Array[Transform3D] = []
+var hospitals: Array[Transform3D] = []
 var map_labels: Array = []
 var water: Array[Rect2] = []
 var lakes: Array[Rect2] = []
@@ -112,6 +113,7 @@ func generate() -> void:
 			if places.has(place_id):
 				push_error("CityLayout: two districts have a place called %s" % place_id)
 			places[place_id] = d.places[place_id]
+		hospitals.append_array(d.hospitals)
 		if d.has_police_station:
 			police_stations.append(d.police_station)
 

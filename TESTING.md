@@ -317,3 +317,16 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **Footsteps:** road, sidewalk, sand (soft), grass (rustle), the pier (hollow boards), wading in the sea (splash). Do they match what you see?
 - [ ] **Rain** over the background, and the background still there underneath.
 - [ ] Are any of the loops obviously repeating, too loud or annoying after a few minutes?
+
+### Fists, knock-outs and the hospital (step 10)
+`tests/fight_test.tscn` checks the mechanics. These checks are about feel and looks.
+- [ ] **Punch:** left mouse (gamepad B) on foot. The right arm shoots out and comes back, with a swish. Afterwards the fists stay up for a moment. Does it feel responsive, or is there too much delay before the blow lands?
+- [ ] **Aim help:** with someone a little to one side in front of you, you turn to them as you punch. Too much help, or too little?
+- [ ] **Hitting someone:** a thud. They stagger back, then run. A quick second punch floors them. People around run off. Two punches give you one star.
+- [ ] **Hitting an officer** (get a star first so officers come): two stars straight away; three punches floor them for a few seconds.
+- [ ] **No punching** in a vehicle, mid-air, or while getting in or out.
+- [ ] **Getting hit** (fighters come with the story missions in step 12; until then only the fight test can hit you): the screen edges flash red and you're pushed back a step.
+- [ ] **Knocked out** (also from step 12): you fall flat. After a moment the green **HOSPITALISED** card shows with the bill. You wake outside the nearest hospital, at full health, with no stars.
+- [ ] **The clinic** (Old Town, west gopuram road, west of the temple): white and green, CLINIC on the roof, a green cross on a sign standing out from the front. The cross glows at night.
+- [ ] **Velanagar General Hospital** (Downtown, east of Central Plaza): white, HOSPITAL on the roof, a big green cross up the front that glows at night.
+- [ ] Both are labelled on the full map (M).

@@ -62,3 +62,23 @@ extends Resource
 @export var vehicle_exit_max_speed: float = 2.5
 ## Give up waiting for the car to slow down and get out anyway after this long.
 @export var vehicle_exit_timeout: float = 4.0
+
+@export_group("Fists (M7)")
+## A punch lasts this long; the blow lands this far into it.
+@export var punch_time: float = 0.42
+@export var punch_hit_at: float = 0.16
+@export var punch_damage: float = 20.0
+## The blow reaches a sphere this far in front of the player, this big.
+@export var punch_reach: float = 1.1
+@export var punch_radius: float = 0.6
+## Share of the usual speed while punching.
+@export_range(0.0, 1.0) var punch_move_scale: float = 0.25
+## Taking a blow: how hard it pushes the player back (m/s) and how long they reel.
+@export var hit_knockback: float = 3.0
+@export var hit_stagger_time: float = 0.25
+
+@export_group("Hospital (M7)")
+## Waking up in hospital costs this share of the player's cash, at least the minimum (as much as
+## they have).
+@export_range(0.0, 1.0) var hospital_fee_share: float = 0.1
+@export var hospital_fee_min: int = 100

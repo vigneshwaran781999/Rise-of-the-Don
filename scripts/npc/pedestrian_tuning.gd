@@ -39,3 +39,13 @@ extends Resource
 ## The player counts as bumping into someone this close (metres) while walking at them.
 @export var bump_distance: float = 0.85
 @export var bump_cooldown: float = 3.0
+
+@export_group("Punched (M7)")
+## Blows a person can take before they go down (health; the player's punch does 20).
+@export var health: float = 40.0
+## A blow that doesn't floor them pushes them back this hard (m/s) for this long, then they run
+## (long enough for a quick second punch to land).
+@export var hit_knockback: float = 2.5
+@export var hit_stagger_time: float = 0.6
+## People this close to a fight run from it.
+@export var fight_alert_radius: float = 12.0

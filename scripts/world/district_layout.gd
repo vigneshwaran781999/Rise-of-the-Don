@@ -60,6 +60,8 @@ var places: Dictionary = {}
 ## Where you are released after an arrest, if the district has a police station.
 var police_station := Transform3D()
 var has_police_station: bool = false
+## Where you wake after being knocked out (M7): the doors of its hospitals and clinics.
+var hospitals: Array[Transform3D] = []
 ## Map labels: [text, world Vector2].
 var map_labels: Array = []
 ## Sea inside the district (world x/z): drawn as water, never walked on by pedestrians.
@@ -661,6 +663,8 @@ func _special_buildings(specials: Array, clearable: Array[StringName]) -> void:
 		if str(place_id).begins_with("police"):     # the district's police station
 			police_station = places[place_id]
 			has_police_station = true
+		if str(place_id).begins_with("hospital"):   # a hospital or clinic
+			hospitals.append(places[place_id])
 
 
 # --------------------------------------------------------------------------- signals, crossings

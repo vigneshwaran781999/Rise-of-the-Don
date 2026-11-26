@@ -33,6 +33,8 @@ func _ready() -> void:
 	_streams[&"ui_back"] = AudioSynth.blips(PackedFloat32Array([1320.0, 880.0]), 0.045, 0.2)
 	_streams[&"footstep"] = AudioSynth.thump(0.09, 0.35, 95.0, 0.55, 11)
 	_streams[&"land"] = AudioSynth.thump(0.22, 0.2, 62.0, 0.85, 23)
+	_streams[&"punch_swing"] = AudioSynth.whoosh(0.2, 0.7, 37)
+	_streams[&"punch_hit"] = AudioSynth.thump(0.13, 0.55, 88.0, 1.0, 41)
 	# Mission stingers (GDD §13): rising for start and pass, falling for failure.
 	_streams[&"mission_start"] = AudioSynth.blips(PackedFloat32Array([523.3, 784.0, 1046.5]), 0.11, 0.22)
 	_streams[&"mission_passed"] = AudioSynth.blips(PackedFloat32Array([523.3, 659.3, 784.0, 1046.5, 1318.5]), 0.13, 0.26)

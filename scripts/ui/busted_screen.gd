@@ -1,9 +1,16 @@
 class_name BustedScreen
 extends CanvasLayer
 ## The arrest card (GDD §7): "BUSTED" in police red and blue with the fine, while the game holds
-## still for a moment. The game session then puts the player at the police station.
+## still for a moment. The game session then puts the player at the police station. HospitalScreen
+## (M7) is the same card with other words and colours.
 
 const HOLD_SECONDS: float = 3.0
+
+## The big word, the line under it (formatted with the amount) and the colours the word's glow
+## flashes between.
+var title_text: String = "BUSTED"
+var amount_format: String = "Fine: %s"
+var flash_colours: Array[Color] = [Color("ff2a3a"), Color("2a5bff")]
 
 var _root: Control
 var _title: Label
@@ -21,9 +28,14 @@ func is_showing() -> bool:
 	return _root.visible
 
 
+## The amount line as shown.
+func get_amount_text() -> String:
+	return _fine.text
+
+
 ## Shows the card for a few seconds with the game paused; returns when it is done.
-func play(fine: int) -> void:
-	_fine.text = "Fine: %s" % EconomyManager.format(fine)
+func play(amount: int) -> void:
+	_fine.text = amount_format % EconomyManager.format(amount)
 	_root.modulate.a = 0.0
 	_root.show()
 	get_tree().paused = true
@@ -37,9 +49,9 @@ func play(fine: int) -> void:
 
 func _process(_delta: float) -> void:
 	if _root.visible:
-		var red: bool = int(Time.get_ticks_msec() / 300) % 2 == 0
-		_title.label_settings.outline_color = Color("ff2a3a") if red else Color("2a5bff")
-		_title.label_settings.shadow_color = Color(_title.label_settings.outline_color, 0.6)
+		var index: int = int(Time.get_ticks_msec() / 300) % flash_colours.size()
+		_title.label_settings.outline_color = flash_colours[index]
+		_title.label_settings.shadow_color = Color(flash_colours[index], 0.6)
 
 
 func _build() -> void:
@@ -59,12 +71,12 @@ func _build() -> void:
 	_root.add_child(box)
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_title = Label.new()
-	_title.name = "BustedTitle"
-	_title.text = "BUSTED"
+	_title.name = title_text.capitalize() + "Title"
+	_title.text = title_text
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var settings: LabelSettings = UIStyle.glow_label(110, UIStyle.TEXT, Color("ff2a3a"), 22)
+	var settings: LabelSettings = UIStyle.glow_label(110, UIStyle.TEXT, flash_colours[0], 22)
 	settings.outline_size = 10
-	settings.outline_color = Color("ff2a3a")
+	settings.outline_color = flash_colours[0]
 	_title.label_settings = settings
 	box.add_child(_title)
 	_fine = Label.new()
