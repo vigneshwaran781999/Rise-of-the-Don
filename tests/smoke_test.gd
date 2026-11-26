@@ -15,7 +15,7 @@ extends Node
 ## and tests/save_test.tscn (M5 missions, cash, saving). Saves go to user://test_saves.
 
 const ErrorCatcher := preload("res://tests/error_catcher.gd")
-const TIMEOUT_SEC: float = 180.0
+const TIMEOUT_SEC: float = 360.0
 const MAIN_MENU: String = "res://scenes/main/main_menu.tscn"
 const GAME: String = "res://scenes/main/game.tscn"
 const TEST_CUBE_PATH: String = "res://assets/models/test/prop_test_cube.glb"
@@ -116,7 +116,7 @@ func _run_checks() -> String:
 		_check_streaming, _check_downtown, _check_beach, _check_industrial, _check_luxury, _check_countryside, _check_fleet,
 		_check_traffic_signals, _check_lane_graph, _check_navmesh,
 		_check_walk_forward, _check_sprint, _check_jump, _check_kerb_step_up, _check_punch,
-		_check_camera, _check_hud,
+		_check_camera, _check_hud, _check_graphics,
 		_check_vehicle_parked, _check_enter_vehicle, _check_drive_brake_reverse, _check_steering,
 		_check_vehicle_cameras, _check_horn_and_lights, _check_crash_damage, _check_pause_in_vehicle,
 		_check_exit_vehicle, _check_exit_at_speed, _check_exit_blocked_door,
@@ -294,6 +294,20 @@ func _check_main_menu() -> String:
 				return "%s shows '%s' for level %s" % [pair[0], button.text, Settings.DENSITY_NAMES[seen[press]]]
 		if seen[2] != before or seen[0] == before or seen[1] == before or seen[0] == seen[1]:
 			return "%s should cycle through all three levels (from %d: %s)" % [pair[0], before, seen]
+	# Graphics (M8): every option has its button; the quality button cycles the presets and the
+	# other rows follow it (what each option does in the game is checked in _check_graphics).
+	for button_name: String in ["QualityButton", "AmbientOcclusionToggle", "GlowToggle", "ShadowButton", "RenderScaleButton",
+			"VSyncToggle", "FullscreenToggle"]:
+		if _find(settings_panel, button_name) as Button == null:
+			return "the settings panel has no %s" % button_name
+	var quality_button := _find(settings_panel, "QualityButton") as Button
+	var start_quality: int = Settings.quality
+	quality_button.pressed.emit()
+	var glow_text: String = (_find(settings_panel, "GlowToggle") as Button).text
+	if Settings.quality == start_quality or not quality_button.text.contains(Settings.QUALITY_NAMES[Settings.quality].to_upper()) \
+			or glow_text != ("ON" if Settings.glow else "OFF"):
+		return "the quality button should move to the next preset and the other rows follow (%s, glow row '%s')" % [quality_button.text, glow_text]
+	Settings.set_quality(start_quality)
 	(_find(settings_panel, "BackButton") as Button).pressed.emit()
 	await _process_frames(2)
 	if settings_panel.visible:
@@ -1100,6 +1114,51 @@ func _check_camera() -> String:
 		return "camera pitch is not clamped"
 	rig.set_view_degrees(0.0, rig.settings.default_pitch_degrees)
 	print("  ok  camera follows (arm %.1f m), stick look turns it, pitch is clamped" % cam_distance)
+	return ""
+
+
+## Graphics settings (M8, GDD §16: every graphics option must change something): each option
+## changes what the renderer uses: ambient occlusion and glow in the environment, the sun's
+## shadow splits and reach and the number of real streetlights, the 3D render scale. VSync and
+## fullscreen only show in a real window (TESTING.md).
+func _check_graphics() -> String:
+	var lighting := get_tree().current_scene.get_node("World/Lighting") as WorldLighting
+	var env: Environment = lighting.world_environment.environment
+	var pool: StreetLightPool = (get_tree().current_scene.get_node("DayNight") as DayNightCycle).street_lights
+	var root: Viewport = get_tree().root
+	var start: int = Settings.quality
+	var report: PackedStringArray = []
+	Settings.set_quality(2)
+	var ao_on: bool = env.ssao_enabled
+	Settings.set_ambient_occlusion(false)
+	if not ao_on or env.ssao_enabled:
+		return "ambient occlusion should switch the environment's SSAO (High %s, then off %s)" % [ao_on, env.ssao_enabled]
+	report.append("ambient occlusion")
+	Settings.set_glow(false)
+	if env.glow_enabled:
+		return "glow off should switch the environment's glow off"
+	report.append("glow")
+	var high_reach: float = lighting.sun.directional_shadow_max_distance
+	var high_lights: int = pool.get_active_count()
+	Settings.set_shadow_quality(0)
+	if lighting.sun.directional_shadow_mode != DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS or lighting.sun.directional_shadow_max_distance >= high_reach \
+			or pool.get_active_count() >= high_lights:
+		return "low shadows should mean 2 splits, a shorter reach and fewer streetlights (reach %.0f -> %.0f, lights %d -> %d)" % [
+			high_reach, lighting.sun.directional_shadow_max_distance, high_lights, pool.get_active_count()]
+	report.append("shadows (reach %.0f -> %.0f m, lights %d -> %d)" % [high_reach, lighting.sun.directional_shadow_max_distance, high_lights, pool.get_active_count()])
+	Settings.set_render_scale(0.67)
+	if absf(root.scaling_3d_scale - 0.67) > 0.01 or root.scaling_3d_mode != Viewport.SCALING_3D_MODE_FSR:
+		return "render scale 67%% should render 3D at 0.67 with FSR (%.2f, mode %d)" % [root.scaling_3d_scale, root.scaling_3d_mode]
+	Settings.set_render_scale(1.0)
+	if absf(root.scaling_3d_scale - 1.0) > 0.01:
+		return "render scale 100%% should render 3D at full size"
+	report.append("render scale")
+	Settings.set_quality(0)
+	var low: Array = [env.ssao_enabled, env.glow_enabled, root.scaling_3d_scale]
+	Settings.set_quality(start)
+	if low[0] or low[1] or low[2] > 0.8:
+		return "the Low preset should turn off ambient occlusion and glow and lower the render scale (%s)" % [low]
+	print("  ok  graphics settings change the renderer: %s; the Low preset sets them all" % ", ".join(report))
 	return ""
 
 

@@ -310,6 +310,28 @@ Main menu → Settings (or pause → Settings): master, music and effects volume
 | Medium (default) | 14 | 26 |
 | High | 22 | 42 |
 
+**Graphics** (in the same screen; scroll down):
+- **Graphics quality:** a preset that sets the options below.
+- **Ambient occlusion:** soft shadows in corners and under things.
+- **Glow:** bloom around lamps, windows and neon.
+- **Shadows and lights:** how sharp the sun's shadows are, how far they reach, and how many streetlights cast real light at night.
+- **Render scale:** below 100% the 3D view renders smaller and is upscaled with AMD FSR.
+- **VSync** and **Fullscreen**.
+
+| Preset | Ambient occlusion | Glow | Shadows and lights | Render scale | Aimed at |
+|---|---|---|---|---|---|
+| Low | off | off | Low (2 lights) | 77% | 60 FPS at 1080p on integrated graphics |
+| Medium (default) | off | on | Medium (4 lights) | 77% | 60 FPS at 1080p on a GTX 1650 / RTX 3050 class laptop |
+| High | on | on | High (4 lights) | 100% | faster graphics cards |
+
+Measured on an Intel UHD 730 at 1080p (the spawn street, `tests/perf_baseline.tscn`):
+
+| Preset | Day | Night |
+|---|---:|---:|
+| Low | 60 FPS | 60 FPS |
+| Medium | 52 FPS | 44 FPS |
+| High | 35 FPS | 30 FPS |
+
 ## Project layout
 
 ```

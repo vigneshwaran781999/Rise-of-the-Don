@@ -746,3 +746,24 @@ Dated entries: what was built, what broke, how it was fixed.
   - **Loading:** New Game, Continue and Load used to freeze the menu while the city loaded. A `LoadingCard` now shows VELANAGAR, a progress bar and a gameplay tip. The game scene loads on a background thread behind it, and the card fades once the city has streamed in. Tests now wait for the game scene by the clock, and the smoke test checks the card appears and goes.
   - **Main menu footer:** it said "Milestone 6"; it now shows just the version and the controls.
   - **Checked and left alone:** the 9 am beach is bright (white sand in low sun) but reads as morning; every other view was fine.
+- **Step 5, graphics settings and optimisation:**
+  - **Settings** (main menu or pause → Settings → Graphics): a quality preset (Low, Medium the default, High), ambient occlusion, glow, shadows and lights, render scale, VSync and fullscreen. All are saved.
+    - `Settings` applies render scale (FSR below 100%), VSync, fullscreen, and the sun's shadow atlas and filter.
+    - `WorldLighting` applies ambient occlusion and glow, and shadow splits and reach, and re-applies when they change.
+    - The street-light pool lights as many lamps as the shadows-and-lights level allows.
+  - **Street lights:** measuring showed the four pooled street lights cost about 3 ms at night on this machine. They are now downward cones (13 m reach, 62°) instead of 16 m spheres, at about half the cost, and closer to how lamps light a street.
+  - **Results on this PC at 1080p:**
+
+    | Preset | Day | Night | Target |
+    |---|---:|---:|---:|
+    | Low | 60 FPS | 60 FPS | 60 |
+    | Medium | 52 FPS | 44 FPS | 40+ |
+    | High | 35 FPS | 30 FPS | none |
+
+    Details in `docs/PERFORMANCE.md`; the baseline now measures each preset by day and at night.
+  - **Tests:** the smoke test checks the settings panel's graphics buttons (the preset cycles the others), and that each option changes what the renderer uses:
+    - SSAO and glow in the environment;
+    - the sun's splits and shadow reach, and the number of street lights;
+    - the 3D scale and FSR.
+
+    VSync and fullscreen can only be seen in a real window (TESTING.md).

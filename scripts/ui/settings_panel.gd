@@ -1,7 +1,9 @@
 class_name SettingsPanel
 extends MenuPanel
-## Master / music / effects volume, mouse sensitivity, invert-Y, pedestrian and traffic density
-## (subset of GDD §10).
+## Master / music / effects volume, mouse sensitivity, invert-Y, pedestrian and traffic density,
+## and graphics (M8: the quality preset, ambient occlusion, glow, shadows and lights, render scale,
+## VSync, fullscreen; Settings applies them)
+## (subset of GDD §10). The rows scroll (keyboard and gamepad focus brings each into view).
 ## Changes apply instantly; they are written to user://settings.cfg when the panel closes.
 
 const PREVIEW_INTERVAL_MS: int = 120
@@ -13,6 +15,7 @@ var _sensitivity_label: Label
 var _invert: Button
 var _density_buttons: Dictionary = {}  # StringName -> Button
 var _last_preview_ms: int = 0
+var _graphics_rows: Array = []        # [Button, Callable that gives its text]
 
 
 func _ready() -> void:
@@ -33,6 +36,7 @@ func _on_opening() -> void:
 	_invert.text = "ON" if Settings.invert_y else "OFF"
 	for key: StringName in _density_buttons:
 		(_density_buttons[key] as Button).text = "◀  %s  ▶" % Settings.DENSITY_NAMES[Settings.get_density(key)].to_upper()
+	_refresh_graphics()
 
 
 func _on_closing() -> void:
@@ -50,11 +54,18 @@ func _build() -> void:
 	box.add_child(UIStyle.make_heading("SETTINGS"))
 	box.add_child(HSeparator.new())
 
+	var scroll := ScrollContainer.new()
+	scroll.name = "Rows"
+	scroll.custom_minimum_size = Vector2(0.0, 600.0)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	box.add_child(scroll)
 	var grid := GridContainer.new()
 	grid.columns = 3
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 28)
 	grid.add_theme_constant_override("v_separation", 24)
-	box.add_child(grid)
+	scroll.add_child(grid)
 	_add_volume_row(grid, "Master volume", &"master_volume", "MasterSlider")
 	_add_volume_row(grid, "Music volume", &"music_volume", "MusicSlider")
 	_add_volume_row(grid, "Effects volume", &"sfx_volume", "SfxSlider")
@@ -79,6 +90,33 @@ func _build() -> void:
 
 	_add_density_row(grid, "Pedestrians", &"pedestrian_density", "PedestrianDensityButton")
 	_add_density_row(grid, "Traffic", &"traffic_density", "TrafficDensityButton")
+
+	var heading := _row_label("GRAPHICS")
+	heading.add_theme_color_override("font_color", UIStyle.MAGENTA)
+	grid.add_child(heading)
+	grid.add_child(Control.new())
+	grid.add_child(Control.new())
+	_add_option_row(grid, "Graphics quality", "QualityButton",
+		func() -> String: return _cycle_text(Settings.QUALITY_NAMES[Settings.quality]),
+		func() -> void: Settings.set_quality((Settings.quality + 1) % Settings.QUALITY_NAMES.size()))
+	_add_option_row(grid, "Ambient occlusion", "AmbientOcclusionToggle",
+		func() -> String: return _on_off(Settings.ambient_occlusion),
+		func() -> void: Settings.set_ambient_occlusion(not Settings.ambient_occlusion))
+	_add_option_row(grid, "Glow", "GlowToggle",
+		func() -> String: return _on_off(Settings.glow),
+		func() -> void: Settings.set_glow(not Settings.glow))
+	_add_option_row(grid, "Shadows and lights", "ShadowButton",
+		func() -> String: return _cycle_text(Settings.SHADOW_NAMES[Settings.shadow_quality]),
+		func() -> void: Settings.set_shadow_quality((Settings.shadow_quality + 1) % Settings.SHADOW_NAMES.size()))
+	_add_option_row(grid, "Render scale", "RenderScaleButton",
+		func() -> String: return _cycle_text("%d%%" % roundi(Settings.render_scale * 100.0)),
+		func() -> void: Settings.set_render_scale(_next_scale()))
+	_add_option_row(grid, "VSync", "VSyncToggle",
+		func() -> String: return _on_off(Settings.vsync),
+		func() -> void: Settings.set_vsync(not Settings.vsync))
+	_add_option_row(grid, "Fullscreen", "FullscreenToggle",
+		func() -> String: return _on_off(Settings.fullscreen),
+		func() -> void: Settings.set_fullscreen(not Settings.fullscreen))
 
 	box.add_child(HSeparator.new())
 	box.add_child(_make_back_button())
@@ -106,6 +144,45 @@ func _add_density_row(grid: GridContainer, text: String, key: StringName, node_n
 	grid.add_child(button)
 	grid.add_child(Control.new())
 	_density_buttons[key] = button
+
+
+## A graphics option: a button showing `show`'s text that does `press` (and refreshes every
+## graphics row: the quality preset changes the others).
+func _add_option_row(grid: GridContainer, text: String, node_name: String, show: Callable, press: Callable) -> void:
+	grid.add_child(_row_label(text))
+	var button := Button.new()
+	button.name = node_name
+	button.custom_minimum_size = Vector2(200.0, 48.0)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.pressed.connect(func() -> void:
+		press.call()
+		_refresh_graphics()
+		AudioManager.play_ui(&"ui_move"))
+	grid.add_child(button)
+	grid.add_child(Control.new())
+	_graphics_rows.append([button, show])
+
+
+func _refresh_graphics() -> void:
+	for row: Array in _graphics_rows:
+		(row[0] as Button).text = (row[1] as Callable).call()
+
+
+static func _cycle_text(value: String) -> String:
+	return "◀  %s  ▶" % value.to_upper()
+
+
+static func _on_off(enabled: bool) -> String:
+	return "ON" if enabled else "OFF"
+
+
+## The render scale after the current one (wrapping round).
+static func _next_scale() -> float:
+	var scales: PackedFloat32Array = Settings.RENDER_SCALES
+	for i: int in scales.size():
+		if absf(scales[i] - Settings.render_scale) < 0.01:
+			return scales[(i + 1) % scales.size()]
+	return scales[scales.size() - 1]
 
 
 func _on_density_pressed(key: StringName, button: Button) -> void:

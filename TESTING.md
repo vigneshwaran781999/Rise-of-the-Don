@@ -385,3 +385,11 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **New Game, Continue and Load:** the loading card (VELANAGAR, a progress bar, a tip) shows while the city loads and fades into the game. No frozen menu.
 - [ ] **The opening view:** the temple's gopuram straight ahead, the street clear on both sides.
 - [ ] **The container yard** (Industrial Zone): no thin coloured lines floating beside the container stacks.
+
+### Graphics settings (step 5)
+- [ ] Settings → Graphics: switch **Graphics quality** between Low, Medium and High in the game (pause → Settings). Each looks different (Low: no bloom on neon, a softer image; High: shadowed corners, sharper) and runs faster or slower (F3 shows FPS).
+- [ ] Each option on its own changes the picture: **Ambient occlusion** (dark corners under awnings), **Glow** (bloom on neon and lamps), **Shadows and lights** (shadow reach; at night, how many lamps cast pools of light), **Render scale** (sharpness).
+- [ ] **VSync:** off lets the frame rate go above your screen's refresh rate (F3); on holds it there.
+- [ ] **Fullscreen:** switches between a window and the whole screen.
+- [ ] **Street lights at night:** pools of warm light on the road and sidewalk under the nearest lamps (orange in the Industrial Zone).
+- [ ] Settings are kept after quitting and starting again.

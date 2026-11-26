@@ -119,7 +119,7 @@ func _check_dusk_and_dawn() -> String:
 	await _ticks(2)
 	var lamps: int = _cycle.street_lights.get_lamp_count()
 	var lit: int = _cycle.street_lights.get_lit_count()
-	if not _cycle.is_dark() or lamps < 20 or lit != mini(GameState.DAY_NIGHT.real_street_lights, lamps):
+	if not _cycle.is_dark() or lamps < 20 or lit != mini(_cycle.street_lights.get_active_count(), lamps):
 		return "at night: dark %s, %d lamps known, %d real lights lit" % [_cycle.is_dark(), lamps, lit]
 	if not traffic.headlights_on:
 		return "traffic headlights should come on at night"
@@ -131,7 +131,7 @@ func _check_dusk_and_dawn() -> String:
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	var nearest_lit: float = INF
 	for i: int in _cycle.street_lights.get_child_count():
-		var light := _cycle.street_lights.get_child(i) as OmniLight3D
+		var light := _cycle.street_lights.get_child(i) as Light3D
 		if light.visible:
 			nearest_lit = minf(nearest_lit, light.global_position.distance_to(camera.global_position))
 	if nearest_lit > 60.0:

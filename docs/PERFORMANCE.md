@@ -221,3 +221,41 @@ Video memory is 333 MB (unchanged).
 - **Streaming one chunk at a time:** to avoid an engine race in the headless test renderer (see DEVELOPMENT_LOG, step 12b), background chunk loads now run one after another instead of all at once. The streaming drive along Ring B at 72 km/h still loaded all 10 chunks it needed in time: 35 FPS average, 1% worst frame 32.9 ms, worst frame 33.8 ms (step 9: 35 FPS, 1% worst 33 ms). Watch for pop-in at higher speeds, for example on the motorcycle at full speed between districts.
 - **Cutscene fill light:** one omni light without shadows, switched on only while a cutscene plays.
 - **City life** (physics including all NPC scripts): 7.4 ms per step at High, as at step 9.
+
+## M8: graphics presets (2026-11-26)
+
+The target in GDD §16 is 60 FPS at 1080p on a GTX 1650-class laptop at Medium. This machine (Intel UHD 730) is the stand-in, as agreed with the user: 60 FPS on Low and at least 40 on Medium here.
+
+What the frame time was made of at night on Low (spawn street, a throwaway probe scene, each line on top of the last):
+
+| Change | ms |
+|---|---:|
+| Night, 4 pooled street lights (16 m spheres) | 19.6 |
+| Street lights off | 16.7 |
+| Moon's shadows off | 16.7 |
+| Lit windows off | 16.7 |
+| Fog off | 16.7 |
+
+The day-night cycle's own updates cost nothing measurable.
+
+The four real street lights cost about 3 ms; nothing else at night did. As 13 m downward cones (a SpotLight3D) they cost about half as much as 16 m spheres. They also look more like lamps (pools of light on the street), so every preset uses them now. Low lights 2 of them and the other presets 4.
+
+At Medium at night (26.75 ms at the time), each change on its own:
+
+| Change | ms |
+|---|---:|
+| 2 lights instead of 4 | 25.9 |
+| Glow off | 22.4 |
+| 77% render scale | 23.5 |
+
+Glow carries the neon look, so Medium renders at 77% (FSR upscaling) instead.
+
+The presets (`Settings.QUALITY_PRESETS`) at the spawn view, 1920x1080:
+
+| Preset | 13:00 | 21:30 |
+|---|---:|---:|
+| Low (no AO, no glow, low shadows, 2 lights, 77%) | 60 FPS (16.7 ms) | 60 FPS (16.7 ms) |
+| Medium (no AO, glow, medium shadows, 4 lights, 77%) | 52 FPS (19.2 ms) | 44 FPS (22.9 ms) |
+| High (AO, glow, high shadows, 4 lights, 100%) | 35 FPS (28.2 ms) | 30 FPS (33.6 ms) |
+
+Low reads 60 at 16.7 ms whatever else changes, so it is held at the window's 60 Hz with headroom left (VSync off still caps windowed mode here). The district rows above are measured at High, as before.

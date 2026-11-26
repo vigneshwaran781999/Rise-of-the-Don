@@ -1,7 +1,8 @@
 class_name WorldLighting
 extends Node3D
 ## Creates the WorldEnvironment (procedural sky, ambient light, fog, ACES tonemapping, glow,
-## SSAO, colour adjustment) and the sun DirectionalLight3D, and shows a LightingPreset with them.
+## SSAO, colour adjustment) and the sun DirectionalLight3D, and shows a LightingPreset with them,
+## as far as the graphics settings allow (ambient occlusion, glow, shadow splits and reach).
 ## apply() can be called again at any time (the day/night cycle does, with blended presets): it
 ## updates the existing sky and environment rather than building new ones.
 ## The sky also carries clouds (M7: a noise panorama drawn over it, as thick as set_cloud_cover()
@@ -14,6 +15,7 @@ var world_environment: WorldEnvironment
 var _sky_material: ProceduralSkyMaterial
 var _env: Environment
 var _cloud_cover: float = 0.0
+var _shown: LightingPreset          # the preset (or blend) on show, re-applied when graphics change
 
 
 func _ready() -> void:
@@ -47,16 +49,20 @@ func _ready() -> void:
 	world_environment.environment = _env
 	add_child(world_environment)
 	apply(preset)
+	Settings.changed.connect(_on_settings_changed)
 
 
 func apply(p: LightingPreset) -> void:
+	_shown = p
+	var shadows: Array = Settings.get_shadow_level()
 	var elevation: float = deg_to_rad(p.sun_elevation_degrees)
 	var azimuth: float = deg_to_rad(p.sun_azimuth_degrees)
 	var to_sun := Vector3(sin(azimuth) * cos(elevation), sin(elevation), -cos(azimuth) * cos(elevation))
 	sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
 	sun.light_color = p.sun_color
 	sun.light_energy = p.sun_energy
-	sun.directional_shadow_max_distance = p.shadow_max_distance
+	sun.directional_shadow_max_distance = p.shadow_max_distance * float(shadows[2])
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if int(shadows[1]) <= 2 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	_sky_material.sky_top_color = p.sky_top_color
 	_sky_material.sky_horizon_color = p.sky_horizon_color
 	_sky_material.ground_horizon_color = p.ground_horizon_color
@@ -65,7 +71,8 @@ func apply(p: LightingPreset) -> void:
 	_env.ambient_light_energy = p.ambient_energy
 	_env.tonemap_exposure = p.exposure
 	_env.glow_intensity = p.glow_intensity
-	_env.ssao_enabled = p.ssao_enabled
+	_env.ssao_enabled = p.ssao_enabled and Settings.ambient_occlusion
+	_env.glow_enabled = Settings.glow
 	_env.fog_light_color = p.fog_color
 	_env.fog_density = p.fog_density
 	_env.fog_sun_scatter = p.fog_sun_scatter
@@ -130,3 +137,9 @@ static func _cloud_texture() -> NoiseTexture2D:
 	texture.color_ramp = ramp
 	_clouds = texture
 	return texture
+
+
+## The graphics settings changed (Settings): show the same light again with them.
+func _on_settings_changed(key: StringName) -> void:
+	if key == &"graphics" and _shown != null:
+		apply(_shown)

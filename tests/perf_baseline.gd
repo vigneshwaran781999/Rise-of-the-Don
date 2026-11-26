@@ -44,6 +44,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	Settings.persist = false
+	Settings.set_quality(2)        # the views are measured at High (as before M8); the presets get their own rows
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
 	get_window().size = Vector2i(1920, 1080)
@@ -88,18 +89,17 @@ func _run() -> void:
 	# Where the time goes: the fixed cost of the screen (sky only), then the spawn view with the
 	# heaviest screen effects switched off and at a lower 3D render resolution.
 	results.append(await _measure_view(world, player, ["Sky only (fixed per-pixel cost)", Vector3(73.5, 1.9, 1.5), Vector3(73.5, 50.0, 1.6)], true))
-	var env: Environment = (world.get_node("Lighting").find_children("*", "WorldEnvironment", true, false)[0] as WorldEnvironment).environment
-	day_night.set_process(false)     # its presets would switch the effects back on
-	env.ssao_enabled = false
-	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - SSAO off", VIEWS[0][1], VIEWS[0][2]], true))
-	env.glow_enabled = false
-	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - SSAO and glow off", VIEWS[0][1], VIEWS[0][2]], true))
-	env.ssao_enabled = true
-	env.glow_enabled = true
-	get_viewport().scaling_3d_scale = 0.75
-	results.append(await _measure_view(world, player, [VIEWS[0][0] + " - 75% 3D resolution", VIEWS[0][1], VIEWS[0][2]], true))
-	get_viewport().scaling_3d_scale = 1.0
-	day_night.set_process(true)
+	# The graphics presets (M8, Settings) at the spawn view by day and at night; High is what the
+	# rows above use.
+	for level: int in [0, 1, 2]:
+		Settings.set_quality(level)
+		for hour: float in [13.0, 21.5]:
+			GameState.set_hour(hour)
+			day_night.refresh()
+			var label: String = "%s - %s preset, %s" % [VIEWS[0][0], Settings.QUALITY_NAMES[level], "13:00" if hour < 20.0 else "night 21:30"]
+			results.append(await _measure_view(world, player, [label, VIEWS[0][1], VIEWS[0][2]], true))
+	Settings.set_quality(2)
+	GameState.set_hour(13.0)
 	day_night.refresh()
 	var drive: Dictionary = await _streaming_drive(world)
 	var life: Array = []
