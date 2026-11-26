@@ -2,22 +2,15 @@ class_name DialogueScene
 extends Node3D
 ## A dialogue scene (GDD §3: "a dialogue scene" with an important contact): while the
 ## conversation plays the camera cuts to a side-on two-shot of the player and whoever they're
-## talking to, black bars slide in at the top and bottom of the screen, and the player stands
+## talking to, black bars (Letterbox) slide in at the top and bottom of the screen, and the player stands
 ## still, turned towards them. stop() puts everything back. MissionDirector runs one for TALK_TO
 ## objectives marked `scene`.
 
-## Bar height as a share of the screen height.
-const BAR_SHARE: float = 0.1
-const SLIDE_SECONDS: float = 0.35
-
 var _camera: Camera3D
-var _bars: CanvasLayer
-var _top: ColorRect
-var _bottom: ColorRect
+var _bars: Letterbox
 var _previous: Camera3D
 var _player: PlayerController
 var _playing: bool = false
-var _tween: Tween
 
 
 func _ready() -> void:
@@ -26,13 +19,9 @@ func _ready() -> void:
 	_camera.fov = 48.0
 	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # placed by hand, cut to at once
 	add_child(_camera)
-	_bars = CanvasLayer.new()
+	_bars = Letterbox.new()
 	_bars.name = "Letterbox"
-	_bars.layer = 5
 	add_child(_bars)
-	_top = _make_bar(true)
-	_bottom = _make_bar(false)
-	_set_bars(0.0)
 
 
 func is_playing() -> bool:
@@ -80,7 +69,7 @@ func play(player: PlayerController, other: Node3D) -> void:
 	_camera.global_position = best
 	_camera.look_at(mid, Vector3.UP)
 	_camera.make_current()
-	_slide(1.0)
+	_bars.set_shown(true)
 
 
 ## Back to the game camera; the player can move again.
@@ -93,35 +82,4 @@ func stop() -> void:
 	if _previous != null and is_instance_valid(_previous):
 		_previous.make_current()
 	_previous = null
-	_slide(0.0)
-
-
-func _slide(to: float) -> void:
-	if _tween != null and _tween.is_valid():
-		_tween.kill()
-	_tween = create_tween()
-	_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	_tween.tween_method(_set_bars, _top.anchor_bottom / BAR_SHARE, to, SLIDE_SECONDS)
-
-
-func _set_bars(share: float) -> void:
-	_top.anchor_bottom = BAR_SHARE * share
-	_bottom.anchor_top = 1.0 - BAR_SHARE * share
-	_top.visible = share > 0.001
-	_bottom.visible = share > 0.001
-
-
-func _make_bar(top: bool) -> ColorRect:
-	var bar := ColorRect.new()
-	bar.color = Color.BLACK
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_bars.add_child(bar)
-	bar.anchor_left = 0.0
-	bar.anchor_right = 1.0
-	bar.anchor_top = 0.0 if top else 1.0
-	bar.anchor_bottom = 0.0 if top else 1.0
-	bar.offset_left = 0.0
-	bar.offset_right = 0.0
-	bar.offset_top = 0.0
-	bar.offset_bottom = 0.0
-	return bar
+	_bars.set_shown(false)

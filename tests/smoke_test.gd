@@ -511,6 +511,13 @@ func _check_punch() -> String:
 	if get_tree().current_scene.get_node_or_null("Hospital") as HospitalScreen == null:
 		return "the game has no HOSPITALISED card"
 	print("  ok  left mouse throws a punch; %d hospitals in the city" % city.hospitals.size())
+	# Cutscenes (M7): the mission director has its cutscene player, with an AnimationPlayer and the
+	# letterbox (tests/cutscene_test.tscn plays them).
+	var cutscene: CutscenePlayer = (get_tree().current_scene as GameSession).missions.get_cutscene()
+	if cutscene == null or not cutscene.get_node_or_null("AnimationPlayer") is AnimationPlayer or cutscene.get_letterbox() == null:
+		return "the mission director should have a cutscene player (AnimationPlayer and letterbox)"
+	if cutscene.is_playing():
+		return "no cutscene should be playing in free roam"
 	return ""
 
 

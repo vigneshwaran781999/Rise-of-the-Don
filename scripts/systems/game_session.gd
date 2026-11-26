@@ -81,6 +81,7 @@ func _ready() -> void:
 	WantedSystem.busted.connect(_on_busted)
 	player.died.connect(_on_player_died)
 	missions.setup(player, world)
+	missions.get_cutscene().playing_changed.connect(_on_cutscene_playing)
 	hud.bind_missions(missions, player)
 	places.menu = shop_menu
 	places.pause_menu = pause_menu
@@ -194,3 +195,8 @@ func _on_vehicle_exited(_vehicle: VehicleController) -> void:
 func _show_region(index: int) -> void:
 	var title: String = world.data.get_region_name(index)
 	hud.show_area_title((title if title != "" else world.get_display_name()).to_upper(), "VELANAGAR")
+
+
+## The HUD steps aside while a cutscene plays (the letterbox carries its subtitles).
+func _on_cutscene_playing(playing: bool) -> void:
+	hud.visible = not playing

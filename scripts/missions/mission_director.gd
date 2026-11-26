@@ -6,7 +6,7 @@ extends Node3D
 ## - Running: puts the player at the checkpoint, brings in the mission's people and vehicles,
 ##   and runs the current objective: a cyan beam to go to, a diamond over the person to talk to
 ##   or the car to get in, the talk prompt and dialogue, carried items, the time limit, and
-##   failure when a vehicle that must survive is wrecked.
+##   failure when a vehicle that must survive is wrecked, and cutscenes (CutscenePlayer, M7).
 ## The HUD shows what it announces through the signals below.
 
 signal objective_text_changed(text: String)
@@ -44,6 +44,7 @@ var _goal: MissionMarker
 var _goal_position := Vector3.ZERO     # where the running GO_TO goes (its position, or a pick)
 var _checkpoint_index: int = 0         # CHECKPOINTS: the next one to pass
 var _scene: DialogueScene
+var _cutscene: CutscenePlayer
 var _rng := RandomNumberGenerator.new()
 var _time_left: float = -1.0
 var _talking_to: MissionContactNPC
@@ -66,6 +67,11 @@ func _ready() -> void:
 	_scene = DialogueScene.new()
 	_scene.name = "DialogueScene"
 	add_child(_scene)
+	_cutscene = CutscenePlayer.new()
+	_cutscene.name = "Cutscene"
+	_cutscene.looks = looks
+	add_child(_cutscene)
+	_cutscene.finished.connect(_on_cutscene_finished)
 
 
 func setup(player: PlayerController, world: CityWorld) -> void:
@@ -118,6 +124,11 @@ func get_objective_text() -> String:
 ## The dialogue scene (camera and letterbox) used by TALK_TO objectives marked `scene`.
 func get_scene() -> DialogueScene:
 	return _scene
+
+
+## The cutscene player used by CUTSCENE objectives (M7).
+func get_cutscene() -> CutscenePlayer:
+	return _cutscene
 
 
 ## Where the running GO_TO objective goes (its position, or the address picked this time).
@@ -374,6 +385,9 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 			_goal_position = _objective.checkpoints[0]
 		MissionObjective.Type.BUY_PROPERTY:
 			_goal_position = _objective.position
+		MissionObjective.Type.CUTSCENE:
+			marked = false
+			_play_cutscene.call_deferred(_objective)
 		_:
 			marked = false
 	if marked:
@@ -392,9 +406,34 @@ func _on_objective_started(mission: MissionData, index: int) -> void:
 		AudioManager.play_ui(&"objective")
 
 
+## CUTSCENE: the player (out of any vehicle) in the cutscene, with the mission's people playing
+## their parts (their figures in the world step aside meanwhile).
+func _play_cutscene(objective: MissionObjective) -> void:
+	if objective != _objective or MissionManager.is_failed() or objective.cutscene == null:
+		if objective == _objective and objective.cutscene == null:
+			push_error("MissionDirector: a CUTSCENE objective without a cutscene")
+			_complete()
+		return
+	if _player.is_in_vehicle():
+		_player.exit_vehicle((_player.get_node("VehicleInteractor") as VehicleInteractor).find_exit_position(_player.vehicle))
+	_world.streamer.load_around_now(objective.cutscene.anchor)
+	var cast: Dictionary = {}
+	if _mission != null:
+		for contact: MissionContact in ([_mission.giver] if _mission.giver != null else []) + _mission.contacts:
+			cast[contact.id] = contact
+	_show(objective.text, null)
+	_cutscene.play(objective.cutscene, _player, cast, _contacts)
+
+
+func _on_cutscene_finished(data: CutsceneData) -> void:
+	if _objective != null and _objective.type == MissionObjective.Type.CUTSCENE and _objective.cutscene == data:
+		_complete()
+
+
 func _on_mission_failed(_mission_data: MissionData, _reason: String) -> void:
 	dialogue.stop()
 	_scene.stop()
+	_cutscene.stop()
 	_talking_to = null
 	_set_prompt("", "")
 	timer_changed.emit(-1.0)
@@ -409,6 +448,7 @@ func _on_mission_passed(mission: MissionData) -> void:
 
 func _on_mission_ended(_mission_data: MissionData) -> void:
 	_scene.stop()
+	_cutscene.stop()
 	if not _passed:
 		dialogue.stop()
 	_clear_running(not _passed, true)

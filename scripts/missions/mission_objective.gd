@@ -9,9 +9,10 @@ extends Resource
 ##   stop. `mode` and `vehicle` as for GO_TO.
 ## - LOSE_WANTED: get the wanted level back to 0 (lose the police, or a respray).
 ## - BUY_PROPERTY: own property `property` (bought at its door; `position` marks the door).
+## - CUTSCENE: watch `cutscene` (the player is put in it, on foot); it ends the objective.
 ## Any objective can raise the wanted level when it starts (`wanted_level`).
 
-enum Type { GO_TO, TALK_TO, ENTER_VEHICLE, CHECKPOINTS, LOSE_WANTED, BUY_PROPERTY }
+enum Type { GO_TO, TALK_TO, ENTER_VEHICLE, CHECKPOINTS, LOSE_WANTED, BUY_PROPERTY, CUTSCENE }
 ## How the player must arrive at a GO_TO point.
 enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 
@@ -41,6 +42,9 @@ enum Mode { ANY, ON_FOOT, IN_VEHICLE }
 @export_group("Checkpoints")
 ## CHECKPOINTS: the points to pass, in order.
 @export var checkpoints: PackedVector3Array = PackedVector3Array()
+
+@export_group("Cutscene")
+@export var cutscene: CutsceneData
 
 @export_group("Property and police")
 ## BUY_PROPERTY: the PropertyData id to own.

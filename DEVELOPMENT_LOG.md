@@ -572,6 +572,30 @@ Dated entries: what was built, what broke, how it was fixed.
     - each district's nearest hospital.
 
     The smoke test checks left mouse punches, both hospitals and the card.
+- **Step 11, cutscenes (GDD §15: "AnimationPlayer-driven camera rigs with letterboxing"):**
+  - **Data** (`scripts/cutscenes/`):
+    - A `CutsceneData` resource holds its shots, its actors, the player's spot and an anchor (a position and a heading). Everything is placed relative to the anchor, so a cutscene can be moved without rewriting it.
+    - Each `CutsceneShot` has a camera move, a look-target move, a field-of-view change, eased or steady, and a subtitle line and/or a caption. A shot that starts where the last ended carries on; anything else is a cut.
+    - Each `CutsceneActor` has a timed walking path, a starting heading, fists up or not, and whether to face the player. It can borrow a mission contact's name, look and colours.
+  - **Playback:** `CutscenePlayer` builds an `Animation` from the data:
+    - value tracks for the camera's position, its look target and its field of view, with a 1 ms key at each shot boundary so shots cut cleanly;
+    - one position track per actor.
+
+    It advances an `AnimationPlayer` by hand each frame, then points the camera at its target and updates the actors: walk cycle and facing from how far they moved, a gesture on their line. It also:
+    - slides in the letterbox (now a shared `Letterbox`, also used by dialogue scenes) with subtitles in the bottom bar, captions and a skip hint;
+    - holds the player at their spot and hides the HUD.
+
+    Interact skips to the next shot. At the end the game camera comes back behind the player.
+  - **Missions:** a new CUTSCENE objective type plays one and completes when it ends. The mission's contacts can play parts; their figures in the world step aside while it plays. A failed or quit mission stops it.
+  - **Screenshot tool:** `--mission=id:n --scene_at=seconds` captures a moment of a mission's cutscene.
+  - **Tests:** new `tests/cutscene_test.tscn` plays a three-shot cutscene and checks:
+    - the eased glide, the cut and the steady glide;
+    - field of view, where the camera looks, captions and subtitles;
+    - an actor walking on time, facing the way it walks and gesturing;
+    - skipping, and what comes back at the end;
+    - the mission objective with a contact's stand-in, and a failure mid-cutscene.
+
+    The smoke test checks that the cutscene player is in place.
 
 **Broke and fixed**
 - **Step 1:**
@@ -609,3 +633,4 @@ Dated entries: what was built, what broke, how it was fixed.
     - Health was set straight to 8, which skips the regeneration delay, so it regenerated before the fighter's blow. It is now set by damage.
     - Starting the welcome mission moved the player to the bus stand, across the road from the fighter. The player is moved back.
     - The first navmesh query came before the map's first sync; the test now waits for it.
+- **Step 11:** no failures; the cutscene test passed on its first run.

@@ -330,3 +330,11 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] **The clinic** (Old Town, west gopuram road, west of the temple): white and green, CLINIC on the roof, a green cross on a sign standing out from the front. The cross glows at night.
 - [ ] **Velanagar General Hospital** (Downtown, east of Central Plaza): white, HOSPITAL on the roof, a big green cross up the front that glows at night.
 - [ ] Both are labelled on the full map (M).
+
+### Cutscenes (step 11)
+`tests/cutscene_test.tscn` checks the mechanics with a test cutscene. The story's own cutscenes come in step 12; check these there.
+- [ ] Black bars slide in at the top and bottom; the HUD goes; subtitles appear in the bottom bar with the speaker's name in magenta.
+- [ ] Camera moves are smooth, without jitter, and cuts are clean (no one-frame flash of the old shot).
+- [ ] People in the cutscene walk naturally (legs in time with their speed), turn the way they walk, and gesture while talking.
+- [ ] **E** skips to the next shot; at the end the camera is back behind you and you can move.
+- [ ] **Esc** pauses a cutscene; resuming carries on from the same moment.

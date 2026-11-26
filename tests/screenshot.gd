@@ -8,6 +8,7 @@ extends Node
 ##       [--drive [--throttle=frames] [--steer=-1..1] [--hood] [--health=0..1] [--headlights]] [--lanes]
 ##       [--crowd[=x,y,z]] [--chase[=n]] [--hour=0..24] [--weather=clear|cloudy|fog|rain] [--waypoint=x,z]
 ##       [--wanted=1..5 [--police=off|car|roadblock|heli]] [--outfit=id] [--shop=id] [--mission=id[:n] [--talk]]
+##       [--scene_at=seconds]
 ##
 ## --view sets the player camera angles in degrees; --cam/--look place a free camera instead.
 ## --at moves the player there first (the city streams in around them: for --cam shots far away).
@@ -21,6 +22,8 @@ extends Node
 ## --weather sets the weather at once (M7).
 ## --outfit dresses the player (an Outfit id); --shop=id puts them at that shop or property's door
 ## and opens it (the shop menu, or the offer for a property on sale).
+## --mission=id:n starts that mission at objective n (a CUTSCENE objective plays its cutscene);
+## --scene_at waits until the cutscene is that many seconds in (use with a small --frames).
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -73,6 +76,10 @@ func _run() -> void:
 		await _shop(instance, StringName(str(args["shop"])))
 	if args.has("mission"):
 		await _mission(instance, str(args["mission"]), args.has("talk"))
+	if args.has("scene_at") and instance.has_node("Missions"):
+		var cutscene: CutscenePlayer = (instance.get_node("Missions") as MissionDirector).get_cutscene()
+		while cutscene.is_playing() and cutscene.get_time() < float(args["scene_at"]):
+			await get_tree().process_frame
 	if args.has("crowd"):
 		var where: String = str(args["crowd"]) if str(args["crowd"]).count(",") == 2 else str(args.get("look", "0,0,0"))
 		await _crowd(instance, _vec3(where))
