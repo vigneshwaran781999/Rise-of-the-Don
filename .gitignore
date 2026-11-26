@@ -24,3 +24,6 @@ desktop.ini
 
 # Note: *.import and *.uid files are intentionally committed. They hold import
 # settings and resource UIDs; ignoring them breaks references on a fresh clone.
+
+# Scratch scripts while working (never part of the project)
+/tools/godot/_tmp/
