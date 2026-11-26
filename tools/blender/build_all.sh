@@ -12,7 +12,6 @@ GENERATORS=(
   buildings.py
   props.py
   vehicles.py
-  characters.py
   humans.py
   old_town.py
   downtown.py

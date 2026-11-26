@@ -2,7 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/npc/fighter.gd" id="1_fighter"]
 [ext_resource type="Resource" path="res://resources/characters/fighter.tres" id="2_tuning"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_man.glb" id="3_look"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/chr_man.glb" id="3_look"]
+[ext_resource type="Script" path="res://scripts/characters/human_figure.gd" id="4_figure"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.3
@@ -19,7 +20,8 @@ look = ExtResource("3_look")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
 shape = SubResource("CapsuleShape3D_body")
 
-[node name="Model" type="MeshInstance3D" parent="."]
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("4_figure")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 path_desired_distance = 1.0

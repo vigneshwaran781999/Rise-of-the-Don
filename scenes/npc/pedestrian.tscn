@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/npc/pedestrian.gd" id="1_ped"]
 [ext_resource type="Resource" path="res://resources/characters/pedestrian.tres" id="2_tuning"]
+[ext_resource type="Script" path="res://scripts/characters/human_figure.gd" id="3_figure"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.28
@@ -17,7 +18,8 @@ tuning = ExtResource("2_tuning")
 position = Vector3(0, 0.85, 0)
 shape = SubResource("CapsuleShape3D_body")
 
-[node name="Model" type="MeshInstance3D" parent="."]
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("3_figure")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 path_desired_distance = 0.7

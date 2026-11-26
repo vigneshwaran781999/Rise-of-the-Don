@@ -9,9 +9,6 @@ extends Resource
 @export var walk_speed: float = 1.6
 @export var run_speed: float = 4.4
 @export var turn_speed: float = 10.0
-## Metres per step (drives the walk cycle) and arm/leg swing at walking pace.
-@export var stride: float = 0.75
-@export var swing: float = 0.45
 
 @export_group("Fighting")
 ## Stops this far from the player to throw punches.

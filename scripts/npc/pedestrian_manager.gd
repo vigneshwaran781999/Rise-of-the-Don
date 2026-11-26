@@ -16,7 +16,7 @@ const SIT_SPOTS: StringName = &"sit_spots"
 
 @export var tuning: PopulationTuning
 @export var pedestrian_scene: PackedScene
-## Models to pick from: man, woman, elder (tools/blender/characters.py).
+## Models to pick from: man, woman, elder (rigged people, tools/blender/humans.py).
 @export var looks: Array[PackedScene] = []
 @export var update_interval: float = 0.25
 

@@ -100,8 +100,8 @@ func _check_population() -> String:
 			if _flat(closest).distance_to(_flat(person.global_position)) > 0.8:
 				return "%s is %.1f m off the navmesh at %s" % [person.name, _flat(closest).distance_to(_flat(person.global_position)), person.global_position]
 	for person: Pedestrian in _people.get_pedestrians():
-		looks[person.model.mesh] = true
-		tops[person.model.get_instance_shader_parameter(&"top_color")] = true
+		looks[person.model.look] = true
+		tops[person.model.get_colour(&"top_color")] = true
 	if looks.size() < 2 or tops.size() < 3:
 		return "everyone looks alike (%d models, %d shirt colours)" % [looks.size(), tops.size()]
 	if not states.has("WALK"):
@@ -197,9 +197,9 @@ func _check_sit() -> String:
 		return "the person sits %.2f m from the seat" % person.global_position.distance_to(claimed.global_position)
 	if not _people.is_seat_taken(claimed):
 		return "the seat is not marked as taken"
-	var sit_pose: float = person.model.get_instance_shader_parameter(&"sit")
-	if sit_pose < 0.9:
-		return "the person is on the seat but not in the sitting pose (sit %.2f)" % sit_pose
+	var sit_pose: StringName = person.model.get_state()
+	if sit_pose != &"sit":
+		return "the person is on the seat but not in the sitting pose (%s)" % sit_pose
 	_people.alert(claimed.global_position + Vector3(3.0, 0.0, 0.0), 10.0, true)
 	await _ticks(30)
 	if person.state != Pedestrian.State.FLEE or _people.is_seat_taken(claimed):

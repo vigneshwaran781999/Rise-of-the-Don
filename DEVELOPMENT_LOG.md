@@ -728,3 +728,15 @@ Dated entries: what was built, what broke, how it was fixed.
     - a punch plays the punch and the fists stay up afterwards;
     - a blow plays the hit, a knock-out plays the knocked fall into lying down, and waking at the hospital plays getting up.
   - **Tests:** the fight test now measures the real right hand: during a punch it reaches 0.60 m in front of the player, against 0.12 m at rest. The screenshot tool can hold the player in any gait, state or action (`--figure`).
+- **Step 3, everyone rigged:**
+  - **Who:** pedestrians, police officers, mission contacts, fighters, cutscene people and motorcycle riders are all `HumanFigure`s now. The managers already passed colours under the same names, so the change was mostly the model node:
+    - pedestrians walk, chat with gestures and sit; a punch plays the hit, a car or a second punch plays the knocked fall into lying, and they play getting up before running;
+    - officers do the same, at a run;
+    - mission contacts gesture while talking;
+    - fighters play the real wind-up, punch and stagger (no longer twisting the whole model), and the knocked fall when knocked out;
+    - cutscene people walk at their path's speed;
+    - riders sit in the drive pose.
+  - **Removed (replaced, recoverable from git history):** the old shader-rigged people (`tools/blender/characters.py`, the three `chr_ped_*` models, `CharacterBaker`, `FightPose` and `shaders/character.gdshader`), plus the pedestrian and fighter walk-cycle tunables they used (stride, swing).
+  - **Tests:**
+    - the smoke test checks each rigged model bakes to one skinned surface with its skin and all 17 clips, walking looping and a punch not;
+    - the pedestrian and cutscene tests read colours and states from the figure.

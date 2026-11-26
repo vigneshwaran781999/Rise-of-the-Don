@@ -6,8 +6,9 @@ extends CharacterBody3D
 ##   flees from crashes, horns, fights and people being hit, is knocked down by cars,
 ##   reels from punches (take_hit) and goes down when out of health,
 ##   and steps aside when the player walks into them.
-## Looks and the walk cycle come from shaders/character.gdshader (per-person colours, legs and
-## arms swung in the vertex shader). PedestrianManager spawns, removes and coordinates them.
+## Looks and movement come from a rigged HumanFigure (per-person colours; walking, sitting,
+## chatting, staggering and falling animations). PedestrianManager spawns, removes and
+## coordinates them.
 
 signal state_changed(previous: State, current: State)
 
@@ -25,15 +26,12 @@ var state: State = State.IDLE
 var manager: PedestrianManager
 
 @onready var agent: NavigationAgent3D = $NavigationAgent3D
-@onready var model: MeshInstance3D = $Model
+@onready var model: HumanFigure = $Model
 @onready var _shape: CollisionShape3D = $CollisionShape3D
 
 var _walk_speed: float = 1.3
 var _speed: float = 1.3
 var _timer: float = 0.0
-var _phase: float = 0.0
-var _swing: float = 0.0
-var _sit: float = 0.0
 var _safe_velocity: Vector3 = Vector3.ZERO
 var _partner: Pedestrian
 var _seat: Node3D
@@ -56,11 +54,9 @@ func _ready() -> void:
 ## Gives the person their look (model and colours) and pace.
 func setup(look: PackedScene, colours: Dictionary, seed_value: int) -> void:
 	_rng.seed = seed_value
-	model.mesh = CharacterBaker.get_mesh(look)
-	for key: StringName in colours:
-		model.set_instance_shader_parameter(key, colours[key])
+	model.set_look(look)
+	model.set_colours(colours)
 	_walk_speed = _rng.randf_range(tuning.walk_speed_min, tuning.walk_speed_max)
-	_phase = _rng.randf() * TAU
 
 
 func get_state_name() -> String:
@@ -167,6 +163,7 @@ func take_hit(damage: float, from: Vector3, attacker: Node3D = null) -> void:
 		velocity = push * tuning.hit_knockback
 		rotation.y = atan2(-push.x, -push.z)        # turned to face the attacker
 		_timer = tuning.hit_stagger_time
+		model.play(&"hit")
 		_set_state(State.STAGGER)
 	if manager != null:
 		manager.alert(global_position, tuning.fight_alert_radius, true, self)
@@ -192,8 +189,7 @@ func _knock_down(by: Node3D, from: Vector3 = Vector3.INF) -> void:
 	var push: Vector3 = _flat3(global_position - origin)
 	if push.length_squared() > 0.01:
 		rotation.y = atan2(-push.x, -push.z)
-	model.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
-	model.position = Vector3(0.0, 0.12, 0.0)
+	model.play(&"knocked")              # falls flat on their back, then lies there
 	_timer = tuning.knocked_time
 	_set_state(State.KNOCKED)
 
@@ -281,19 +277,19 @@ func _arrived() -> void:
 	wander()
 
 
-func _animate(delta: float) -> void:
-	var speed: float = _flat(velocity).length() if state != State.KNOCKED and state != State.SIT else 0.0
-	var target_swing: float = clampf(speed / 1.4, 0.0, 1.0) * tuning.swing * (1.5 if speed > 2.5 else 1.0)
-	if state == State.TALK:
-		target_swing = 0.12          # small hand gestures
-		_phase += delta * 2.5
-	else:
-		_phase += speed / tuning.stride * PI * delta
-	_swing = lerpf(_swing, target_swing, 1.0 - exp(-8.0 * delta))
-	_sit = move_toward(_sit, 1.0 if state == State.SIT else 0.0, delta * 3.0)
-	model.set_instance_shader_parameter(&"walk_phase", _phase)
-	model.set_instance_shader_parameter(&"swing", _swing)
-	model.set_instance_shader_parameter(&"sit", _sit)
+## The figure follows what the person is doing: their gait by speed, sitting, chatting, lying.
+func _animate(_delta: float) -> void:
+	var still: bool = state in [State.KNOCKED, State.SIT, State.STAGGER]
+	model.set_speed(0.0 if still else _flat(velocity).length())
+	match state:
+		State.SIT:
+			model.set_state(&"sit")
+		State.TALK:
+			model.set_state(&"talk")
+		State.KNOCKED:
+			model.set_state(&"down")
+		_:
+			model.set_state(&"move")
 
 
 ## The player walking into this person makes them step out of the way.
@@ -347,8 +343,7 @@ func _stand_up() -> void:
 
 
 func _get_up() -> void:
-	model.rotation = Vector3.ZERO
-	model.position = Vector3.ZERO
+	model.play(&"getup")
 	_shape.set_deferred(&"disabled", false)
 	state = State.IDLE
 	flee_from(_hit_by.global_position if is_instance_valid(_hit_by) else _danger, true)

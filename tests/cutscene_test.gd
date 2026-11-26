@@ -268,7 +268,7 @@ func _check_objective() -> String:
 		return "a CUTSCENE objective should play its cutscene"
 	var stand_in: MissionContactNPC = _director.get_contact(&"ravi")
 	var ravi: CutsceneFigure = _cutscene.get_figures()[0]
-	var shirt: Color = ravi.get_node("Model").get_instance_shader_parameter(&"top_color")
+	var shirt: Color = ravi.get_model().get_colour(&"top_color")
 	if stand_in == null or stand_in.visible:
 		return "Ravi's figure in the world should step aside while he plays his part"
 	if ravi.speaker != "Ravi" or not shirt.is_equal_approx(mission.contacts[0].top_color):

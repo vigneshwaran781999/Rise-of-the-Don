@@ -3,7 +3,7 @@ extends CharacterBody3D
 ## A police officer on foot (GDD §7): runs after the player along the sidewalks (navmesh) and
 ## straight at them when close; searches around where they were last seen; walks off when the
 ## player is clear. A car or the player's fists can knock them down (assaulting an officer is a
-## crime). Built in code: a capsule, the pedestrian man model in khaki, a NavigationAgent3D.
+## crime). Built in code: a capsule, the rigged man (HumanFigure) in khaki, a NavigationAgent3D.
 
 enum State { CHASE, SEARCH, KNOCKED, LEAVE }
 
@@ -26,13 +26,11 @@ var run_speed: float = 5.6
 var max_health: float = 60.0
 var manager: Node
 
-var model: MeshInstance3D
+var model: HumanFigure
 var agent: NavigationAgent3D
 
 var _shape: CollisionShape3D
 var _gravity: float = 9.8
-var _phase: float = 0.0
-var _swing: float = 0.0
 var _timer: float = 0.0
 var _repath: float = 0.0
 var _health: float = 60.0
@@ -51,15 +49,11 @@ func setup(look: PackedScene, skin: Color) -> void:
 	_shape.shape = capsule
 	_shape.position = Vector3(0.0, 0.85, 0.0)
 	add_child(_shape)
-	model = MeshInstance3D.new()
+	model = HumanFigure.new()
 	model.name = "Model"
-	model.mesh = CharacterBaker.get_mesh(look)
-	model.material_override = CharacterBaker.get_material()
+	model.set_colours({&"top_color": KHAKI, &"bottom_color": DARK_KHAKI, &"skin_color": skin, &"hair_color": Color("17120f")})
 	add_child(model)
-	model.set_instance_shader_parameter(&"top_color", KHAKI)
-	model.set_instance_shader_parameter(&"bottom_color", DARK_KHAKI)
-	model.set_instance_shader_parameter(&"skin_color", skin)
-	model.set_instance_shader_parameter(&"hair_color", Color("17120f"))
+	model.set_look(look)
 	agent = NavigationAgent3D.new()
 	agent.path_desired_distance = 1.0
 	agent.target_desired_distance = 1.0
@@ -105,6 +99,7 @@ func take_hit(damage: float, from: Vector3, attacker: Node3D = null) -> void:
 		velocity.x = push.x * HIT_KNOCKBACK
 		velocity.z = push.z * HIT_KNOCKBACK
 		_stagger_left = HIT_STAGGER_SECONDS
+		model.play(&"hit")
 	if manager != null and manager.has_method(&"officer_punched"):
 		manager.call(&"officer_punched", self, attacker, not _punched)
 	_punched = true
@@ -119,8 +114,7 @@ func _knock_down(from: Vector3) -> void:
 	push.y = 0.0
 	if push.length_squared() > 0.01:
 		rotation.y = atan2(-push.x, -push.z)
-	model.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
-	model.position = Vector3(0.0, 0.12, 0.0)
+	model.play(&"knocked")
 	_timer = KNOCKED_SECONDS
 	_health = max_health
 	state = State.KNOCKED
@@ -131,8 +125,7 @@ func _physics_process(delta: float) -> void:
 		State.KNOCKED:
 			_timer -= delta
 			if _timer <= 0.0:
-				model.rotation = Vector3.ZERO
-				model.position = Vector3.ZERO
+				model.play(&"getup")
 				_shape.set_deferred(&"disabled", false)
 				state = State.CHASE
 			_animate(delta, 0.0)
@@ -169,8 +162,6 @@ func _move_towards(goal: Vector3, speed: float, delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, atan2(step.x, step.z), 1.0 - exp(-10.0 * delta))
 
 
-func _animate(delta: float, speed: float) -> void:
-	_phase += speed / 0.75 * PI * delta
-	_swing = lerpf(_swing, clampf(speed / 1.4, 0.0, 1.0) * 0.45 * (1.5 if speed > 3.0 else 1.0), 1.0 - exp(-8.0 * delta))
-	model.set_instance_shader_parameter(&"walk_phase", _phase)
-	model.set_instance_shader_parameter(&"swing", _swing)
+func _animate(_delta: float, speed: float) -> void:
+	model.set_state(&"down" if state == State.KNOCKED else &"move")
+	model.set_speed(0.0 if _stagger_left > 0.0 else speed)

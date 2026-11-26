@@ -34,8 +34,8 @@ const VEHICLE_ASSETS: PackedStringArray = [
 	"vehicles/veh_wheel_sport", "vehicles/veh_wheel_suv", "vehicles/veh_wheel_heavy",
 	"vehicles/veh_bike_body", "vehicles/veh_bike_wheel",
 ]
-## Pedestrian models: visuals only too (a pedestrian is a CharacterBody3D with its own capsule).
-const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_ped_man", "characters/chr_ped_woman", "characters/chr_ped_elder"]
+## Rigged people (M8): visuals only too (everyone has their own capsule).
+const CHARACTER_ASSETS: PackedStringArray = ["characters/chr_man", "characters/chr_woman", "characters/chr_elder"]
 ## City kit pieces (every district) that must exist as baked meshes (one surface each).
 const KIT_MESHES: PackedStringArray = [
 	"road_main_seg", "road_lane_seg", "road_junction_mm", "road_walk_main", "road_walk_corner",
@@ -234,10 +234,17 @@ func _check_asset_collisions() -> String:
 			return "%s should be one surface with the palette material (run tools/godot/build_city.gd)" % mesh_path
 	for asset: String in CHARACTER_ASSETS:
 		var look := load("res://assets/models/%s.glb" % asset) as PackedScene
-		var mesh: ArrayMesh = CharacterBaker.get_mesh(look)
-		if mesh == null or mesh.get_surface_count() != 1:
-			return "%s should bake to one animated surface" % asset
-	print("  ok  %d Blender assets imported, each with visuals and collision (baking to convex hulls); %d vehicle and %d pedestrian models (visuals only, pedestrians bake to one draw call); %d city kit meshes baked to one draw call each" % [
+		var parts: Dictionary = HumanBaker.get_parts(look)
+		var mesh: ArrayMesh = parts["mesh"]
+		var library: AnimationLibrary = parts["library"]
+		if mesh == null or mesh.get_surface_count() != 1 or mesh.surface_get_arrays(0)[Mesh.ARRAY_BONES] == null or parts["skin"] == null:
+			return "%s should bake to one skinned surface with its skin" % asset
+		for clip: StringName in HumanFigure.ACTIONS + [&"idle", &"walk", &"run", &"sprint", &"guard", &"sit", &"drive", &"down", &"fall", &"talk"]:
+			if not library.has_animation(clip):
+				return "%s has no '%s' animation" % [asset, clip]
+		if library.get_animation(&"walk").loop_mode != Animation.LOOP_LINEAR or library.get_animation(&"punch").loop_mode != Animation.LOOP_NONE:
+			return "%s: walking should loop and a punch shouldn't" % asset
+	print("  ok  %d Blender assets imported, each with visuals and collision (baking to convex hulls); %d vehicle and %d rigged people (visuals only; each bakes to one skinned surface with all its animations); %d city kit meshes baked to one draw call each" % [
 		COLLIDABLE_ASSETS.size(), VEHICLE_ASSETS.size(), CHARACTER_ASSETS.size(), KIT_MESHES.size()])
 	return ""
 

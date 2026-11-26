@@ -6,10 +6,6 @@ extends Resource
 @export var walk_speed_min: float = 1.1
 @export var walk_speed_max: float = 1.5
 @export var run_speed: float = 4.2
-## Metres per step (drives the walk cycle).
-@export var stride: float = 0.7
-## Leg swing at walking speed, radians (running swings more).
-@export var swing: float = 0.45
 @export var turn_speed: float = 8.0
 
 @export_group("Wandering")

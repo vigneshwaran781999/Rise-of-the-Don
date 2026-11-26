@@ -7,8 +7,8 @@ extends CharacterBody3D
 ## and break a wind-up; at no health they go down for good (defeated). Not hostile, they stand
 ## about until someone punches them. A car can floor them too. They leave a player who is down or
 ## in a vehicle alone.
-## Looks and the walk cycle come from shaders/character.gdshader (CharacterBaker), like
-## pedestrians. Missions spawn them (scenes/npc/fighter.tscn).
+## Looks and movement come from a rigged HumanFigure (the wind-up, punch, stagger and fall are
+## its animations), like pedestrians. Missions spawn them (scenes/npc/fighter.tscn).
 
 ## Out of the fight (knocked out).
 signal defeated(fighter: Fighter)
@@ -26,8 +26,6 @@ const HITTABLE_GROUP: StringName = &"hittable"
 const DIRECT_RANGE: float = 6.0
 ## A blow lands on the target if they are within this angle of where the fighter faces.
 const STRIKE_ANGLE_DEGREES: float = 60.0
-## The shoulders turn this far back in the wind-up (radians).
-const WINDUP_TWIST: float = 0.4
 
 @export var tuning: FighterTuning
 @export var look: PackedScene
@@ -47,7 +45,7 @@ const WINDUP_TWIST: float = 0.4
 var target: Node3D
 var state: State = State.IDLE
 
-@onready var model: MeshInstance3D = $Model
+@onready var model: HumanFigure = $Model
 @onready var agent: NavigationAgent3D = $NavigationAgent3D
 @onready var _shape: CollisionShape3D = $CollisionShape3D
 
@@ -56,8 +54,6 @@ var _timer: float = 0.0
 var _cooldown: float = 0.0
 var _landed: bool = true
 var _repath: float = 0.0
-var _phase: float = 0.0
-var _swing: float = 0.0
 var _guard: float = 0.0
 var _gravity: float = 9.8
 var _rng := RandomNumberGenerator.new()
@@ -71,12 +67,8 @@ func _ready() -> void:
 	_rng.randomize()
 	_cooldown = _rng.randf_range(0.2, tuning.cooldown_min)    # not everyone swings at once
 	if look != null:
-		model.mesh = CharacterBaker.get_mesh(look)
-	model.set_instance_shader_parameter(&"top_color", top_color)
-	model.set_instance_shader_parameter(&"bottom_color", bottom_color)
-	model.set_instance_shader_parameter(&"skin_color", skin_color)
-	model.set_instance_shader_parameter(&"hair_color", hair_color)
-	_phase = _rng.randf() * TAU
+		model.set_look(look)
+	model.set_colours({&"top_color": top_color, &"bottom_color": bottom_color, &"skin_color": skin_color, &"hair_color": hair_color})
 
 
 func get_state_name() -> String:
@@ -150,6 +142,7 @@ func _physics_process(delta: float) -> void:
 			_timer -= delta
 			if _timer <= 0.0:
 				_timer = tuning.punch_time
+				model.play(&"punch")
 				_landed = false
 				state = State.PUNCH
 		State.PUNCH:
@@ -188,6 +181,7 @@ func _chase(delta: float) -> Vector3:
 	if distance <= tuning.punch_range and _cooldown <= 0.0 \
 			and rad_to_deg(global_basis.z.angle_to(to.normalized())) < tuning.punch_angle_degrees:
 		_timer = tuning.windup_time
+		model.play(&"windup")
 		state = State.WINDUP
 		return Vector3.ZERO
 	if distance <= tuning.engage_distance:
@@ -223,6 +217,7 @@ func _stagger(from: Vector3, knockback: float) -> void:
 	velocity.z = push.z * knockback
 	rotation.y = atan2(-push.x, -push.z)          # turned to face whoever hit them
 	_timer = tuning.hit_stagger_time
+	model.play(&"hit")
 	_cooldown = maxf(_cooldown, tuning.cooldown_min * 0.5)
 	state = State.STAGGER
 
@@ -235,35 +230,19 @@ func _go_down(from: Vector3) -> void:
 	var push := Vector3(global_position.x - from.x, 0.0, global_position.z - from.z)
 	if push.length_squared() > 0.01:
 		rotation.y = atan2(-push.x, -push.z)
-	model.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
-	model.position = Vector3(0.0, 0.12, 0.0)
+	model.play(&"knocked")
 	state = State.DOWN
 	defeated.emit(self)
 
 
+## The figure follows the fight: the gait by speed, fists up while fighting, lying once out.
 func _animate(delta: float) -> void:
-	var speed: float = Vector2(velocity.x, velocity.z).length() if state != State.DOWN else 0.0
-	_phase += speed / tuning.stride * PI * delta
-	var target_swing: float = clampf(speed / 1.4, 0.0, 1.0) * tuning.swing * (1.5 if speed > 2.5 else 1.0)
-	_swing = lerpf(_swing, target_swing, 1.0 - exp(-8.0 * delta))
+	var busy: bool = state in [State.WINDUP, State.PUNCH, State.STAGGER, State.DOWN]
+	model.set_speed(0.0 if busy else Vector2(velocity.x, velocity.z).length())
+	model.set_state(&"down" if state == State.DOWN else &"move")
 	var fighting: bool = hostile and state in [State.CHASE, State.WINDUP, State.PUNCH, State.STAGGER] and _can_fight()
 	_guard = move_toward(_guard, 1.0 if fighting else 0.0, delta * 4.0)
-	var arm: float = 0.0
-	var twist: float = 0.0
-	if state == State.WINDUP:
-		var drawn: float = clampf(1.0 - _timer / tuning.windup_time, 0.0, 1.0) * 3.0
-		arm = -0.6 * minf(drawn, 1.0)                 # the right arm drawn back...
-		twist = WINDUP_TWIST * minf(drawn, 1.0)       # ...and the shoulders turned with it
-	elif state == State.PUNCH:
-		var progress: float = 1.0 - _timer / tuning.punch_time
-		arm = FightPose.arm_out(progress, tuning.punch_hit_at / tuning.punch_time)
-		twist = lerpf(WINDUP_TWIST, -0.15, minf(progress * 3.0, 1.0)) * (1.0 - arm * 0.3)
-	if state != State.DOWN:
-		model.rotation.y = lerpf(model.rotation.y, twist, 1.0 - exp(-20.0 * delta))
-	model.set_instance_shader_parameter(&"walk_phase", _phase)
-	model.set_instance_shader_parameter(&"swing", _swing)
-	model.set_instance_shader_parameter(&"guard", _guard)
-	model.set_instance_shader_parameter(&"punch", arm)
+	model.set_guard(_guard)
 
 
 # --------------------------------------------------------------------------- helpers

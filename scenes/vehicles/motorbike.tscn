@@ -13,7 +13,7 @@
 [ext_resource type="Script" path="res://scripts/vehicles/vehicle_bumper.gd" id="11_bumper"]
 [ext_resource type="Script" path="res://scripts/vehicles/bike_lean.gd" id="12_lean"]
 [ext_resource type="Script" path="res://scripts/vehicles/bike_rider.gd" id="13_rider"]
-[ext_resource type="PackedScene" path="res://assets/models/characters/chr_ped_man.glb" id="14_look"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/chr_man.glb" id="14_look"]
 [ext_resource type="Resource" path="res://resources/shops/textiles.tres" id="15_wardrobe"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
@@ -32,7 +32,7 @@ body_scene = ExtResource("3_body")
 wheel_scene = ExtResource("4_wheel")
 paint_color = Color(0.1216, 0.3098, 0.6275, 1)
 
-[node name="Rider" type="MeshInstance3D" parent="Model"]
+[node name="Rider" type="Node3D" parent="Model"]
 visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.55, -0.2)
 script = ExtResource("13_rider")

@@ -364,3 +364,19 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
   - save afterwards and load: the game remembers.
 - [ ] **Story:** do the lines read naturally? Are any too long to read before the shot changes? (E skips on.)
 - [ ] **Retry:** failing missions 7, 8, 9, 10, 11 and 14 after their checkpoints restarts you at the fight or the tail, not from the very beginning.
+
+## M8 — Polish and ship
+
+### The Windows build (step 1)
+- [ ] Copy `build/windows/` (`RiseOfTheDon.exe` and `RiseOfTheDon.pck`) to another folder or PC and run the `.exe`: the main menu appears, New Game works.
+- [ ] Opening the project in the Godot 4.7.2 editor (the standard build) shows no errors.
+
+### Rigged people (steps 2-3)
+- [ ] **You:** walk, run (Shift), sprint. Do the legs and arms move naturally, and do the feet stay planted (not sliding) at each speed? Is the switch between walk, run and sprint smooth?
+- [ ] **Jumping:** the take-off crouch, the arms in the air, the landing crouch.
+- [ ] **Punching** (left mouse): the right fist goes straight out, the shoulders turn, the fists stay up a moment, then drop.
+- [ ] **Getting hit and knocked out** (missions 6+ fights): the stagger; falling flat on your back; getting up when you wake at the hospital.
+- [ ] **Pedestrians:** walking, chatting (hand gestures), sitting on benches; punched (stagger, then knocked down, getting up and running). Skirts and veshtis: the legs poke out behind the hem a little mid-stride; is it bad enough to matter?
+- [ ] **Police officers** running after you; **fighters** squaring up, winding up (the arm drawn back) and punching.
+- [ ] **Cutscene people** walking in, gesturing while they speak.
+- [ ] **Motorcycle:** the rider sits with hands on the bars and leans with the bike.
