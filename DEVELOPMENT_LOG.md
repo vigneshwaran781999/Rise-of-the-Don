@@ -908,3 +908,9 @@ The user picked this next. Their choices (the recommended options):
     - The Honest Road from 22:00: 06:00 the next day, rent paid, clear.
   - **`campaign_test`:** expects the house's rent for any day the story clock passes. It plays all ten missions and both endings with the new times.
 - **Screenshots** in a window: the lighthouse at dusk with the beam, the market at a misty dawn, the harbour showdown at night in rain.
+
+**Approved** by the user on 2026-11-26 and released as **1.0.3**:
+- **Version 1.0.3:** set in `setup_project.gd` (re-run) and in the export preset's file and product versions.
+- **The release export:** `build/windows/` holds the new `.exe` (109 MB) and `.pck` (24 MB). Windows reads the file properties back as "Rise of the Don", file and product version 1.0.3.0.
+- **Checks on the exported pack:** the main menu and 1500 frames of the game scene run with no errors. The smoke and save tests pass.
+- **Leak warning with `--quit-after`:** `--verbose` shows the cut-off game scene's leaks are a sound still playing (2 instances), the same test-only path as before.
