@@ -1,7 +1,7 @@
 class_name PauseMenu
 extends CanvasLayer
 ## Esc / Start pauses the game: Resume, Map, Missions (replay a passed story mission, after 1.0),
-## Save Game, Settings, Main Menu, Quit (subset of GDD §10).
+## Save Game, Settings, Controls (rebinding, after 1.0), Main Menu, Quit (subset of GDD §10).
 ## Pausing stops gameplay through SceneTree.paused and frees the mouse.
 
 const MAIN_MENU_SCENE: String = "res://scenes/main/main_menu.tscn"
@@ -16,6 +16,8 @@ var _save_button: Button
 var _map_button: Button
 var _missions: MissionsPanel
 var _missions_button: Button
+var _controls: ControlsPanel
+var _controls_button: Button
 var _save_only: bool = false     # opened straight on the save panel (at a property): closing it resumes
 ## The full map, opened from here (set by the game session).
 var map_screen: MapScreen
@@ -54,6 +56,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_save.close()
 	elif _missions.visible:
 		_missions.close()
+	elif _controls.visible:
+		_controls.close()
 	else:
 		resume()
 	get_viewport().set_input_as_handled()
@@ -67,6 +71,7 @@ func open() -> void:
 	_settings.hide()
 	_save.hide()
 	_missions.hide()
+	_controls.hide()
 	_resume.grab_focus()
 	AudioManager.play_ui(&"ui_accept")
 
@@ -115,6 +120,10 @@ func _build() -> void:
 	_save_button.pressed.connect(_open_save)
 	_settings_button = _add_button(box, "Settings", "SettingsButton")
 	_settings_button.pressed.connect(_open_settings)
+	_controls_button = _add_button(box, "Controls", "ControlsButton")
+	_controls_button.pressed.connect(func() -> void:
+		_menu.hide()
+		_controls.open())
 	var main_menu: Button = _add_button(box, "Main Menu", "MainMenuButton")
 	main_menu.pressed.connect(_go_to_main_menu)
 	var quit: Button = _add_button(box, "Quit to Desktop", "QuitButton")
@@ -126,6 +135,11 @@ func _build() -> void:
 	_save = SavePanel.new()
 	center.add_child(_save)
 	_save.closed.connect(_on_save_closed)
+	_controls = ControlsPanel.new()
+	center.add_child(_controls)
+	_controls.closed.connect(func() -> void:
+		_menu.show()
+		_controls_button.grab_focus())
 	_missions = MissionsPanel.new()
 	_missions.replay = replay
 	center.add_child(_missions)

@@ -1,8 +1,8 @@
 extends Node
 ## Player-facing settings: audio volumes, mouse look, how busy the streets are (pedestrian and
 ## traffic density, GDD §6) and graphics (M8: a quality preset, ambient occlusion, glow, shadows,
-## render scale, VSync, fullscreen). Changes apply immediately and are
-## persisted to user://settings.cfg (GDD §14). Autoload: Settings.
+## render scale, VSync, fullscreen) and, after 1.0, the controls (rebinding; InputBindings). Changes
+## apply immediately and are persisted to user://settings.cfg (GDD §14). Autoload: Settings.
 
 signal changed(key: StringName)
 
@@ -36,8 +36,18 @@ const VOLUME_BUSES: Dictionary = {
 	&"sfx_volume": &"SFX",
 }
 
-## When false nothing is written to disk (the smoke test uses this so it never touches real settings).
-var persist: bool = true
+## When false nothing is written to disk and the controls are the defaults (tests use this, so
+## they never touch real settings and their key presses mean what they expect).
+var persist: bool = true:
+	set(value):
+		persist = value
+		if not value:
+			InputMap.load_from_project_settings()
+			_bindings.clear()
+## The settings file (tests point this at a scratch file).
+var save_path: String = SAVE_PATH
+## Rebound controls (after 1.0): action -> its three slots as InputBindings.to_data() data.
+var _bindings: Dictionary = {}
 
 var master_volume: float = 0.8
 var music_volume: float = 0.6
@@ -224,15 +234,18 @@ func save_settings() -> void:
 	cfg.set_value("graphics", "render_scale", render_scale)
 	cfg.set_value("graphics", "vsync", vsync)
 	cfg.set_value("graphics", "fullscreen", fullscreen)
-	var err: Error = cfg.save(SAVE_PATH)
+	for action: StringName in _bindings:
+		cfg.set_value("bindings", String(action), _bindings[action])
+	var err: Error = cfg.save(save_path)
 	if err != OK:
-		push_warning("Settings: could not save %s (error %d)" % [SAVE_PATH, err])
+		push_warning("Settings: could not save %s (error %d)" % [save_path, err])
 
 
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(SAVE_PATH) != OK:
+	if cfg.load(save_path) != OK:
 		return  # first run: keep defaults
+	_load_bindings(cfg)
 	master_volume = clampf(float(cfg.get_value("audio", "master_volume", master_volume)), 0.0, 1.0)
 	music_volume = clampf(float(cfg.get_value("audio", "music_volume", music_volume)), 0.0, 1.0)
 	sfx_volume = clampf(float(cfg.get_value("audio", "sfx_volume", sfx_volume)), 0.0, 1.0)
@@ -248,6 +261,74 @@ func load_settings() -> void:
 	render_scale = clampf(float(cfg.get_value("graphics", "render_scale", render_scale)), 0.5, 1.0)
 	vsync = bool(cfg.get_value("graphics", "vsync", vsync))
 	fullscreen = bool(cfg.get_value("graphics", "fullscreen", fullscreen))
+
+
+# --------------------------------------------------------------------------- controls (after 1.0)
+
+## Puts `event` in `slot` (InputBindings.Slot) of `action`; null clears the slot. A keyboard or
+## mouse input goes only in a key slot, a gamepad one only in the gamepad slot. If another action
+## that is live at the same time already has that input, the two swap: it gets this slot's old
+## input. Saved at once. Returns the action it swapped with, or &"".
+func bind(action: StringName, slot: int, event: InputEvent) -> StringName:
+	if not InputBindings.CONTEXTS.has(action):
+		return &""
+	if event != null and InputBindings.is_keyboard(event) != (slot != InputBindings.Slot.PAD):
+		return &""
+	var slots: Array = InputBindings.get_slots(action)
+	var old: InputEvent = slots[slot]
+	var swapped: StringName = &""
+	if event != null:
+		var kinds: Array = [InputBindings.Slot.PAD] if slot == InputBindings.Slot.PAD else [InputBindings.Slot.KEY, InputBindings.Slot.ALT_KEY]
+		for other: StringName in InputBindings.get_actions():
+			if other != action and not InputBindings.clash(action, other):
+				continue
+			var other_slots: Array = slots if other == action else InputBindings.get_slots(other)
+			for other_slot: int in kinds:
+				if (other == action and other_slot == slot) or not InputBindings.same_input(other_slots[other_slot], event):
+					continue
+				other_slots[other_slot] = old
+				if other != action:
+					InputBindings.set_slots(other, other_slots)
+					_remember(other)
+					swapped = other
+	slots[slot] = event
+	InputBindings.set_slots(action, slots)
+	_remember(action)
+	save_settings()
+	changed.emit(&"controls")
+	return swapped
+
+
+## Every control back to its default (project.godot's input map).
+func reset_controls() -> void:
+	InputMap.load_from_project_settings()
+	_bindings.clear()
+	save_settings()
+	changed.emit(&"controls")
+
+
+func _remember(action: StringName) -> void:
+	var data: Array = []
+	for event: Variant in InputBindings.get_slots(action):
+		data.append(InputBindings.to_data(event as InputEvent))
+	_bindings[action] = data
+
+
+func _load_bindings(cfg: ConfigFile) -> void:
+	InputMap.load_from_project_settings()
+	_bindings.clear()
+	if not cfg.has_section("bindings"):
+		return
+	for key: String in cfg.get_section_keys("bindings"):
+		var action := StringName(key)
+		var data: Variant = cfg.get_value("bindings", key, [])
+		if not InputBindings.CONTEXTS.has(action) or not InputMap.has_action(action) or not (data is Array) or (data as Array).size() != 3:
+			continue
+		var slots: Array = []
+		for entry: Variant in data:
+			slots.append(InputBindings.from_data(entry as Dictionary) if entry is Dictionary else null)
+		InputBindings.set_slots(action, slots)
+		_remember(action)
 
 
 func _apply_volume(key: StringName) -> void:

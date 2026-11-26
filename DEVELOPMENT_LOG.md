@@ -914,3 +914,28 @@ The user picked this next. Their choices (the recommended options):
 - **The release export:** `build/windows/` holds the new `.exe` (109 MB) and `.pck` (24 MB). Windows reads the file properties back as "Rise of the Don", file and product version 1.0.3.0.
 - **Checks on the exported pack:** the main menu and 1500 frames of the game scene run with no errors. The smoke and save tests pass.
 - **Leak warning with `--quit-after`:** `--verbose` shows the cut-off game scene's leaks are a sound still playing (2 instances), the same test-only path as before.
+
+## 2026-11-26 — After 1.0: changing the controls
+
+The user asked for the controls to be editable. They chose keys and gamepad (the recommended option). The Controls screen used to only list the bindings, with a note that rebinding would come with a later settings screen, which never happened.
+
+**Built**
+- **`InputBindings`** (new, static helpers):
+  - **Three slots per action:** a key or mouse button, an alternative key, and a gamepad button or stick/trigger direction. It reads and writes them in the InputMap (the defaults still come from project.godot via `setup_project.gd`).
+  - **Saving:** turns them into plain data for the settings file and names them for the screen ("Left stick up", "RT").
+  - **Which actions are live at the same time:** on foot, driving, or on the map. On-foot and driving controls can share keys (W walks and accelerates; Space jumps and handbrakes), as the defaults already did.
+  - **Never bindable:** Esc (it cancels picking, and always pauses) and the mouse wheel.
+- **`Settings`:**
+  - `bind(action, slot, event)`: if another action live at the same time has that input, the two swap, so no action is silently left without one.
+  - `reset_controls()`.
+  - **Saving:** the changed actions are saved under `[bindings]` in `settings.cfg` and applied on start.
+  - **For tests:** `persist = false` now also puts the default controls back. Otherwise a player's rebound E would break the tests that press E. The settings file path is a variable, so tests can use a scratch file.
+- **The Controls screen** (main menu and, now, the pause menu):
+  - **Layout:** a scrolling table, action / key / alternative / gamepad.
+  - **Picking:** select a slot, then press a key, mouse button or gamepad button, or push a stick or trigger. A few frames are ignored first, so the press that selected the slot doesn't count. Esc cancels and Backspace clears. Doing nothing for 6 seconds gives up, since gamepad players have no Esc.
+  - **Feedback:** the status line says what changed and what swapped. Reset to Defaults asks twice.
+  - **Prompts and hints** already read the InputMap, so they show the new keys.
+- **Test, `tests/controls_test` (new):**
+  - **Setup:** the pause menu's Controls screen with real input events through the viewport, and a scratch settings file.
+  - **Covered:** the defaults shown; Jump to J, then to E (swap with Talk, prompts follow); Horn to Ctrl (no swap with Walk); Esc, Backspace, an ignored gamepad press, the 6 s give-up; a mouse button; a gamepad button swap; a trigger swap; saved and loaded on a fresh start; Reset; tests get the defaults.
+  - **Checked by hand:** the player's real `settings.cfg` was untouched (no `[bindings]`).

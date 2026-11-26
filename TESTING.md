@@ -427,3 +427,13 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] Start one of those missions when it's already the right time: no fade, and the clock doesn't move.
 - [ ] Fail a mission after its first checkpoint and Retry: the clock carries on (no second skip).
 - [ ] Do the skips and the weather feel right, or should any scene be at a different hour?
+
+### Changing the controls
+- [ ] Main menu → Controls and pause → Controls: every action, with its key, alternative and gamepad input. It scrolls with the mouse wheel, arrow keys and the D-pad.
+- [ ] Select Jump's key and press J: Jump is J. In the game, J jumps and Space doesn't.
+- [ ] Select Jump's key and press E: Talk had E, so the screen says it swapped, and Talk gets your old key. The prompt by a mission contact now shows the new key.
+- [ ] Bind a mouse button (for example Punch to the right button), then punch with it.
+- [ ] With a gamepad: change Jump's gamepad input to another button, and the Accelerate trigger to a different one. Drive and jump with them.
+- [ ] While picking: Esc cancels, Backspace clears the slot, and doing nothing for 6 seconds gives up.
+- [ ] Quit and start the game again: your controls are kept.
+- [ ] Reset to Defaults (select it twice): everything back as it was.
