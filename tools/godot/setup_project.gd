@@ -43,7 +43,7 @@ func _setup_core_settings() -> void:
 	ProjectSettings.set_setting("application/run/main_scene", MAIN_SCENE)
 	# The release (M8): its version, and the Windows icon of the window and the exported game
 	# (written by tools/godot/make_icon.gd from icon.svg).
-	ProjectSettings.set_setting("application/config/version", "1.0.3")
+	ProjectSettings.set_setting("application/config/version", "1.0.4")
 	ProjectSettings.set_setting("application/config/windows_native_icon", "res://icon.ico")
 	# Smooth rendering between 60 Hz physics ticks on high-refresh screens.
 	ProjectSettings.set_setting("physics/common/physics_interpolation", true)

@@ -92,7 +92,7 @@ func _build() -> void:
 	var footer := Label.new()
 	footer.name = "Footer"
 	footer.text = "v%s      Enter / A select   ·   Esc / B back" % \
-			str(ProjectSettings.get_setting("application/config/version", "1.0.3"))
+			str(ProjectSettings.get_setting("application/config/version", "1.0.4"))
 	footer.add_theme_font_size_override("font_size", 18)
 	footer.add_theme_color_override("font_color", UIStyle.TEXT_DIM)
 	column.add_child(footer)
