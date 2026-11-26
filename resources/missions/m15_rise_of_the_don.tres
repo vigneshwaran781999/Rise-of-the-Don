@@ -129,6 +129,9 @@ fov_to = 45.0
 [sub_resource type="Resource" id="Resource_xp1m3"]
 script = ExtResource("5_qcvg8")
 id = &"c15_tank"
+hour_from = 20.0
+hour_to = 4.5
+weather = &"clear"
 anchor = Vector3(80, 0.15, 53.5)
 shots = Array[ExtResource("6_ni4s0")]([SubResource("Resource_1d1ix"), SubResource("Resource_r5cxv"), SubResource("Resource_8wy7k"), SubResource("Resource_dv7xc"), SubResource("Resource_nil8q"), SubResource("Resource_1radx")])
 actors = Array[ExtResource("4_ojqbw")]([SubResource("Resource_pok57"), SubResource("Resource_sm3hw")])
@@ -222,6 +225,9 @@ caption = "THE HONEST ROAD"
 [sub_resource type="Resource" id="Resource_opdt4"]
 script = ExtResource("5_qcvg8")
 id = &"c15_honest"
+hour_from = 6.0
+hour_to = 8.0
+weather = &"clear"
 anchor = Vector3(80, 0.15, 53.5)
 shots = Array[ExtResource("6_ni4s0")]([SubResource("Resource_fw0jm"), SubResource("Resource_kl11b"), SubResource("Resource_dd16v"), SubResource("Resource_dwl86")])
 actors = Array[ExtResource("4_ojqbw")]([SubResource("Resource_n0de7"), SubResource("Resource_pcdgr")])
@@ -306,6 +312,9 @@ caption = "THE DON OF VELANAGAR"
 [sub_resource type="Resource" id="Resource_4en2j"]
 script = ExtResource("5_qcvg8")
 id = &"c15_don"
+hour_from = 20.0
+hour_to = 4.5
+weather = &"clear"
 anchor = Vector3(80, 0.15, 53.5)
 shots = Array[ExtResource("6_ni4s0")]([SubResource("Resource_rckhl"), SubResource("Resource_rd6hv"), SubResource("Resource_h4j2i"), SubResource("Resource_tjmsj")])
 actors = Array[ExtResource("4_ojqbw")]([SubResource("Resource_qe8r4"), SubResource("Resource_ouay0")])
@@ -326,6 +335,8 @@ if_answer = 1
 [resource]
 script = ExtResource("7_br3lq")
 id = &"rise_of_the_don"
+hour_from = 20.0
+hour_to = 23.0
 title = "Rise of the Don"
 description = "Durai says two people want you at the temple tank."
 prerequisites = Array[StringName]([&"harbour"])

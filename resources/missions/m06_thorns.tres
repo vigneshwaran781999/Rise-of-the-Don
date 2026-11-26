@@ -112,6 +112,8 @@ line = "KAMALAM: No knives, no fuss. Fists. Make them remember the market has fr
 [sub_resource type="Resource" id="Resource_qljv2"]
 script = ExtResource("4_llq3w")
 id = &"c06_thorns"
+hour_from = 7.5
+hour_to = 13.0
 anchor = Vector3(-70.9, 0.15, -71)
 anchor_yaw_degrees = 180.0
 shots = Array[ExtResource("5_fgdoo")]([SubResource("Resource_u4uwj"), SubResource("Resource_0rmaw"), SubResource("Resource_34pi0"), SubResource("Resource_01qxa"), SubResource("Resource_625g6"), SubResource("Resource_p5pf3")])
@@ -177,6 +179,8 @@ choices = PackedStringArray()
 [resource]
 script = ExtResource("7_ct3lu")
 id = &"thorns"
+hour_from = 8.0
+hour_to = 12.0
 title = "Thorns"
 description = "Kamalam has trouble in the flower market."
 prerequisites = Array[StringName]([&"building_empire"])

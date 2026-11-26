@@ -28,6 +28,12 @@ enum Category { STORY, DRIVING, DELIVERY, RACING, EXPLORATION, RESCUE, BUSINESS 
 @export var min_cash: int = 0
 ## Offered again after it has been passed (side jobs; GDD §3, mission 5).
 @export var repeatable: bool = false
+## When it is played: started from the top outside this window of hours (from-to, may run past
+## midnight), the clock skips forward to `hour_from` (StoryClock, after 1.0). Negative: any time.
+@export var hour_from: float = -1.0
+@export var hour_to: float = -1.0
+## The weather it starts in (a WeatherLook id; empty: leave the weather alone).
+@export var weather: StringName = &""
 
 @export_group("Content")
 @export var objectives: Array[MissionObjective] = []

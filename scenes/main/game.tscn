@@ -42,6 +42,7 @@
 [ext_resource type="Script" path="res://scripts/world/ambience_director.gd" id="38_ambience"]
 [ext_resource type="Resource" path="res://resources/world/ambience.tres" id="39_ambience_settings"]
 [ext_resource type="Script" path="res://scripts/missions/mission_replay.gd" id="42_replay"]
+[ext_resource type="Script" path="res://scripts/world/story_clock.gd" id="43_storyclock"]
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -147,3 +148,6 @@ settings = ExtResource("39_ambience_settings")
 
 [node name="Replay" type="Node" parent="."]
 script = ExtResource("42_replay")
+
+[node name="StoryClock" type="Node" parent="."]
+script = ExtResource("43_storyclock")

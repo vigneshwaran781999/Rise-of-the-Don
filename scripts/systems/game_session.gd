@@ -37,6 +37,7 @@ const DOWN_SECONDS: float = 1.5
 @onready var weather: WeatherCycle = $Weather
 @onready var ambience: AmbienceDirector = $Ambience
 @onready var replay: MissionReplay = $Replay
+@onready var story_clock: StoryClock = $StoryClock
 
 
 func _ready() -> void:
@@ -96,6 +97,8 @@ func _ready() -> void:
 	hud.bind_map(player, world.data, gps)
 	map_screen.setup(player, world.data, gps)
 	pause_menu.map_screen = map_screen
+	story_clock.setup(day_night, weather, missions.get_cutscene())
+	story_clock.message.connect(hud.get_mission_hud().show_hint)
 	replay.setup(player, missions, police, place_player)
 	replay.message.connect(hud.get_mission_hud().show_hint)
 	pause_menu.replay = replay

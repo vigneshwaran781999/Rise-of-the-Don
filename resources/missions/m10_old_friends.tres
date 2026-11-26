@@ -109,6 +109,8 @@ line = "VETRI: Go home, Ravi. I'll meet them there."
 [sub_resource type="Resource" id="Resource_7ramp"]
 script = ExtResource("4_da08s")
 id = &"c10_ravi"
+hour_from = 7.0
+hour_to = 11.0
 anchor = Vector3(91, 0.15, -9)
 anchor_yaw_degrees = 180.0
 shots = Array[ExtResource("5_taf0r")]([SubResource("Resource_q7x0n"), SubResource("Resource_edikm"), SubResource("Resource_pea6s"), SubResource("Resource_wcmtd"), SubResource("Resource_h4jij"), SubResource("Resource_88d2d")])
@@ -205,6 +207,8 @@ must_survive = false
 [resource]
 script = ExtResource("7_50kgh")
 id = &"old_friends"
+hour_from = 7.0
+hour_to = 10.0
 title = "Old Friends"
 description = "Someone from home is looking for you at the bus stand."
 prerequisites = Array[StringName]([&"ledger"])

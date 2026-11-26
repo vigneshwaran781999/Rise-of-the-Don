@@ -24,20 +24,13 @@ var _mission: MissionData
 var _passed: bool = false
 var _returning: bool = false
 var _snapshot: Dictionary = {}
-var _fade: ColorRect
+var _fade: ScreenFade
 
 
 func _ready() -> void:
-	var layer := CanvasLayer.new()
-	layer.name = "Fade"
-	layer.layer = 40
-	add_child(layer)
-	_fade = ColorRect.new()
-	_fade.name = "Black"
-	_fade.color = Color(0.0, 0.0, 0.0, 0.0)
-	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(_fade)
-	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fade = ScreenFade.new()
+	_fade.name = "Fade"
+	add_child(_fade)
 	MissionManager.replay_passed.connect(_on_replay_passed)
 	MissionManager.mission_ended.connect(_on_mission_ended)
 
@@ -97,15 +90,15 @@ func start(id: StringName) -> bool:
 		"day": GameState.day,
 		"choices": GameState.choices.duplicate(),
 	}
-	_fade.color.a = 1.0                  # the jump to the mission's start happens behind black
+	_fade.set_alpha(1.0)                 # the jump to the mission's start happens behind black
 	if not MissionManager.replay(id):
-		_fade.color.a = 0.0
+		_fade.set_alpha(0.0)
 		_snapshot = {}
 		message.emit("That mission can't be replayed.")
 		return false
 	_mission = MissionManager.get_mission(id)
 	_passed = false
-	_fade_to(0.0, FADE_SECONDS * 1.5)
+	_fade.fade_to(0.0, FADE_SECONDS * 1.5)
 	return true
 
 
@@ -138,10 +131,10 @@ func _go_back() -> void:
 			await get_tree().create_timer(0.25, false).timeout
 			waited += 0.25
 	if not MissionManager.is_active():
-		await _fade_to(1.0, FADE_SECONDS).finished
+		await _fade.fade_to(1.0, FADE_SECONDS).finished
 		_restore()
 		message.emit("Back where you were.")
-		_fade_to(0.0, FADE_SECONDS * 1.5)
+		_fade.fade_to(0.0, FADE_SECONDS * 1.5)
 	_mission = null
 	_snapshot = {}
 	_returning = false
@@ -156,9 +149,3 @@ func _restore() -> void:
 	_player.stats.set_health(float(_snapshot["health"]))
 	GameState.day = int(_snapshot["day"])
 	GameState.set_hour(float(_snapshot["hour"]))
-
-
-func _fade_to(alpha: float, seconds: float) -> Tween:
-	var tween := create_tween()
-	tween.tween_property(_fade, "color:a", alpha, seconds)
-	return tween

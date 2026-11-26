@@ -68,6 +68,17 @@ func set_hour(new_hour: float) -> void:
 	hour = fposmod(new_hour, 24.0)
 
 
+## Hours from now until the clock is in the window from `from_hour` to `to_hour` (it may run past
+## midnight, e.g. 20 to 4.5): 0 if it is in it already, or if `from_hour` is negative (any time).
+## Otherwise the hours until `from_hour` next comes round (the story clock only skips forward).
+func hours_until(from_hour: float, to_hour: float) -> float:
+	if from_hour < 0.0:
+		return 0.0
+	var span: float = fposmod(to_hour - from_hour, 24.0)
+	var into: float = fposmod(hour - from_hour, 24.0)
+	return 0.0 if into <= span else 24.0 - into
+
+
 ## "18:45"
 func get_clock_text() -> String:
 	var minutes: int = int(hour * 60.0) % (24 * 60)

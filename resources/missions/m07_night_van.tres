@@ -139,6 +139,8 @@ line = "VETRI: Councillor Raghavan. Kamalam will want to hear this."
 [sub_resource type="Resource" id="Resource_yysmv"]
 script = ExtResource("5_oh4fj")
 id = &"c07_tower"
+hour_from = 18.5
+hour_to = 2.0
 anchor = Vector3(-26, 0.15, -506)
 shots = Array[ExtResource("6_wko5t")]([SubResource("Resource_l3wi6"), SubResource("Resource_evrci"), SubResource("Resource_8oxao"), SubResource("Resource_n2b3u"), SubResource("Resource_j1yxm")])
 actors = Array[ExtResource("4_w50cf")]([SubResource("Resource_n0clj"), SubResource("Resource_p3yox")])
@@ -187,6 +189,8 @@ must_survive = false
 [resource]
 script = ExtResource("7_3dbqh")
 id = &"night_van"
+hour_from = 18.5
+hour_to = 22.0
 title = "The Night Van"
 description = "Kamalam wants to know where her market's money goes."
 prerequisites = Array[StringName]([&"thorns"])

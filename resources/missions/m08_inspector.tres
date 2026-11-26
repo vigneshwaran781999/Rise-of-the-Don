@@ -134,6 +134,8 @@ line = "DURAI: Never mind her. Leela at the Sea Breeze owes Kamalam money, and K
 [sub_resource type="Resource" id="Resource_3h8wk"]
 script = ExtResource("4_vq5kk")
 id = &"c08_inspector"
+hour_from = 8.5
+hour_to = 17.0
 anchor = Vector3(60.3, 0.15, 144.2)
 anchor_yaw_degrees = 180.0
 shots = Array[ExtResource("5_1bdkj")]([SubResource("Resource_sykqb"), SubResource("Resource_n82s3"), SubResource("Resource_kj54e"), SubResource("Resource_fe31m"), SubResource("Resource_bossw"), SubResource("Resource_ci3lh"), SubResource("Resource_23h15")])
@@ -252,6 +254,8 @@ line = "VETRI: Then put the kettle on. This won't take long."
 [sub_resource type="Resource" id="Resource_k3ddc"]
 script = ExtResource("4_vq5kk")
 id = &"c08_leela"
+hour_from = 9.0
+hour_to = 18.0
 anchor = Vector3(518.6, 0.15, -80)
 anchor_yaw_degrees = -90.0
 shots = Array[ExtResource("5_1bdkj")]([SubResource("Resource_60ulu"), SubResource("Resource_n0jnm"), SubResource("Resource_s5fbd"), SubResource("Resource_vyovp"), SubResource("Resource_db0ay"), SubResource("Resource_r4xyb")])
@@ -335,6 +339,8 @@ must_survive = false
 [resource]
 script = ExtResource("7_q7544")
 id = &"inspector"
+hour_from = 9.0
+hour_to = 14.0
 title = "The Inspector"
 description = "Durai has a job at the beach, and someone is waiting outside your house."
 prerequisites = Array[StringName]([&"night_van"])

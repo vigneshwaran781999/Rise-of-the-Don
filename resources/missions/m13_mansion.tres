@@ -166,6 +166,8 @@ line = "VETRI: Of course."
 [sub_resource type="Resource" id="Resource_cl82l"]
 script = ExtResource("5_x2xkm")
 id = &"c13_varadhan"
+hour_from = 13.5
+hour_to = 18.5
 anchor = Vector3(-512, 0.15, -530)
 anchor_yaw_degrees = 180.0
 shots = Array[ExtResource("6_r38t6")]([SubResource("Resource_mrofb"), SubResource("Resource_r3g66"), SubResource("Resource_fqbh4"), SubResource("Resource_5qrvp"), SubResource("Resource_f0y8u"), SubResource("Resource_ga13l"), SubResource("Resource_5rphp")])
@@ -206,6 +208,8 @@ must_survive = false
 [resource]
 script = ExtResource("7_r6giq")
 id = &"mansion"
+hour_from = 14.0
+hour_to = 16.5
 title = "The Man in the Mansion"
 description = "A man in a good suit is waiting at your house."
 prerequisites = Array[StringName]([&"fire"])

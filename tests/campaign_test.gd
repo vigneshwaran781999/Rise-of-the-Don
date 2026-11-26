@@ -122,6 +122,7 @@ func _play(id: StringName, answer: int) -> String:
 		if where != "":
 			return "%s (the giver) stands inside %s" % [mission.giver.display_name, where]
 	var cash: int = EconomyManager.cash
+	var day: int = GameState.day
 	await _walk_into(mission.start_position)
 	if not MissionManager.is_active() or MissionManager.get_active() != mission:
 		return "walking into the start marker should start it"
@@ -149,8 +150,12 @@ func _play(id: StringName, answer: int) -> String:
 			return "objective %d ('%s') didn't complete" % [index, objective.text]
 	if MissionManager.is_active() or not MissionManager.is_completed(id):
 		return "should be passed after its objectives"
-	if EconomyManager.cash != cash + mission.reward_cash:
-		return "should pay %s (cash %d -> %d)" % [EconomyManager.format(mission.reward_cash), cash, EconomyManager.cash]
+	# The story clock skips forward to a mission's or cutscene's hours (after 1.0): each new day on
+	# the way pays the house's rent once it is owned.
+	var rent: int = (GameState.day - day) * _daily_rent()
+	if EconomyManager.cash != cash + mission.reward_cash + rent:
+		return "should pay %s (+%s rent; cash %d -> %d)" % [EconomyManager.format(mission.reward_cash), EconomyManager.format(rent),
+			cash, EconomyManager.cash]
 	var ending: String = ""
 	if GameState.get_choice(&"ending") >= 0 and id == &"rise_of_the_don":
 		ending = ", ending: %s" % ["The Honest Road", "The Don of Velanagar"][GameState.get_choice(&"ending")]
@@ -433,6 +438,15 @@ func _key(code: Key, pressed: bool) -> void:
 func _tap(code: Key) -> void:
 	_key(code, true)
 	_key(code, false)
+
+
+## Rent a day from the properties the player owns.
+func _daily_rent() -> int:
+	var total: int = 0
+	for property: PropertyData in (_game.get_node("Places") as PlaceDirector).properties:
+		if EconomyManager.owns(property.id):
+			total += property.daily_income
+	return total
 
 
 func _note(line: String) -> void:

@@ -864,3 +864,47 @@ The user picked this next. Their choices (all the recommended options):
 - **The release export:** `build/windows/` holds the new `.exe` (109 MB) and `.pck` (24 MB). Windows reads the file properties back as "Rise of the Don", file and product version 1.0.2.0.
 - **Checks on the exported pack:** the main menu and 1500 frames of the game scene run with no errors. The smoke and save tests pass.
 - **Leak warning with `--quit-after`:** `--verbose` shows the cut-off game scene's leaks are all sounds still playing (15 playbacks this run), the same test-only path as before.
+
+## 2026-11-26 — After 1.0: story time of day
+
+The user picked this next. Their choices (the recommended options):
+- **The clock skips forward** to a scene's time and carries on from there (the play that follows happens at that time too).
+- **A few scenes set the weather** for mood.
+
+**Built**
+- **Windows of hours:** `CutsceneData` and `MissionData` have `hour_from`, `hour_to` (a window that may run past midnight) and `weather` (a WeatherLook id; empty leaves it alone).
+  - **Why a window:** a fixed hour would skip a whole day whenever the clock was a little past it. With a window, if the clock is already inside it, nothing moves; otherwise the clock skips forward to `hour_from`, never back.
+  - **The maths:** `GameState.hours_until(from, to)`.
+- **`StoryClock`** (new, in the game scene):
+  - **When:** as a mission starts from the top (not on a retry from a checkpoint or a resumed save part-way through), and as each cutscene starts.
+  - **What:** it advances the clock (so days and rent tick over as usual), refreshes the day and night lighting at once, and sets the weather at once.
+  - **How it looks:** a mission's skip happens behind a quick fade, with "Time passes. It's 18:30."; a cutscene's is hidden by its first cut.
+- **Missions too, not only cutscenes:** in four missions the cutscene comes after the play leading up to it: the van tail, the harbour fights, the drive to tea, the walk to the tank. Without a mission window you'd tail the "evening" van in daylight, then cut to night, or arrive at the estate at night and skip a whole night to reach afternoon tea mid-mission.
+- **`ScreenFade`** (new) is the fade the replays already used, now shared by both.
+- **The story's times** (from the lines: "every evening", "tonight", "they came at dawn", tea):
+
+  | Mission / cutscene | Window | Weather |
+  |---|---|---|
+  | 6 Thorns / the flower market | 08:00-12:00 / 07:30-13:00 | |
+  | 7 The Night Van / the handover downtown | 18:30-22:00 / 18:30-02:00 | |
+  | 8 The Inspector / outside the house; the beach | 09:00-14:00 / 08:30-17:00; 09:00-18:00 | |
+  | 10 Old Friends / the bus stand | 07:00-10:00 / 07:00-11:00 | |
+  | 11 The Detective / the station; the lighthouse | 16:30-18:30 / 16:00-19:30; 19:30-04:30 | |
+  | 12 Fire in the Lanes / the market | 06:00-08:30 / 06:00-10:00 | fog |
+  | 13 The Man in the Mansion / tea | 14:00-16:30 / 13:30-18:30 | |
+  | 14 Harbour Lights / Periyasamy | 20:00-01:00 / 20:00-04:30 | rain |
+  | 15 Rise of the Don / the tank; The Don of Velanagar | 20:00-23:00 / 20:00-04:30 | clear |
+  | The Honest Road | 06:00-08:00 (the next morning) | clear |
+
+  Missions 1-5 and 9 (The Ledger) name no time and leave the clock alone.
+- **Tests:**
+  - **`tests/story_clock_test` (new):**
+    - the window maths (9 cases, past midnight too);
+    - The Night Van from noon: 18:30 behind a fade;
+    - not when already inside its window, nor from its checkpoint;
+    - no window: no change;
+    - Harbour Lights: dark at once, raining;
+    - the lighthouse: 19:30;
+    - The Honest Road from 22:00: 06:00 the next day, rent paid, clear.
+  - **`campaign_test`:** expects the house's rent for any day the story clock passes. It plays all ten missions and both endings with the new times.
+- **Screenshots** in a window: the lighthouse at dusk with the beam, the market at a misty dawn, the harbour showdown at night in rain.

@@ -416,3 +416,14 @@ To get wanted: drive into a pedestrian. For higher levels, keep at it, or ram a 
 - [ ] With a wanted star, in a car, or during a mission: the rows are greyed and the panel says why.
 - [ ] Replay the last mission and pick the other answer at the ending choice: you see the other ending. Afterwards, save and load: the story still has your first answer.
 - [ ] Your health and the clock (top right) are as they were when you picked the replay.
+
+### Story time of day
+- [ ] Start **The Night Van** (mission 7) in the daytime: a quick fade, "Time passes. It's 18:30.", and you tail the van at dusk into the night. The handover downtown is at dusk or night.
+- [ ] **The Detective** (mission 11): the talk at the police station is late afternoon, the tail runs into the evening, and the lighthouse scene is at dusk or night with the beam turning.
+- [ ] **Fire in the Lanes** (mission 12): dawn and mist at the flower market.
+- [ ] **The Man in the Mansion** (mission 13): tea at the estate in the afternoon.
+- [ ] **Harbour Lights** (mission 14): night and rain from the start to the showdown.
+- [ ] **Rise of the Don** (mission 15): night at the temple tank, clear sky. **The Honest Road** ending: the next morning (the day ticks over, and the house's rent comes in). **The Don of Velanagar**: the same night.
+- [ ] Start one of those missions when it's already the right time: no fade, and the clock doesn't move.
+- [ ] Fail a mission after its first checkpoint and Retry: the clock carries on (no second skip).
+- [ ] Do the skips and the weather feel right, or should any scene be at a different hour?

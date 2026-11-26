@@ -206,6 +206,9 @@ line = "VETRI: Sirens. Time to go."
 [sub_resource type="Resource" id="Resource_g3te5"]
 script = ExtResource("5_6jtk3")
 id = &"c14_periyasamy"
+hour_from = 20.0
+hour_to = 4.5
+weather = &"rain"
 anchor = Vector3(612, 0.15, -511)
 anchor_yaw_degrees = -90.0
 shots = Array[ExtResource("6_k117f")]([SubResource("Resource_ewh26"), SubResource("Resource_evksa"), SubResource("Resource_1c57h"), SubResource("Resource_gaqah"), SubResource("Resource_asgmf"), SubResource("Resource_ir6qw")])
@@ -247,6 +250,9 @@ must_survive = false
 [resource]
 script = ExtResource("7_5hc4s")
 id = &"harbour"
+hour_from = 20.0
+hour_to = 1.0
+weather = &"rain"
 title = "Harbour Lights"
 description = "Kamalam says it's time to take the harbour."
 prerequisites = Array[StringName]([&"mansion"])

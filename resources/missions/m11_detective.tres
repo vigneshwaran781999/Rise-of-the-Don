@@ -114,6 +114,8 @@ line = "NANDINI: Then I start remembering it. Keys."
 [sub_resource type="Resource" id="Resource_570xw"]
 script = ExtResource("4_mjrdb")
 id = &"c11_deal"
+hour_from = 16.0
+hour_to = 19.5
 anchor = Vector3(-21.8, 0.15, 119.4)
 shots = Array[ExtResource("5_ca1bk")]([SubResource("Resource_6uldi"), SubResource("Resource_quauk"), SubResource("Resource_3kesy"), SubResource("Resource_orxxp"), SubResource("Resource_oyao3"), SubResource("Resource_bf7pt"), SubResource("Resource_em5h3")])
 actors = Array[ExtResource("3_4hgrn")]([SubResource("Resource_n0hbo")])
@@ -258,6 +260,8 @@ line = "VETRI: Varadhan. So even Periyasamy answers to someone."
 [sub_resource type="Resource" id="Resource_eikaq"]
 script = ExtResource("4_mjrdb")
 id = &"c11_lighthouse"
+hour_from = 19.5
+hour_to = 4.5
 anchor = Vector3(540, 0.15, 220)
 anchor_yaw_degrees = -90.0
 shots = Array[ExtResource("5_ca1bk")]([SubResource("Resource_ttyil"), SubResource("Resource_1e4u6"), SubResource("Resource_r7s62"), SubResource("Resource_0urhw"), SubResource("Resource_uyy5h"), SubResource("Resource_mvrav")])
@@ -325,6 +329,8 @@ must_survive = false
 [resource]
 script = ExtResource("7_tr324")
 id = &"detective"
+hour_from = 16.5
+hour_to = 18.5
 title = "The Detective"
 description = "Inspector Nandini wants a word at the Old Town police station."
 prerequisites = Array[StringName]([&"old_friends"])

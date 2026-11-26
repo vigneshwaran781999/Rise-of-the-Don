@@ -17,6 +17,14 @@ extends Resource
 ## Can interact skip on to the next shot.
 @export var skippable: bool = true
 
+@export_group("Time and weather")
+## When it happens: outside this window of hours (from-to, may run past midnight, e.g. 20 to 4.5)
+## the clock skips forward to `hour_from` as it starts (StoryClock). Negative: any time.
+@export var hour_from: float = -1.0
+@export var hour_to: float = -1.0
+## The weather it sets at once (a WeatherLook id; empty: leave the weather alone).
+@export var weather: StringName = &""
+
 
 ## The frame everything is placed in.
 func get_frame() -> Transform3D:
